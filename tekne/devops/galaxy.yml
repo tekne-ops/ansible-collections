@@ -1,0 +1,14 @@
+namespace: tekne
+name: devops
+version: 1.0.0
+readme: README.md
+authors:
+  - dvaliente
+license:
+  - MIT
+description: Tekne Arch Linux workstation and server roles
+tags:
+  - laptop
+  - workstation
+  - server
+dependencies: {}

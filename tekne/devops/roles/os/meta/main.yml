@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: dvaliente
+  description: Configures Arch Linux OS settings including locale, mirrors, NTP, and network
+  license: MIT
+  min_ansible_version: "2.10"
+  platforms:
+    - name: Archlinux
+      versions:
+        - all
+  galaxy_tags:
+    - system
+    - archlinux
+    - locale
+    - network
+    - ntp
+
+dependencies: []

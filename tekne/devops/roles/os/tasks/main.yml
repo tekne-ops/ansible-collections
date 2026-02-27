@@ -1,0 +1,485 @@
+---
+# =============================================================================
+# System Configuration
+# =============================================================================
+
+- name: Ensure reflector config directory exists
+  ansible.builtin.file:
+    path: /etc/xdg/reflector
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - os
+    - system_config
+
+- name: Copy reflector.conf to system
+  ansible.builtin.copy:
+    src: reflector.conf
+    dest: /etc/xdg/reflector/reflector.conf
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - os
+    - system_config
+
+# =============================================================================
+# CPU power / governor
+# =============================================================================
+
+- name: Set CPU governor to performance in cpupower-service.conf
+  ansible.builtin.lineinfile:
+    path: /etc/default/cpupower-service.conf
+    regexp: "^#?GOVERNOR=.*"
+    line: "GOVERNOR='performance'"
+    create: true
+    mode: '0644'
+  tags:
+    - os
+    - cpupower
+
+- name: Enable cpupower.service (do not start)
+  ansible.builtin.systemd:
+    name: cpupower
+    enabled: true
+    state: stopped
+  tags:
+    - os
+    - cpupower
+
+# Locale Configuration
+- name: Set system locale
+  ansible.builtin.lineinfile:
+    path: /etc/locale.conf
+    state: present
+    line: "LANG={{ os_locale }}"
+    create: true
+    mode: '0644'
+  tags:
+    - os
+    - locale
+
+- name: Enable locale in locale.gen
+  ansible.builtin.lineinfile:
+    path: /etc/locale.gen
+    regexp: '^#?{{ os_locale | regex_escape }}'
+    line: "{{ os_locale }} UTF-8"
+  notify: Generate locales
+  tags:
+    - os
+    - locale
+
+- name: Flush handlers to run locale-gen now
+  ansible.builtin.meta: flush_handlers
+  tags:
+    - os
+    - locale
+
+# =============================================================================
+# Network Configuration
+# =============================================================================
+# Order: deploy templates first, then flush handlers, then enable/restart
+# services so they load the new config before WiFi connect.
+
+- name: Copy WiFi network configuration
+  ansible.builtin.template:
+    src: 80-wifi-station.network.j2
+    dest: /etc/systemd/network/80-wifi-station.network
+    owner: root
+    group: root
+    mode: '0644'
+  when: os_hostname in ['ASTER', 'YUGEN']
+  notify: Restart systemd-networkd
+  tags:
+    - os
+    - network
+
+- name: Copy Ethernet network configuration
+  ansible.builtin.template:
+    src: 89-ethernet.network.j2
+    dest: /etc/systemd/network/89-ethernet.network
+    owner: root
+    group: root
+    mode: '0644'
+  when: os_hostname in ['ASTER', 'YUGEN']
+  notify: Restart systemd-networkd
+  tags:
+    - os
+    - network
+
+# SSH and bridge (br0) network configuration
+- name: Ensure sshd_config.d directory exists
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - os
+    - network
+
+- name: Copy ssh.conf to sshd_config.d
+  ansible.builtin.copy:
+    src: ssh.conf
+    dest: /etc/ssh/sshd_config.d/ssh.conf
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - os
+    - network
+
+- name: Copy 25-br0.netdev to systemd-network (THEMIS)
+  ansible.builtin.copy:
+    src: 25-br0.netdev
+    dest: /etc/systemd/network/25-br0.netdev
+    owner: root
+    group: root
+    mode: '0644'
+  when: os_hostname == 'THEMIS'
+  notify: Restart systemd-networkd
+  tags:
+    - os
+    - network
+
+- name: Copy 25-br0-en.network to systemd-network (THEMIS)
+  ansible.builtin.copy:
+    src: 25-br0-en.network
+    dest: /etc/systemd/network/25-br0-en.network
+    owner: root
+    group: root
+    mode: '0644'
+  when: os_hostname == 'THEMIS'
+  notify: Restart systemd-networkd
+  tags:
+    - os
+    - network
+
+- name: Deploy 25-br0.network with hostname (THEMIS)
+  ansible.builtin.template:
+    src: 25-br0.network.j2
+    dest: /etc/systemd/network/25-br0.network
+    owner: root
+    group: root
+    mode: '0644'
+  when: os_hostname == 'THEMIS'
+  notify: Restart systemd-networkd
+  tags:
+    - os
+    - network
+
+- name: Flush handlers so networkd restarts with new config before enabling WiFi
+  ansible.builtin.meta: flush_handlers
+  tags:
+    - os
+    - network
+
+- name: Enable and restart bluetooth and acpid
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: restarted
+  loop:
+    - bluetooth.service
+    - acpid.service
+  when: os_hostname in ['ASTER', 'YUGEN']
+  tags:
+    - os
+    - network
+
+- name: Enable and restart iwd (ASTER only)
+  ansible.builtin.systemd:
+    name: iwd.service
+    enabled: true
+    state: restarted
+  when: os_hostname == 'ASTER'
+  tags:
+    - os
+    - network
+    - wifi
+
+- name: Enable and restart systemd-networkd
+  ansible.builtin.systemd:
+    name: systemd-networkd.service
+    enabled: true
+    state: restarted
+  tags:
+    - os
+    - network
+
+- name: Enable and restart systemd-resolved
+  ansible.builtin.systemd:
+    name: systemd-resolved.service
+    enabled: true
+    state: restarted
+  tags:
+    - os
+    - network
+
+- name: Require WiFi passphrase for ASTER
+  ansible.builtin.assert:
+    that:
+      - os_wifi_passphrase is defined
+      - os_wifi_passphrase | length > 0
+    fail_msg: "os_wifi_passphrase must be set (e.g. in vault) for ASTER WiFi connection."
+  when: os_hostname == 'ASTER'
+  tags:
+    - os
+    - network
+    - wifi
+
+- name: Resolve WiFi interface name (ASTER only, auto-detect)
+  ansible.builtin.shell: "ls /sys/class/net | grep -E '^wl' | head -1"
+  register: _wifi_interface_cmd
+  until: _wifi_interface_cmd.stdout | trim | length > 0
+  retries: 10
+  delay: 2
+  changed_when: false
+  when:
+    - os_hostname == 'ASTER'
+    - os_wifi_interface | default('') | length == 0
+  tags:
+    - os
+    - network
+    - wifi
+
+- name: Set WiFi interface for ASTER
+  ansible.builtin.set_fact:
+    os_wifi_interface_resolved: "{{ os_wifi_interface if (os_wifi_interface | default('') | length > 0) else ((_wifi_interface_cmd.stdout | trim) | default('wlan0')) }}"
+  when: os_hostname == 'ASTER'
+  tags:
+    - os
+    - network
+    - wifi
+
+- name: Wait for WiFi interface to appear (ASTER only)
+  ansible.builtin.wait_for:
+    path: "/sys/class/net/{{ os_wifi_interface_resolved }}"
+    timeout: 15
+  when: os_hostname == 'ASTER'
+  tags:
+    - os
+    - network
+    - wifi
+
+- name: Connect to WiFi network (ASTER only)
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/iwctl
+      - station
+      - "{{ os_wifi_interface_resolved }}"
+      - connect
+      - "{{ os_wifi_ssid }}"
+      - --passphrase
+      - "{{ os_wifi_passphrase }}"
+  register: _iwctl_connect
+  until: _iwctl_connect.rc == 0
+  retries: 6
+  delay: 5
+  when: os_hostname == 'ASTER'
+  changed_when: false
+  no_log: true
+  tags:
+    - os
+    - network
+    - wifi
+
+# =============================================================================
+# Wait for Network Connectivity
+# =============================================================================
+
+- name: Flush handlers to restart networkd if config changed
+  ansible.builtin.meta: flush_handlers
+  tags:
+    - os
+    - network
+
+- name: Wait for network connectivity
+  ansible.builtin.command:
+    cmd: ping -c 1 -W 2 archlinux.org
+  register: network_check
+  until: network_check.rc == 0
+  retries: 30
+  delay: 2
+  changed_when: false
+  tags:
+    - os
+    - network
+
+# =============================================================================
+# Tekne bash repository and PATH (requires network)
+# =============================================================================
+
+- name: Ensure git is installed for cloning tekne bash repo
+  community.general.pacman:
+    name: git
+    state: present
+  tags:
+    - os
+    - tekne_bash
+
+- name: Ensure devs group exists (for /srv/code ownership)
+  ansible.builtin.group:
+    name: devs
+    state: present
+  tags:
+    - os
+    - tekne_bash
+    - srv_code
+
+- name: Create /srv/code directory (group devs, no access for others)
+  ansible.builtin.file:
+    path: /srv/code
+    state: directory
+    owner: root
+    group: devs
+    mode: '0770'
+  tags:
+    - os
+    - tekne_bash
+    - srv_code
+
+- name: Create /srv/code/tekne directory
+  ansible.builtin.file:
+    path: /srv/code/tekne
+    state: directory
+    owner: root
+    group: devs
+    mode: '0770'
+  tags:
+    - os
+    - tekne_bash
+
+- name: Clone tekne bash repository into /srv/code/tekne/bash
+  ansible.builtin.git:
+    repo: https://github.com/dvaliente-tekne/bash
+    dest: /srv/code/tekne/bash
+    version: main
+    force: false
+  tags:
+    - os
+    - tekne_bash
+
+- name: Clone tekne python repository into /srv/code/tekne/python
+  ansible.builtin.git:
+    repo: https://github.com/dvaliente-tekne/python
+    dest: /srv/code/tekne/python
+    version: main
+    force: false
+  tags:
+    - os
+    - tekne_python
+
+- name: Create /srv/code/tekne/ansible directory
+  ansible.builtin.file:
+    path: /srv/code/tekne/ansible
+    state: directory
+    owner: root
+    group: devs
+    mode: '0770'
+  tags:
+    - os
+    - tekne_ansible
+
+- name: Clone ansible role repositories into /srv/code/tekne/ansible
+  ansible.builtin.git:
+    repo: "{{ item }}"
+    dest: "/srv/code/tekne/ansible/{{ item | regex_replace('^.*/', '') }}"
+    version: main
+    force: false
+  loop: "{{ os_ansible_role_repos }}"
+  loop_control:
+    label: "{{ item | regex_replace('^.*/', '') }}"
+  tags:
+    - os
+    - tekne_ansible
+
+- name: Clone ansible-playbook repository into /srv/code/tekne/ansible/ansible-playbook
+  ansible.builtin.git:
+    repo: https://github.com/dvaliente-tekne/ansible-playbook
+    dest: /srv/code/tekne/ansible/ansible-playbook
+    version: main
+    force: false
+  tags:
+    - os
+    - tekne_ansible
+
+- name: Add tekne bash paths to /etc/profile via profile.d
+  ansible.builtin.copy:
+    dest: /etc/profile.d/tekne-bash.sh
+    content: |
+      # Tekne bash utilities - scripts and bin in PATH
+      append_path() {
+        case ":$PATH:" in
+          *:"$1":*) ;;
+          *) PATH="${PATH:+"$PATH:"}$1" ;;
+        esac
+      }
+      append_path '/srv/code/tekne/bash/scripts'
+      append_path '/srv/code/tekne/bash/bin'
+      append_path '/srv/code/tekne/python/src/tekne_tools'
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - os
+    - tekne_bash
+
+# =============================================================================
+# NTP Configuration (requires network)
+# =============================================================================
+
+- name: Enable NTP synchronization
+  ansible.builtin.command:
+    cmd: /usr/bin/timedatectl set-ntp true
+  changed_when: false
+  tags:
+    - os
+    - ntp
+
+# =============================================================================
+# Mirror Configuration (requires network to be up)
+# =============================================================================
+
+- name: Update pacman mirrorlist
+  ansible.builtin.command:
+    cmd: >-
+      /usr/bin/reflector
+      --country '{{ os_mirror_country }}'
+      --latest {{ os_mirror_count }}
+      --sort rate
+      --protocol {{ os_mirror_protocols }}
+      --age {{ os_mirror_age }}
+      --save /etc/pacman.d/mirrorlist
+  changed_when: false
+  tags:
+    - os
+    - mirrors
+
+# =============================================================================
+# THEMIS-specific packages (local .pkg.tar.zst)
+# =============================================================================
+
+- name: Copy THEMIS local packages to target
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/tmp/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: "{{ os_themis_local_packages }}"
+  when: os_hostname == 'THEMIS'
+  tags:
+    - os
+    - themis_packages
+
+- name: Install THEMIS local packages with pacman
+  ansible.builtin.command:
+    cmd: pacman -U --noconfirm {{ os_themis_local_packages | map('regex_replace', '^', '/tmp/') | join(' ') }}
+  when: os_hostname == 'THEMIS'
+  tags:
+    - os
+    - themis_packages

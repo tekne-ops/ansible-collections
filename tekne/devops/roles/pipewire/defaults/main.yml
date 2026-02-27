@@ -1,0 +1,30 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for ./ansible-role-pipewire
+
+# Packages to remove before installing pipewire (conflicts)
+pipewire_conflicting_packages:
+  - jack
+  - ffmpeg
+  - jack2
+  - libjack
+  - portaudio
+  - libopenmpt
+  - freerdp
+
+# Pipewire packages to install
+pipewire_packages:
+  - pipewire
+  - pipewire-audio
+  - pipewire-libcamera
+  - pipewire-jack
+  - pipewire-alsa
+  - pipewire-pulse
+  - lib32-pipewire
+  - lib32-pipewire-jack
+  - wireplumber
+  - pavucontrol
+  - sound-theme-smooth
+
+# User service to enable
+pipewire_user_service: pipewire
