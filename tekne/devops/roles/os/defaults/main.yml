@@ -26,23 +26,6 @@ os_wifi_ssid: esher
 # Interface name (e.g. wlan0, wlp2s0). Leave empty to auto-detect first wlan interface.
 os_wifi_interface: ""
 
-# Ansible roles to clone into /srv/code/tekne/ansible (from prep.sh)
-os_ansible_role_repos:
-  - https://github.com/dvaliente-tekne/ansible-role-bootstrap
-  - https://github.com/dvaliente-tekne/ansible-role-docker
-  - https://github.com/dvaliente-tekne/ansible-role-gaming
-  - https://github.com/dvaliente-tekne/ansible-role-gpu
-  - https://github.com/dvaliente-tekne/ansible-role-haproxy
-  - https://github.com/dvaliente-tekne/ansible-role-hostname
-  - https://github.com/dvaliente-tekne/ansible-role-libvirt
-  - https://github.com/dvaliente-tekne/ansible-role-nftables
-  - https://github.com/dvaliente-tekne/ansible-role-onedrive
-  - https://github.com/dvaliente-tekne/ansible-role-os
-  - https://github.com/dvaliente-tekne/ansible-role-pipewire
-  - https://github.com/dvaliente-tekne/ansible-role-repotekne
-  - https://github.com/dvaliente-tekne/ansible-role-user
-  - https://github.com/dvaliente-tekne/ansible-role-xfce4
-
 # THEMIS-only: local .pkg.tar.zst packages (place in role files/)
 os_themis_local_packages:
   - pikaur-1.33.2-1-any.pkg.tar.zst
