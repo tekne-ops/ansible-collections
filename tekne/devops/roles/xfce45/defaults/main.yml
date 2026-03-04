@@ -1,0 +1,78 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for ./ansible-role-xfce4/
+
+# XFCE4 package groups (verified with pacman -Qg)
+xfce4_groups:
+  - xfce4
+  - xfce4-goodies
+  - xorg-apps
+
+# XFCE4 individual packages (verified with pacman -Q)
+xfce4_packages:
+  - xfce4-panel-profiles
+  - gnome-keyring
+  - seahorse
+  - libsecret
+  - xdg-desktop-portal
+  - xdg-desktop-portal-gtk
+  - xdg-desktop-portal-xapp
+  - xdg-desktop-portal-cosmic
+  - libportal
+  - libportal-gtk4
+  - libportal-qt6
+  - bibata-cursor-theme-bin
+  - flat-remix
+  - kora-icon-theme
+  - xorg-server
+  - xdotool
+  - file-roller
+  - thunar-volman
+  - gvfs
+  - gvfs-afc
+  # Bluetooth support (required for bootstrap role bluetooth config)
+  - bluez
+  - bluez-utils
+  - blueman
+  # Software needed at first boot.
+  - microsoft-edge-stable-bin
+  - ocs-url
+  - bitwarden-bin
+  - yubico-authenticator-bin
+  # VLC
+  - vlc
+  - vlc-plugin-mpg123
+  - vlc-plugin-mpeg2
+  - vlc-plugin-x264
+  - vlc-plugin-x265
+  - vlc-plugin-matroska
+  - vlc-plugin-ass
+  - vlc-plugins-video-output
+  - vlc-plugins-visualization
+  - vlc-plugins-extra
+  - vlc-plugins-base
+  - vlc-plugin-ogg
+  - vlc-plugin-notify
+  - vlc-plugin-upnp
+  - vlc-plugin-mtp
+  - vlc-plugin-mad
+  - vlc-plugin-gstreamer
+  - vlc-plugin-freetype
+  - vlc-plugin-flac
+  - vlc-plugin-ffmpeg
+
+# LightDM packages (installed only on specific hosts)
+xfce4_lightdm_packages:
+  - lightdm
+  - light-locker
+  - lightdm-slick-greeter
+  - lightdm-gtk-greeter
+  - lightdm-gtk-greeter-settings
+  - lightdm-webkit-theme-litarvan
+  - lightdm-webkit2-greeter
+
+# Hostname that requires LightDM
+xfce4_lightdm_hostname: "ASTER"
+
+# LightDM service name
+xfce4_lightdm_service: lightdm
