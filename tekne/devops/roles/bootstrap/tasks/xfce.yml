@@ -155,7 +155,7 @@
   ansible.builtin.debug:
     msg:
       - >-
-        XFCE configuration {{ 'applied' if xfce_display_available
+        XFCE configuration {{ 'applied' if (xfce_display_available | default(true))
         else 'SKIPPED (no display)' }}:
       - "  User: {{ bootstrap_user }}"
       - "  Monitors: {{ bootstrap_xfce_monitors | join(', ') }}"

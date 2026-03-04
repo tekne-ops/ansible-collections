@@ -23,24 +23,24 @@
 # Package Management
 # =============================================================================
 
-- name: Remove conflicting packages
-  community.general.pacman:
-    name: "{{ pipewire_conflicting_packages }}"
-    state: absent
-    extra_args: '--noconfirm'
-  tags:
-    - pipewire
-    - packages
+# - name: Remove conflicting packages
+  # community.general.pacman:
+    # name: "{{ pipewire_conflicting_packages }}"
+    # state: absent
+    # extra_args: '--noconfirm'
+  # tags:
+    # - pipewire
+    # - packages
 
-- name: Install pipewire packages
-  community.general.pacman:
-    name: "{{ pipewire_packages }}"
-    state: present
-    extra_args: '--noconfirm --needed'
-  register: pipewire_install_result
-  tags:
-    - pipewire
-    - packages
+# - name: Install pipewire packages
+  # community.general.pacman:
+    # name: "{{ pipewire_packages }}"
+    # state: present
+    # extra_args: '--noconfirm --needed'
+    # register: pipewire_install_result
+    # tags:
+      # - pipewire
+      # - packages
 
 # =============================================================================
 # User Configuration Directories

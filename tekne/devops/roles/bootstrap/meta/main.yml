@@ -1,8 +1,6 @@
 ---
 galaxy_info:
   author: dvaliente
-  role_name: bootstrap
-  namespace: dvaliente_tekne
   description: Bootstrap role for symlinks, bluetooth, and XFCE desktop configuration
   license: MIT
   min_ansible_version: "2.10"
