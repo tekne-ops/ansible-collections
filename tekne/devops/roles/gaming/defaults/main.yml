@@ -9,7 +9,7 @@ gaming_packages:
   - steam
   - ttf-liberation
   - lib32-systemd
-  - wine-tkg-clean-staging-git
+  - wine-tkg-valve-exp-bleeding
   - winetricks
   - wine-gecko
   - wine-mono

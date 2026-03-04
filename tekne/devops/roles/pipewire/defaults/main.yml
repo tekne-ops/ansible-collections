@@ -6,6 +6,7 @@
 pipewire_conflicting_packages:
   - jack
   - ffmpeg
+  - ffmpeg4.4
   - jack2
   - libjack
   - portaudio

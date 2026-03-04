@@ -386,20 +386,17 @@
 
 - name: Clone ansible role repositories into /srv/code/tekne/ansible
   ansible.builtin.git:
-    repo: "{{ item }}"
+    repo: https://github.com/dvaliente-tekne/ansible-collections
     dest: "/srv/code/tekne/ansible/{{ item | regex_replace('^.*/', '') }}"
     version: main
     force: false
-  loop: "{{ os_ansible_role_repos }}"
-  loop_control:
-    label: "{{ item | regex_replace('^.*/', '') }}"
   tags:
     - os
     - tekne_ansible
 
 - name: Clone ansible-playbook repository into /srv/code/tekne/ansible/ansible-playbook
   ansible.builtin.git:
-    repo: https://github.com/dvaliente-tekne/ansible-playbook
+    repo: https://github.com/dvaliente-tekne/ansible-playbooks
     dest: /srv/code/tekne/ansible/ansible-playbook
     version: main
     force: false

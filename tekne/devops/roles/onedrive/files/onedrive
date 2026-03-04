@@ -1,7 +1,7 @@
 sync_dir = "/home/dvaliente/OneDrive"
 sync_dir_permissions = "700"
 sync_file_permissions = "600"
-skip_dir = "BackUps, MobileApps, Music, public_share, Pictures/Professional, Pictures/Personal, Pictures/CK\ Share"
+skip_dir = "BackUps|MobileApps|Music|public_share|Pictures/Professional|Pictures/Personal|Pictures/CK Share"
 skip_dotfiles = "true"
 skip_symlinks = "true"
 sync_root_files = "false"
