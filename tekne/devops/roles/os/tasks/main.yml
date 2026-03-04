@@ -387,7 +387,7 @@
 - name: Clone ansible role repositories into /srv/code/tekne/ansible
   ansible.builtin.git:
     repo: https://github.com/dvaliente-tekne/ansible-collections
-    dest: "/srv/code/tekne/ansible/{{ item | regex_replace('^.*/', '') }}"
+    dest: "/srv/code/tekne/ansible"
     version: main
     force: false
   tags:
