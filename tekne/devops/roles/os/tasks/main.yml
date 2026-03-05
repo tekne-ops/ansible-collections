@@ -49,6 +49,54 @@
     - os
     - cpupower
 
+- name: Enable and start fstrim.service (all hosts)
+  ansible.builtin.systemd:
+    name: fstrim.service
+    enabled: true
+    state: started
+  tags:
+    - os
+    - fstrim
+
+# =============================================================================
+# THEMIS: cronie, cpupower config, irqbalance (enable and start)
+# =============================================================================
+
+- name: Install cronie (THEMIS)
+  community.general.pacman:
+    name: cronie
+    state: present
+  when: os_hostname == 'THEMIS'
+  tags:
+    - os
+    - themis_services
+
+- name: Create /etc/default/cpupower (THEMIS)
+  ansible.builtin.copy:
+    dest: /etc/default/cpupower
+    content: "governor=performance\n"
+    owner: root
+    group: root
+    mode: '0644'
+  when: os_hostname == 'THEMIS'
+  tags:
+    - os
+    - themis_services
+
+- name: Enable and start cronie, irqbalance, cpupower (THEMIS)
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - cronie.service
+    - irqbalance.service
+    - cpupower.service
+  when: os_hostname == 'THEMIS'
+  tags:
+    - os
+    - themis_services
+
 # Locale Configuration
 - name: Set system locale
   ansible.builtin.lineinfile:
