@@ -27,7 +27,7 @@
     docker run -d --name gerbera --restart=unless-stopped \
       --network=host \
       -e G_LOG=info \
-      -v /srv/docker/gerbera:/media:ro \
+      -v /srv/docker/gerbera:/mnt/content:ro \
       gerbera/gerbera:latest
   when: (gerbera_container_check.stdout | trim) != 'gerbera'
   tags:
