@@ -88,7 +88,7 @@
 
 - name: Clone bash repo into repotekne container
   ansible.builtin.shell: |
-    docker exec repotekne bash -c 'test -d /srv/code/tekne/bash || sudo -u repo git clone https://github.com/dvaliente-tekne/bash /srv/code/tekne/bash'
+    docker exec repotekne bash -c 'test -d /srv/code/tekne/bash || sudo -u repo git clone https://github.com/tekne-ops/bash /srv/code/tekne/bash'
   tags:
     - repotekne
     - setup

@@ -403,7 +403,7 @@
 
 - name: Clone tekne bash repository into /srv/code/tekne/bash
   ansible.builtin.git:
-    repo: https://github.com/dvaliente-tekne/bash
+    repo: https://github.com/tekne-ops/bash
     dest: /srv/code/tekne/bash
     version: main
     force: false
@@ -413,7 +413,7 @@
 
 - name: Clone tekne python repository into /srv/code/tekne/python
   ansible.builtin.git:
-    repo: https://github.com/dvaliente-tekne/python
+    repo: https://github.com/tekne-ops/python
     dest: /srv/code/tekne/python
     version: main
     force: false
@@ -434,7 +434,7 @@
 
 - name: Clone ansible role repositories into /srv/code/tekne/ansible
   ansible.builtin.git:
-    repo: https://github.com/dvaliente-tekne/ansible-collections
+    repo: https://github.com/tekne-ops/ansible-collections
     dest: "/srv/code/tekne/ansible"
     version: main
     force: false
@@ -444,7 +444,7 @@
 
 - name: Clone ansible-playbook repository into /srv/code/tekne/ansible/ansible-playbook
   ansible.builtin.git:
-    repo: https://github.com/dvaliente-tekne/ansible-playbooks
+    repo: https://github.com/tekne-ops/ansible-playbooks
     dest: /srv/code/tekne/ansible/ansible-playbooks
     version: main
     force: false
