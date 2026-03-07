@@ -81,4 +81,4 @@ xfce4_lightdm_service: lightdm
 # XFCE backgrounds (LightDM host only)
 xfce4_backgrounds_repo: "https://github.com/tekne-ops/backgrounds"
 xfce4_backgrounds_dir: "/usr/share/backgrounds/xfce"
-xfce4_slick_greeter_background: "/usr/share/backgrounds/xfce/xfce-blue.jpg"
+xfce4_slick_greeter_background: "/usr/share/backgrounds/xfce/dog-animal-picture-uhdpaper.com-4K-4.3358.jpg"
