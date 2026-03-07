@@ -54,7 +54,7 @@
     - config
 
 # =============================================================================
-# NVIDIA Installation (themis, yugen)
+# NVIDIA Installation (yugen, aster)
 # =============================================================================
 
 - name: Install NVIDIA packages
@@ -63,14 +63,14 @@
     state: present
     extra_args: '--noconfirm --needed'
   register: nvidia_install_result
-  when: inventory_hostname in ['themis', 'yugen']
+  when: inventory_hostname in ['yugen', 'aster']
   tags:
     - gpu
     - nvidia
     - packages
 
 # =============================================================================
-# Intel/Mesa Installation (themis only)
+# Intel/Mesa Installation (themis, hephaestus)
 # =============================================================================
 
 - name: Install Intel/Mesa packages
@@ -79,7 +79,7 @@
     state: present
     extra_args: '--noconfirm --needed'
   register: intel_install_result
-  when: inventory_hostname == 'themis'
+  when: inventory_hostname in ['themis', 'hephaestus']
   tags:
     - gpu
     - intel
@@ -89,16 +89,31 @@
 # Verification
 # =============================================================================
 
-- name: Verify GPU packages are installed
+- name: Verify NVIDIA packages are installed
   ansible.builtin.command:
     cmd: "pacman -Q {{ item }}"
-  loop: "{{ gpu_packages }}"
-  register: gpu_package_verify
+  loop: "{{ gpu_nvidia_packages }}"
+  register: nvidia_package_verify
   changed_when: false
-  failed_when: gpu_package_verify.rc != 0
+  failed_when: nvidia_package_verify.rc != 0
+  when: inventory_hostname in ['yugen', 'aster']
   tags:
     - gpu
     - verify
+    - nvidia
+
+- name: Verify Intel/Mesa packages are installed
+  ansible.builtin.command:
+    cmd: "pacman -Q {{ item }}"
+  loop: "{{ gpu_intel_packages }}"
+  register: intel_package_verify
+  changed_when: false
+  failed_when: intel_package_verify.rc != 0
+  when: inventory_hostname in ['themis', 'hephaestus']
+  tags:
+    - gpu
+    - verify
+    - intel
 
 - name: Display GPU installation summary
   ansible.builtin.debug:

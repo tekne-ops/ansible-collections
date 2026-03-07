@@ -109,18 +109,26 @@
   ansible.builtin.file:
     path: "{{ xfce4_backgrounds_dir }}"
     state: directory
-    mode: '0755'
+    mode: '0775'
   when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
   tags:
     - xfce4
     - lightdm
     - backgrounds
 
+- name: Find all files in backgrounds dir
+  ansible.builtin.find:
+    paths: "{{ xfce4_backgrounds_dir }}"
+    recurse: yes
+    file_type: any
+  register: found_items
+
 - name: Remove existing contents of XFCE backgrounds directory
-  ansible.builtin.shell: "rm -rf {{ xfce4_backgrounds_dir }}/*"
-  args:
-    warn: false
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  ansible.builtin.file:
+    path: "{{ xfce4_backgrounds_dir }}"
+    state: absent
+  loop: "{{ found_items.files }}"
+  when: found_items.files | length >0
   tags:
     - xfce4
     - lightdm
@@ -137,6 +145,14 @@
     - xfce4
     - lightdm
     - backgrounds
+
+- name: Create backgrounds directory
+  ansible.builtin.file:
+    path: "{{ xfce4_backgrounds_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 775
 
 - name: Copy backgrounds repo content to XFCE backgrounds directory
   ansible.builtin.shell: "cp -r /tmp/ansible_xfce4_backgrounds_clone/* {{ xfce4_backgrounds_dir }}/"
