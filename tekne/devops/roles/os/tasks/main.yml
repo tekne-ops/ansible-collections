@@ -548,12 +548,12 @@
 
 - name: Make all files in bash scripts and bin executable
   ansible.builtin.file:
-    path: "{{ item.path }}"
+    path: "{{ item }}"
     mode: '0755'
   loop: "{{ bash_find_result.results | selectattr('files') | map(attribute='files') | flatten | map(attribute='path') | list }}"
   when: bash_find_result.results is defined
   loop_control:
-    label: "{{ item.path }}"
+    label: "{{ item }}"
   tags:
     - os
     - bash_executable
