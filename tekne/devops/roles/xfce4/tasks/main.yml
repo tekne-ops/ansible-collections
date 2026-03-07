@@ -102,6 +102,86 @@
     - service
 
 # =============================================================================
+# XFCE backgrounds and slick-greeter (LightDM host only)
+# =============================================================================
+
+- name: Ensure XFCE backgrounds directory exists
+  ansible.builtin.file:
+    path: "{{ xfce4_backgrounds_dir }}"
+    state: directory
+    mode: '0755'
+  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  tags:
+    - xfce4
+    - lightdm
+    - backgrounds
+
+- name: Remove existing contents of XFCE backgrounds directory
+  ansible.builtin.shell: "rm -rf {{ xfce4_backgrounds_dir }}/*"
+  args:
+    warn: false
+  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  tags:
+    - xfce4
+    - lightdm
+    - backgrounds
+
+- name: Clone tekne-ops/backgrounds repository
+  ansible.builtin.git:
+    repo: "{{ xfce4_backgrounds_repo }}"
+    dest: /tmp/ansible_xfce4_backgrounds_clone
+    depth: 1
+    force: true
+  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  tags:
+    - xfce4
+    - lightdm
+    - backgrounds
+
+- name: Copy backgrounds repo content to XFCE backgrounds directory
+  ansible.builtin.shell: "cp -r /tmp/ansible_xfce4_backgrounds_clone/* {{ xfce4_backgrounds_dir }}/"
+  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  tags:
+    - xfce4
+    - lightdm
+    - backgrounds
+
+- name: Remove temporary backgrounds clone
+  ansible.builtin.file:
+    path: /tmp/ansible_xfce4_backgrounds_clone
+    state: absent
+  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  tags:
+    - xfce4
+    - lightdm
+    - backgrounds
+
+- name: Copy slick-greeter.conf to LightDM config
+  ansible.builtin.copy:
+    src: "{{ xfce4_backgrounds_dir }}/slick-greeter.conf"
+    dest: /etc/lightdm/slick-greeter.conf
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0644'
+  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  tags:
+    - xfce4
+    - lightdm
+    - slick-greeter
+
+- name: Set background in slick-greeter.conf
+  ansible.builtin.replace:
+    path: /etc/lightdm/slick-greeter.conf
+    regexp: '^background=.*'
+    replace: "background={{ xfce4_slick_greeter_background }}"
+  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  tags:
+    - xfce4
+    - lightdm
+    - slick-greeter
+
+# =============================================================================
 # User Configuration
 # =============================================================================
 
