@@ -528,3 +528,32 @@
   tags:
     - os
     - themis_packages
+
+# =============================================================================
+# Tekne bash scripts and bin – make all files executable
+# =============================================================================
+
+- name: Find all files in bash scripts and bin directories
+  ansible.builtin.find:
+    paths: "{{ item }}"
+    recurse: true
+    file_type: file
+  register: bash_find_result
+  loop:
+    - /srv/code/tekne/bash/scripts
+    - /srv/code/tekne/bash/bin
+  tags:
+    - os
+    - bash_executable
+
+- name: Make all files in bash scripts and bin executable
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: '0755'
+  loop: "{{ bash_find_result.results | selectattr('files') | map(attribute='files') | flatten | map(attribute='path') | list }}"
+  when: bash_find_result.results is defined
+  loop_control:
+    label: "{{ item.path }}"
+  tags:
+    - os
+    - bash_executable
