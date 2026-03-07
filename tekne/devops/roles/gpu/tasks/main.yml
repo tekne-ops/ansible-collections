@@ -54,7 +54,7 @@
     - config
 
 # =============================================================================
-# NVIDIA Installation (yugen)
+# NVIDIA Installation (themis, yugen)
 # =============================================================================
 
 - name: Install NVIDIA packages
@@ -63,14 +63,14 @@
     state: present
     extra_args: '--noconfirm --needed'
   register: nvidia_install_result
-  when: gpu_effective_hostname == (gpu_nvidia_hostname | default('') | upper)
+  when: inventory_hostname in ['themis', 'yugen']
   tags:
     - gpu
     - nvidia
     - packages
 
 # =============================================================================
-# Intel/Mesa Installation (other hosts)
+# Intel/Mesa Installation (themis only)
 # =============================================================================
 
 - name: Install Intel/Mesa packages
@@ -79,6 +79,7 @@
     state: present
     extra_args: '--noconfirm --needed'
   register: intel_install_result
+  when: inventory_hostname == 'themis'
   tags:
     - gpu
     - intel

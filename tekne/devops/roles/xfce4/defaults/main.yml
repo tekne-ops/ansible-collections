@@ -60,6 +60,7 @@ xfce4_packages:
   - vlc-plugin-freetype
   - vlc-plugin-flac
   - vlc-plugin-ffmpeg
+  - pavucontrol
 
 # LightDM packages (installed only on specific hosts)
 xfce4_lightdm_packages:
