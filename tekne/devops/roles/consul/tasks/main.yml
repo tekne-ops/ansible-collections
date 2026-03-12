@@ -26,6 +26,8 @@
   ansible.builtin.shell: |
     docker run -d --name consul --restart=unless-stopped \
       --net {{ consul_docker_network }} --ip {{ consul_docker_ip }} \
+      -v /srv/docker/consul/data:/consul/data \
+      -v /srv/docker/consul/config:/consul/config \
       {{ consul_docker_image }}
   when: (consul_container_check.stdout | trim) != 'consul'
   register: consul_container_created
@@ -45,6 +47,130 @@
     - consul
     - docker
     - config
+
+- name: Copy base.hcl to consul config directory
+  ansible.builtin.copy:
+    src: base.hcl
+    dest: "{{ consul_directory }}/base.hcl"
+    owner: root
+    group: root
+    mode: '0644'
+  register: copy_base_hcl
+  tags:
+    - consul
+    - config
+
+# ---------------------------------------------------------------------------
+# TLS: create certs directory, CA, rename, server cert, copy tls.hcl, restart
+# ---------------------------------------------------------------------------
+
+- name: Create consul config certs directory
+  ansible.builtin.file:
+    path: "{{ consul_directory }}/certs"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - consul
+    - config
+    - tls
+
+- name: Check if consul TLS CA already exists
+  ansible.builtin.stat:
+    path: "{{ consul_directory }}/certs/{{ consul_tls_domain }}-agent-ca.pem"
+  register: consul_tls_ca_file
+  tags:
+    - consul
+    - tls
+
+- name: Run consul tls ca create in certs directory
+  ansible.builtin.shell: |
+    docker exec consul sh -c 'mkdir -p /consul/config/certs && cd /consul/config/certs && consul tls ca create'
+  when: not consul_tls_ca_file.stat.exists
+  tags:
+    - consul
+    - tls
+
+- name: Rename CA files to domain-named files
+  ansible.builtin.shell: |
+    docker exec consul sh -c 'cd /consul/config/certs && mv consul-ca.pem {{ consul_tls_domain }}-agent-ca.pem && mv consul-ca-key.pem {{ consul_tls_domain }}-agent-ca-key.pem'
+  when: not consul_tls_ca_file.stat.exists
+  tags:
+    - consul
+    - tls
+
+- name: Run consul tls cert create (server) in certs directory
+  ansible.builtin.shell: |
+    docker exec consul sh -c 'cd /consul/config/certs && consul tls cert create -server -dc {{ consul_tls_dc }} -domain {{ consul_tls_domain }}'
+  when: not consul_tls_ca_file.stat.exists
+  register: consul_tls_cert_created
+  tags:
+    - consul
+    - tls
+
+- name: Copy tls.hcl to consul config directory
+  ansible.builtin.copy:
+    src: tls.hcl
+    dest: "{{ consul_directory }}/tls.hcl"
+    owner: root
+    group: root
+    mode: '0644'
+  register: copy_tls_hcl
+  tags:
+    - consul
+    - config
+    - tls
+
+- name: Restart consul container
+  ansible.builtin.command: docker restart consul
+  when: >
+    (copy_base_hcl is changed or copy_tls_hcl is changed or (consul_tls_cert_created is defined and consul_tls_cert_created is changed))
+    and ((consul_container_check.stdout | trim) == 'consul' or consul_container_created is changed)
+  tags:
+    - consul
+    - config
+
+# ---------------------------------------------------------------------------
+# ACL bootstrap: run once, save token to config directory
+# ---------------------------------------------------------------------------
+
+- name: Check if consul ACL bootstrap result already exists
+  ansible.builtin.stat:
+    path: "{{ consul_directory }}/bootstrap_token.txt"
+  register: consul_bootstrap_file
+  tags:
+    - consul
+    - config
+    - bootstrap
+
+- name: Run consul acl bootstrap in container
+  ansible.builtin.command: docker exec consul consul acl bootstrap
+  register: consul_acl_bootstrap
+  changed_when: consul_acl_bootstrap.rc == 0
+  failed_when: false
+  when: not consul_bootstrap_file.stat.exists
+  tags:
+    - consul
+    - config
+    - bootstrap
+
+- name: Save consul ACL bootstrap result to config directory
+  ansible.builtin.copy:
+    content: "{{ consul_acl_bootstrap.stdout }}"
+    dest: "{{ consul_directory }}/bootstrap_token.txt"
+    mode: '0600'
+    owner: root
+    group: root
+  when:
+    - not consul_bootstrap_file.stat.exists
+    - consul_acl_bootstrap.rc == 0
+    - consul_acl_bootstrap.stdout is defined
+    - consul_acl_bootstrap.stdout | length > 0
+  tags:
+    - consul
+    - config
+    - bootstrap
 
 - name: Check if consul encryption key file already exists
   ansible.builtin.stat:
@@ -77,48 +203,3 @@
   tags:
     - consul
     - config
-
-# ---------------------------------------------------------------------------
-# TLS CA and server certificate (run in container, copy to host)
-# ---------------------------------------------------------------------------
-
-- name: Check if consul TLS CA already exists on host
-  ansible.builtin.stat:
-    path: "{{ consul_directory }}/consul-ca.pem"
-  register: consul_tls_ca_file
-  tags:
-    - consul
-    - tls
-
-- name: Run consul tls ca create in container
-  ansible.builtin.shell: |
-    docker exec consul sh -c 'mkdir -p /tmp/consul-tls && cd /tmp/consul-tls && consul tls ca create'
-  when: not consul_tls_ca_file.stat.exists
-  tags:
-    - consul
-    - tls
-
-- name: Run consul tls cert create (server) in container
-  ansible.builtin.shell: |
-    docker exec consul sh -c 'cd /tmp/consul-tls && consul tls cert create -server -dc {{ consul_tls_dc }} -domain {{ consul_tls_domain }}'
-  when: not consul_tls_ca_file.stat.exists
-  tags:
-    - consul
-    - tls
-
-- name: Copy consul TLS files from container to host
-  ansible.builtin.shell: |
-    docker cp consul:/tmp/consul-tls/. "{{ consul_directory }}/"
-  when: not consul_tls_ca_file.stat.exists
-  tags:
-    - consul
-    - tls
-
-- name: Set ownership and mode on consul TLS files on host
-  ansible.builtin.shell: |
-    chown root:root "{{ consul_directory }}"/*.pem
-    chmod 0600 "{{ consul_directory }}"/*.pem
-  when: not consul_tls_ca_file.stat.exists
-  tags:
-    - consul
-    - tls
