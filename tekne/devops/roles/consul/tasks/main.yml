@@ -1,0 +1,124 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for consul
+
+- name: Create consul directory
+  ansible.builtin.file:
+    path: "{{ consul_directory }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - consul
+    - config
+
+- name: Check if consul container already exists
+  ansible.builtin.command: docker ps -a -f name=^consul$ --format '{{ "{{" }}.Names{{ "}}" }}'
+  register: consul_container_check
+  changed_when: false
+  failed_when: false
+  tags:
+    - consul
+    - docker
+
+- name: Create and start consul Docker container
+  ansible.builtin.shell: |
+    docker run -d --name consul --restart=unless-stopped \
+      --net {{ consul_docker_network }} --ip {{ consul_docker_ip }} \
+      {{ consul_docker_image }}
+  when: (consul_container_check.stdout | trim) != 'consul'
+  register: consul_container_created
+  tags:
+    - consul
+    - docker
+
+- name: Wait for consul container to be available
+  ansible.builtin.command: docker exec consul true
+  register: consul_wait
+  until: consul_wait.rc == 0
+  retries: 12
+  delay: 5
+  changed_when: false
+  when: (consul_container_check.stdout | trim) == 'consul' or consul_container_created is changed
+  tags:
+    - consul
+    - docker
+    - config
+
+- name: Check if consul encryption key file already exists
+  ansible.builtin.stat:
+    path: "{{ consul_directory }}/encryption_key.txt"
+  register: consul_encryption_key_file
+  tags:
+    - consul
+    - config
+
+- name: Run consul keygen in container and register output
+  ansible.builtin.command: docker exec consul consul keygen
+  register: consul_keygen_result
+  changed_when: true
+  when: not consul_encryption_key_file.stat.exists
+  tags:
+    - consul
+    - config
+
+- name: Save consul encryption key to host file
+  ansible.builtin.copy:
+    content: "{{ consul_keygen_result.stdout }}"
+    dest: "{{ consul_directory }}/encryption_key.txt"
+    mode: '0600'
+    owner: root
+    group: root
+  when:
+    - not consul_encryption_key_file.stat.exists
+    - consul_keygen_result.stdout is defined
+    - consul_keygen_result.stdout | length > 0
+  tags:
+    - consul
+    - config
+
+# ---------------------------------------------------------------------------
+# TLS CA and server certificate (run in container, copy to host)
+# ---------------------------------------------------------------------------
+
+- name: Check if consul TLS CA already exists on host
+  ansible.builtin.stat:
+    path: "{{ consul_directory }}/consul-ca.pem"
+  register: consul_tls_ca_file
+  tags:
+    - consul
+    - tls
+
+- name: Run consul tls ca create in container
+  ansible.builtin.shell: |
+    docker exec consul sh -c 'mkdir -p /tmp/consul-tls && cd /tmp/consul-tls && consul tls ca create'
+  when: not consul_tls_ca_file.stat.exists
+  tags:
+    - consul
+    - tls
+
+- name: Run consul tls cert create (server) in container
+  ansible.builtin.shell: |
+    docker exec consul sh -c 'cd /tmp/consul-tls && consul tls cert create -server -dc {{ consul_tls_dc }} -domain {{ consul_tls_domain }}'
+  when: not consul_tls_ca_file.stat.exists
+  tags:
+    - consul
+    - tls
+
+- name: Copy consul TLS files from container to host
+  ansible.builtin.shell: |
+    docker cp consul:/tmp/consul-tls/. "{{ consul_directory }}/"
+  when: not consul_tls_ca_file.stat.exists
+  tags:
+    - consul
+    - tls
+
+- name: Set ownership and mode on consul TLS files on host
+  ansible.builtin.shell: |
+    chown root:root "{{ consul_directory }}"/*.pem
+    chmod 0600 "{{ consul_directory }}"/*.pem
+  when: not consul_tls_ca_file.stat.exists
+  tags:
+    - consul
+    - tls
