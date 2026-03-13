@@ -134,6 +134,9 @@
 # ---------------------------------------------------------------------------
 # ACL bootstrap: run once, save token to config directory
 # ---------------------------------------------------------------------------
+# We run bootstrap when the token file is missing or empty (empty = failed save
+# or no output from consul acl bootstrap). We only write the file when we have
+# non-empty content so we never create an empty file and get stuck.
 
 - name: Check if consul ACL bootstrap result already exists
   ansible.builtin.stat:
@@ -149,7 +152,7 @@
   register: consul_acl_bootstrap
   changed_when: consul_acl_bootstrap.rc == 0
   failed_when: false
-  when: not consul_bootstrap_file.stat.exists
+  when: not consul_bootstrap_file.stat.exists or (consul_bootstrap_file.stat.size | default(0)) == 0
   tags:
     - consul
     - config
@@ -162,7 +165,10 @@
     mode: '0600'
     owner: root
     group: root
-  when: not consul_bootstrap_file.stat.exists
+  when:
+    - not consul_bootstrap_file.stat.exists or (consul_bootstrap_file.stat.size | default(0)) == 0
+    - consul_acl_bootstrap.skipped is not defined or not consul_acl_bootstrap.skipped
+    - (consul_acl_bootstrap.stdout | default('')) | length > 0 or (consul_acl_bootstrap.stderr | default('')) | length > 0
   tags:
     - consul
     - config
