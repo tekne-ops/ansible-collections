@@ -162,9 +162,7 @@
     mode: '0600'
     owner: root
     group: root
-  when:
-    - consul_acl_bootstrap.skipped is not defined or not consul_acl_bootstrap.skipped
-    - (consul_acl_bootstrap.stdout | default('')) | length > 0 or (consul_acl_bootstrap.stderr | default('')) | length > 0
+  when: not consul_bootstrap_file.stat.exists
   tags:
     - consul
     - config
