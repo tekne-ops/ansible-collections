@@ -61,6 +61,58 @@
     - config
 
 # ---------------------------------------------------------------------------
+# ACL bootstrap: run once, save token to config directory
+# ---------------------------------------------------------------------------
+# Output is written inside the container to /consul/config/bootstrap_token.txt
+# (mounted from host) so we don't rely on Ansible capturing docker exec stdout.
+
+- name: Check if consul ACL bootstrap result already exists
+  ansible.builtin.stat:
+    path: "{{ consul_directory }}/bootstrap_token.txt"
+  register: consul_bootstrap_file
+  tags:
+    - consul
+    - config
+    - bootstrap
+
+- name: Run consul acl bootstrap and write result to config directory
+  ansible.builtin.shell: |
+    docker exec consul sh -c 'consul acl bootstrap > /consul/config/bootstrap_token.txt 2>&1'
+  args:
+    executable: /bin/bash
+  changed_when: true
+  failed_when: false
+  when: not consul_bootstrap_file.stat.exists or (consul_bootstrap_file.stat.size | default(0)) == 0
+  register: consul_bootstrap_run
+  tags:
+    - consul
+    - config
+    - bootstrap
+
+- name: Check if bootstrap token file was created
+  ansible.builtin.stat:
+    path: "{{ consul_directory }}/bootstrap_token.txt"
+  register: consul_bootstrap_file_after
+  when: consul_bootstrap_run is not skipped
+  tags:
+    - consul
+    - config
+    - bootstrap
+
+- name: Set ownership on bootstrap token file
+  ansible.builtin.file:
+    path: "{{ consul_directory }}/bootstrap_token.txt"
+    state: file
+    owner: root
+    group: root
+    mode: '0600'
+  when: consul_bootstrap_file_after.stat.exists | default(false)
+  tags:
+    - consul
+    - config
+    - bootstrap
+
+# ---------------------------------------------------------------------------
 # TLS: create certs directory, CA, rename, server cert, copy tls.hcl, restart
 # ---------------------------------------------------------------------------
 
@@ -130,55 +182,3 @@
   tags:
     - consul
     - config
-
-# ---------------------------------------------------------------------------
-# ACL bootstrap: run once, save token to config directory
-# ---------------------------------------------------------------------------
-# Output is written inside the container to /consul/config/bootstrap_token.txt
-# (mounted from host) so we don't rely on Ansible capturing docker exec stdout.
-
-- name: Check if consul ACL bootstrap result already exists
-  ansible.builtin.stat:
-    path: "{{ consul_directory }}/bootstrap_token.txt"
-  register: consul_bootstrap_file
-  tags:
-    - consul
-    - config
-    - bootstrap
-
-- name: Run consul acl bootstrap and write result to config directory
-  ansible.builtin.shell: |
-    docker exec consul sh -c 'consul acl bootstrap > /consul/config/bootstrap_token.txt 2>&1'
-  args:
-    executable: /bin/bash
-  changed_when: true
-  failed_when: false
-  when: not consul_bootstrap_file.stat.exists or (consul_bootstrap_file.stat.size | default(0)) == 0
-  register: consul_bootstrap_run
-  tags:
-    - consul
-    - config
-    - bootstrap
-
-- name: Check if bootstrap token file was created
-  ansible.builtin.stat:
-    path: "{{ consul_directory }}/bootstrap_token.txt"
-  register: consul_bootstrap_file_after
-  when: consul_bootstrap_run is not skipped
-  tags:
-    - consul
-    - config
-    - bootstrap
-
-- name: Set ownership on bootstrap token file
-  ansible.builtin.file:
-    path: "{{ consul_directory }}/bootstrap_token.txt"
-    state: file
-    owner: root
-    group: root
-    mode: '0600'
-  when: consul_bootstrap_file_after.stat.exists | default(false)
-  tags:
-    - consul
-    - config
-    - bootstrap
