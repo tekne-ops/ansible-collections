@@ -163,8 +163,7 @@
     owner: root
     group: root
   when:
-    - not consul_bootstrap_file.stat.exists
-    - consul_acl_bootstrap.rc == 0
+    - consul_acl_bootstrap.skipped is not defined or not consul_acl_bootstrap.skipped
     - consul_acl_bootstrap.stdout is defined
     - consul_acl_bootstrap.stdout | length > 0
   tags:
