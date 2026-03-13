@@ -154,6 +154,17 @@
   changed_when: true
   failed_when: false
   when: not consul_bootstrap_file.stat.exists or (consul_bootstrap_file.stat.size | default(0)) == 0
+  register: consul_bootstrap_run
+  tags:
+    - consul
+    - config
+    - bootstrap
+
+- name: Check if bootstrap token file was created
+  ansible.builtin.stat:
+    path: "{{ consul_directory }}/bootstrap_token.txt"
+  register: consul_bootstrap_file_after
+  when: consul_bootstrap_run is not skipped
   tags:
     - consul
     - config
@@ -166,7 +177,7 @@
     owner: root
     group: root
     mode: '0600'
-  when: not consul_bootstrap_file.stat.exists or (consul_bootstrap_file.stat.size | default(0)) == 0
+  when: consul_bootstrap_file_after.stat.exists | default(false)
   tags:
     - consul
     - config
