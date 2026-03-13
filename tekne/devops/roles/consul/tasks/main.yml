@@ -167,6 +167,19 @@
     - config
     - bootstrap
 
+- name: Wait for Consul HTTP API before bootstrap
+  ansible.builtin.command: docker exec consul sh -c 'wget -q -O- http://127.0.0.1:8500/v1/status/leader || exit 1'
+  register: consul_api_wait
+  until: consul_api_wait.rc == 0
+  retries: 30
+  delay: 2
+  changed_when: false
+  when: not consul_bootstrap_file.stat.exists or (consul_bootstrap_file.stat.size | default(0)) == 0
+  tags:
+    - consul
+    - config
+    - bootstrap
+
 - name: Run consul acl bootstrap and write result to config directory
   ansible.builtin.shell: |
     docker exec consul sh -c 'consul acl bootstrap > /consul/config/bootstrap_token.txt 2>&1'
