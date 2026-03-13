@@ -48,6 +48,13 @@
     - docker
     - config
 
+- name: Install sudo in consul container
+  ansible.builtin.command: docker exec consul sh -c 'apk update && apk add sudo'
+  when: (consul_container_check.stdout | trim) == 'consul' or consul_container_created is changed
+  tags:
+    - consul
+    - docker
+
 - name: Copy base.hcl to consul config directory
   ansible.builtin.copy:
     src: base.hcl
