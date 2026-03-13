@@ -157,15 +157,14 @@
 
 - name: Save consul ACL bootstrap result to config directory
   ansible.builtin.copy:
-    content: "{{ consul_acl_bootstrap.stdout }}"
+    content: "{{ (consul_acl_bootstrap.stdout | default('')) + (consul_acl_bootstrap.stderr | default('')) }}"
     dest: "{{ consul_directory }}/bootstrap_token.txt"
     mode: '0600'
     owner: root
     group: root
   when:
     - consul_acl_bootstrap.skipped is not defined or not consul_acl_bootstrap.skipped
-    - consul_acl_bootstrap.stdout is defined
-    - consul_acl_bootstrap.stdout | length > 0
+    - (consul_acl_bootstrap.stdout | default('')) | length > 0 or (consul_acl_bootstrap.stderr | default('')) | length > 0
   tags:
     - consul
     - config
