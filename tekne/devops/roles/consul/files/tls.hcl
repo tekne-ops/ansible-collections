@@ -11,7 +11,9 @@ tls {
       verify_server_hostname = true
    }
 }
-
 auto_encrypt {
   allow_tls = true
+}
+ports {
+  grpc_tls = 8503
 }
