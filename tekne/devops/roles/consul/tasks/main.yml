@@ -94,7 +94,7 @@
 
 - name: Rename CA files to domain-named files
   ansible.builtin.shell: |
-    docker exec consul sh -c 'cd /consul/config/certs && mv consul-ca.pem {{ consul_tls_domain }}-agent-ca.pem && mv consul-ca-key.pem {{ consul_tls_domain }}-agent-ca-key.pem'
+    docker exec consul sh -c 'cd /consul/config/certs && mv consul-agent-ca.pem {{ consul_tls_domain }}-agent-ca.pem && mv consul-agent-ca-key.pem {{ consul_tls_domain }}-agent-ca-key.pem'
   when: not consul_tls_ca_file.stat.exists
   tags:
     - consul
