@@ -161,6 +161,14 @@
     - consul
     - tls
 
+- name: Set cert ownership for Consul process in container
+  ansible.builtin.shell: |
+    docker exec consul sh -c 'chown -R {{ consul_container_user }}:{{ consul_container_group }} /consul/config/certs'
+  when: consul_tls_ca_file.stat.exists or (consul_tls_cert_created is defined and consul_tls_cert_created is changed)
+  tags:
+    - consul
+    - tls
+
 - name: Copy tls.hcl to consul config directory
   ansible.builtin.copy:
     src: tls.hcl
