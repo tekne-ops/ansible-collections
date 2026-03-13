@@ -158,7 +158,7 @@
 - name: Save consul ACL bootstrap result to config directory
   ansible.builtin.copy:
     content: "{{ consul_acl_bootstrap.stdout }}"
-    dest: "{{ consul_directory }}/bootstrap_token.txt"
+    dest: "{{ consul_directory }}/config/bootstrap_token.txt"
     mode: '0600'
     owner: root
     group: root
@@ -171,35 +171,3 @@
     - consul
     - config
     - bootstrap
-
-- name: Check if consul encryption key file already exists
-  ansible.builtin.stat:
-    path: "{{ consul_directory }}/encryption_key.txt"
-  register: consul_encryption_key_file
-  tags:
-    - consul
-    - config
-
-- name: Run consul keygen in container and register output
-  ansible.builtin.command: docker exec consul consul keygen
-  register: consul_keygen_result
-  changed_when: true
-  when: not consul_encryption_key_file.stat.exists
-  tags:
-    - consul
-    - config
-
-- name: Save consul encryption key to host file
-  ansible.builtin.copy:
-    content: "{{ consul_keygen_result.stdout }}"
-    dest: "{{ consul_directory }}/encryption_key.txt"
-    mode: '0600'
-    owner: root
-    group: root
-  when:
-    - not consul_encryption_key_file.stat.exists
-    - consul_keygen_result.stdout is defined
-    - consul_keygen_result.stdout | length > 0
-  tags:
-    - consul
-    - config
