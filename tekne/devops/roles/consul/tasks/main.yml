@@ -77,7 +77,7 @@
 
 - name: Run consul acl bootstrap and write result to config directory
   ansible.builtin.shell: |
-    docker exec consul sh -c 'consul acl bootstrap > /consul/config/bootstrap_token.txt 2>&1'
+    docker exec consul sh -c 'sudo -u consul consul acl bootstrap > /consul/config/bootstrap_token.txt 2>&1'
   args:
     executable: /bin/bash
   changed_when: true
@@ -138,7 +138,7 @@
 
 - name: Run consul tls ca create in certs directory
   ansible.builtin.shell: |
-    docker exec consul sh -c 'mkdir -p /consul/config/certs && cd /consul/config/certs && consul tls ca create'
+    docker exec consul sh -c 'sudo -u consul mkdir -p /consul/config/certs && cd /consul/config/certs && sudo -u consul consul tls ca create'
   when: not consul_tls_ca_file.stat.exists
   tags:
     - consul
@@ -154,7 +154,7 @@
 
 - name: Run consul tls cert create (server) in certs directory
   ansible.builtin.shell: |
-    docker exec consul sh -c 'cd /consul/config/certs && consul tls cert create -server -dc {{ consul_tls_dc }} -domain {{ consul_tls_domain }}'
+    docker exec consul sh -c 'cd /consul/config/certs && sudo -u consul consul tls cert create -server -dc {{ consul_tls_dc }} -domain {{ consul_tls_domain }}'
   when: not consul_tls_ca_file.stat.exists
   register: consul_tls_cert_created
   tags:
