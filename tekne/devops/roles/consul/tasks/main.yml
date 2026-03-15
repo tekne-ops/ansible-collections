@@ -274,19 +274,18 @@
     executable: /bin/bash
   register: append_tekne_token_result
   failed_when: false
-  when: acl_bootstrap_file.stat.exists | default(false)
   tags:
     - consul
     - config
     - acl
 
 - name: Show bootstrap_token.txt tail after append (verify file was updated)
-  ansible.builtin.shell: tail -20 "{{ consul_directory }}/bootstrap_token.txt"
+  ansible.builtin.shell: tail -20 "{{ consul_directory }}/bootstrap_token.txt" 2>/dev/null || true
   args:
     executable: /bin/bash
   register: bootstrap_token_tail
   changed_when: false
-  when: acl_bootstrap_file.stat.exists | default(false)
+  failed_when: false
   tags:
     - consul
     - config
