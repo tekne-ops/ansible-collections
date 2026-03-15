@@ -258,13 +258,48 @@
     - config
     - acl
 
-- name: Append separator and tekne-admin token to bootstrap_token.txt
+- name: Run consul acl token create for tekne-admin and capture output
   ansible.builtin.shell: |
-    docker exec consul sh -c 'echo "" >> /consul/config/bootstrap_token.txt && echo "---" >> /consul/config/bootstrap_token.txt && TOKEN=$(grep -i SecretID /consul/config/bootstrap_token.txt | head -1 | awk -F: '"'"'{print $2}'"'"' | tr -d " \r") && CONSUL_HTTP_TOKEN="$TOKEN" consul acl token create -role-name tekne-admin >> /consul/config/bootstrap_token.txt 2>&1'
+    TOKEN=$(grep -i SecretID "{{ consul_directory }}/bootstrap_token.txt" | head -1 | awk -F: '{print $2}' | tr -d ' \r')
+    docker exec -e CONSUL_HTTP_TOKEN="$TOKEN" consul consul acl token create -role-name tekne-admin 2>&1
   args:
     executable: /bin/bash
+  register: consul_tekne_admin_token_result
   failed_when: false
+  changed_when: consul_tekne_admin_token_result.rc == 0
   when: consul_bootstrap_file.stat.exists and (consul_bootstrap_file.stat.size | default(0)) > 0
+  tags:
+    - consul
+    - config
+    - acl
+
+- name: Read current bootstrap_token.txt
+  ansible.builtin.slurp:
+    src: "{{ consul_directory }}/bootstrap_token.txt"
+  register: bootstrap_token_content
+  when: consul_bootstrap_file.stat.exists and (consul_bootstrap_file.stat.size | default(0)) > 0
+  tags:
+    - consul
+    - config
+    - acl
+
+- name: Append separator and tekne-admin token output to bootstrap_token.txt
+  ansible.builtin.copy:
+    content: |
+      {{ (bootstrap_token_content.content | b64decode) | trim }}
+
+      ---
+      {{ consul_tekne_admin_token_result.stdout | default('') }}
+      {{ consul_tekne_admin_token_result.stderr | default('') }}
+    dest: "{{ consul_directory }}/bootstrap_token.txt"
+    mode: '0600'
+    owner: root
+    group: root
+  when:
+    - consul_bootstrap_file.stat.exists and (consul_bootstrap_file.stat.size | default(0)) > 0
+    - consul_tekne_admin_token_result is defined
+    - bootstrap_token_content is defined and bootstrap_token_content.content is defined
+    - (bootstrap_token_content.content | b64decode) is not search('tekne-admin')
   tags:
     - consul
     - config
