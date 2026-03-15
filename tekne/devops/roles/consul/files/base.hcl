@@ -11,8 +11,8 @@ acl {
   enabled = true
   default_policy = "deny"
   down_policy = "extend-cache"
-  role_ttl = 30s
-  policy_ttl = 30s
-  token_ttl = 30s
+  role_ttl = "30s"
+  policy_ttl = "30s"
+  token_ttl = "30s"
   enable_token_persistence = true
 }
