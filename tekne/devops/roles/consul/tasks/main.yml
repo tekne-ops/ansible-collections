@@ -180,9 +180,9 @@
     - config
     - bootstrap
 
-- name: Run consul acl bootstrap and write result to config directory
+- name: Run consul acl bootstrap and token create, write all output to config directory
   ansible.builtin.shell: |
-    docker exec consul sh -c 'consul acl bootstrap > /consul/config/bootstrap_token.txt 2>&1'
+    docker exec consul sh -c 'consul acl bootstrap > /consul/config/bootstrap_token.txt 2>&1 && echo "---" >> /consul/config/bootstrap_token.txt && TOKEN=$(grep -E "^SecretID:" /consul/config/bootstrap_token.txt | awk '"'"'{print $2}'"'"') && CONSUL_HTTP_TOKEN="$TOKEN" consul acl token create -policy-name global-management >> /consul/config/bootstrap_token.txt 2>&1'
   args:
     executable: /bin/bash
   changed_when: true
@@ -216,3 +216,52 @@
     - consul
     - config
     - bootstrap
+
+# ---------------------------------------------------------------------------
+# ACL policy tekne: copy rules file and create policy
+# ---------------------------------------------------------------------------
+
+- name: Copy acl_tekne.hcl to consul config directory
+  ansible.builtin.copy:
+    src: acl_tekne.hcl
+    dest: "{{ consul_directory }}/acl_tekne.hcl"
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - consul
+    - config
+    - acl
+
+- name: Create Consul ACL policy tekne from acl_tekne.hcl
+  ansible.builtin.shell: |
+    docker exec consul sh -c 'cd /consul/config && TOKEN=$(grep -E "^SecretID:" /consul/config/bootstrap_token.txt | awk '"'"'{print $2}'"'"') && CONSUL_HTTP_TOKEN="$TOKEN" consul acl policy create -name tekne -rules @acl_tekne.hcl'
+  args:
+    executable: /bin/bash
+  failed_when: false
+  tags:
+    - consul
+    - config
+    - acl
+
+- name: Create Consul ACL role tekne-admin with policy tekne
+  ansible.builtin.shell: |
+    docker exec consul sh -c 'TOKEN=$(grep -E "^SecretID:" /consul/config/bootstrap_token.txt | awk '"'"'{print $2}'"'"') && CONSUL_HTTP_TOKEN="$TOKEN" consul acl role create -name tekne-admin -policy-name tekne'
+  args:
+    executable: /bin/bash
+  failed_when: false
+  tags:
+    - consul
+    - config
+    - acl
+
+- name: Create Consul ACL token for role tekne-admin and append to bootstrap_token.txt
+  ansible.builtin.shell: |
+    docker exec consul sh -c 'TOKEN=$(grep -E "^SecretID:" /consul/config/bootstrap_token.txt | awk '"'"'{print $2}'"'"') && echo "---" >> /consul/config/bootstrap_token.txt && CONSUL_HTTP_TOKEN="$TOKEN" consul acl token create -role-name tekne-admin >> /consul/config/bootstrap_token.txt 2>&1'
+  args:
+    executable: /bin/bash
+  failed_when: false
+  tags:
+    - consul
+    - config
+    - acl
