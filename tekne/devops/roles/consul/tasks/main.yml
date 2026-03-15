@@ -220,7 +220,16 @@
 # ---------------------------------------------------------------------------
 # ACL policy tekne: copy rules file and create policy (only when bootstrap token exists)
 # ---------------------------------------------------------------------------
-# Token extraction uses first "SecretID" line in file; works with varying whitespace/format.
+# Stat the bootstrap file here so this block works when run with --tags acl.
+
+- name: Check bootstrap token file for ACL section
+  ansible.builtin.stat:
+    path: "{{ consul_directory }}/bootstrap_token.txt"
+  register: acl_bootstrap_file
+  tags:
+    - consul
+    - config
+    - acl
 
 - name: Copy acl_tekne.hcl to consul config directory
   ansible.builtin.copy:
@@ -240,7 +249,7 @@
   args:
     executable: /bin/bash
   failed_when: false
-  when: consul_bootstrap_file.stat.exists and (consul_bootstrap_file.stat.size | default(0)) > 0
+  when: acl_bootstrap_file.stat.exists and (acl_bootstrap_file.stat.size | default(0)) > 0
   tags:
     - consul
     - config
@@ -252,57 +261,35 @@
   args:
     executable: /bin/bash
   failed_when: false
-  when: consul_bootstrap_file.stat.exists and (consul_bootstrap_file.stat.size | default(0)) > 0
+  when: acl_bootstrap_file.stat.exists and (acl_bootstrap_file.stat.size | default(0)) > 0
   tags:
     - consul
     - config
     - acl
 
-- name: Run consul acl token create for tekne-admin and capture output
-  ansible.builtin.shell: |
-    TOKEN=$(grep -i SecretID "{{ consul_directory }}/bootstrap_token.txt" | head -1 | awk -F: '{print $2}' | tr -d ' \r')
-    docker exec -e CONSUL_HTTP_TOKEN="$TOKEN" consul consul acl token create -role-name tekne-admin 2>&1
-  args:
-    executable: /bin/bash
-  register: consul_tekne_admin_token_result
-  failed_when: false
-  changed_when: consul_tekne_admin_token_result.rc == 0
-  when: consul_bootstrap_file.stat.exists and (consul_bootstrap_file.stat.size | default(0)) > 0
-  tags:
-    - consul
-    - config
-    - acl
-
-- name: Write tekne-admin token output to temp file
+- name: Create script to append tekne-admin token inside container
   ansible.builtin.copy:
-    content: |
-      {{ consul_tekne_admin_token_result.stdout | default('') }}
-      {{ consul_tekne_admin_token_result.stderr | default('') }}
-    dest: "{{ consul_directory }}/.tekne_admin_token.tmp"
-    mode: '0600'
+    dest: "{{ consul_directory }}/append_tekne_admin_token.sh"
+    mode: '0755'
     owner: root
     group: root
-  when:
-    - consul_bootstrap_file.stat.exists and (consul_bootstrap_file.stat.size | default(0)) > 0
-    - consul_tekne_admin_token_result is defined
-    - consul_tekne_admin_token_result.skipped is not defined or not consul_tekne_admin_token_result.skipped
+    content: |
+      #!/bin/sh
+      # Runs inside consul container; /consul/config is the mounted volume
+      TOKEN=$(grep -i SecretID /consul/config/bootstrap_token.txt | head -1 | awk -F: '{print $2}' | tr -d ' \r')
+      echo "" >> /consul/config/bootstrap_token.txt
+      echo "---" >> /consul/config/bootstrap_token.txt
+      CONSUL_HTTP_TOKEN="$TOKEN" consul acl token create -role-name tekne-admin >> /consul/config/bootstrap_token.txt 2>&1
+  when: acl_bootstrap_file.stat.exists and (acl_bootstrap_file.stat.size | default(0)) > 0
   tags:
     - consul
     - config
     - acl
 
-- name: Append separator and tekne-admin token to bootstrap_token.txt on host
-  ansible.builtin.shell: |
-    echo "" >> "{{ consul_directory }}/bootstrap_token.txt"
-    echo "---" >> "{{ consul_directory }}/bootstrap_token.txt"
-    cat "{{ consul_directory }}/.tekne_admin_token.tmp" >> "{{ consul_directory }}/bootstrap_token.txt"
-    rm -f "{{ consul_directory }}/.tekne_admin_token.tmp"
-  args:
-    executable: /bin/bash
-  when:
-    - consul_bootstrap_file.stat.exists and (consul_bootstrap_file.stat.size | default(0)) > 0
-    - consul_tekne_admin_token_result is defined
-    - consul_tekne_admin_token_result.skipped is not defined or not consul_tekne_admin_token_result.skipped
+- name: Run script in container to append tekne-admin token to bootstrap_token.txt
+  ansible.builtin.command: docker exec consul sh /consul/config/append_tekne_admin_token.sh
+  failed_when: false
+  when: acl_bootstrap_file.stat.exists and (acl_bootstrap_file.stat.size | default(0)) > 0
   tags:
     - consul
     - config
