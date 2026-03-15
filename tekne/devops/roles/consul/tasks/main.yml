@@ -281,3 +281,17 @@
     - consul
     - config
     - acl
+
+- name: Create Consul KV key tekne/
+  ansible.builtin.shell: |
+    TOKEN=$(grep -i SecretID "{{ consul_directory }}/bootstrap_token.txt" 2>/dev/null | head -1 | awk -F: '{print $2}' | tr -d ' \r') || true
+    docker exec -e CONSUL_HTTP_TOKEN="$TOKEN" consul consul kv put tekne/aws/us-west-2/network ""
+  args:
+    executable: /bin/bash
+  register: consul_kv_put_tekne
+  failed_when: false
+  when: acl_bootstrap_file.stat.exists | default(false) and (acl_bootstrap_file.stat.size | default(0)) > 0
+  tags:
+    - consul
+    - config
+    - acl

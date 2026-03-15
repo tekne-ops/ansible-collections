@@ -1,3 +1,4 @@
+node_name = "consul-server"
 server = true
 bootstrap_expect = 1
 bind_addr = "192.168.75.11"
