@@ -267,39 +267,17 @@
     - config
     - acl
 
-- name: Run consul acl token create for tekne-admin and capture output on host
+- name: Create tekne-admin token and append to bootstrap_token.txt (single shell on host)
   ansible.builtin.shell: |
-    TOKEN=$(grep -i SecretID "{{ consul_directory }}/bootstrap_token.txt" | head -1 | awk -F: '{print $2}' | tr -d ' \r')
-    docker exec -e CONSUL_HTTP_TOKEN="$TOKEN" consul consul acl token create -role-name tekne-admin 2>&1
+    set -e
+    F="{{ consul_directory }}/bootstrap_token.txt"
+    TOKEN=$(grep -i SecretID "$F" | head -1 | awk -F: '{print $2}' | tr -d ' \r')
+    OUT=$(docker exec -e CONSUL_HTTP_TOKEN="$TOKEN" consul consul acl token create -role-name tekne-admin 2>&1) || true
+    { echo ""; echo "---"; echo "$OUT"; } >> "$F"
   args:
     executable: /bin/bash
-  register: tekne_admin_token_out
+  register: append_tekne_result
   failed_when: false
-  tags:
-    - consul
-    - config
-    - acl
-
-- name: Write tekne-admin token output to temp file on host
-  ansible.builtin.copy:
-    dest: "{{ consul_directory }}/.tekne_append.tmp"
-    content: |
-      ---
-      {{ tekne_admin_token_out.stdout | default('') }}
-      {{ tekne_admin_token_out.stderr | default('') }}
-    mode: '0600'
-  tags:
-    - consul
-    - config
-    - acl
-
-- name: Append temp file to bootstrap_token.txt on host
-  ansible.builtin.shell: |
-    echo "" >> "{{ consul_directory }}/bootstrap_token.txt"
-    cat "{{ consul_directory }}/.tekne_append.tmp" >> "{{ consul_directory }}/bootstrap_token.txt"
-    rm -f "{{ consul_directory }}/.tekne_append.tmp"
-  args:
-    executable: /bin/bash
   tags:
     - consul
     - config
