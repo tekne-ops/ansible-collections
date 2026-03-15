@@ -273,33 +273,36 @@
     - config
     - acl
 
-- name: Read current bootstrap_token.txt
-  ansible.builtin.slurp:
-    src: "{{ consul_directory }}/bootstrap_token.txt"
-  register: bootstrap_token_content
-  when: consul_bootstrap_file.stat.exists and (consul_bootstrap_file.stat.size | default(0)) > 0
-  tags:
-    - consul
-    - config
-    - acl
-
-- name: Append separator and tekne-admin token output to bootstrap_token.txt
+- name: Write tekne-admin token output to temp file
   ansible.builtin.copy:
     content: |
-      {{ (bootstrap_token_content.content | b64decode) | trim }}
-
-      ---
       {{ consul_tekne_admin_token_result.stdout | default('') }}
       {{ consul_tekne_admin_token_result.stderr | default('') }}
-    dest: "{{ consul_directory }}/bootstrap_token.txt"
+    dest: "{{ consul_directory }}/.tekne_admin_token.tmp"
     mode: '0600'
     owner: root
     group: root
   when:
     - consul_bootstrap_file.stat.exists and (consul_bootstrap_file.stat.size | default(0)) > 0
     - consul_tekne_admin_token_result is defined
-    - bootstrap_token_content is defined and bootstrap_token_content.content is defined
-    - (bootstrap_token_content.content | b64decode) is not search('tekne-admin')
+    - consul_tekne_admin_token_result.skipped is not defined or not consul_tekne_admin_token_result.skipped
+  tags:
+    - consul
+    - config
+    - acl
+
+- name: Append separator and tekne-admin token to bootstrap_token.txt on host
+  ansible.builtin.shell: |
+    echo "" >> "{{ consul_directory }}/bootstrap_token.txt"
+    echo "---" >> "{{ consul_directory }}/bootstrap_token.txt"
+    cat "{{ consul_directory }}/.tekne_admin_token.tmp" >> "{{ consul_directory }}/bootstrap_token.txt"
+    rm -f "{{ consul_directory }}/.tekne_admin_token.tmp"
+  args:
+    executable: /bin/bash
+  when:
+    - consul_bootstrap_file.stat.exists and (consul_bootstrap_file.stat.size | default(0)) > 0
+    - consul_tekne_admin_token_result is defined
+    - consul_tekne_admin_token_result.skipped is not defined or not consul_tekne_admin_token_result.skipped
   tags:
     - consul
     - config
