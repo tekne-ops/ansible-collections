@@ -267,29 +267,35 @@
     - config
     - acl
 
-- name: Create script to append tekne-admin token inside container
-  ansible.builtin.copy:
-    dest: "{{ consul_directory }}/append_tekne_admin_token.sh"
-    mode: '0755'
-    owner: root
-    group: root
-    content: |
-      #!/bin/sh
-      # Runs inside consul container; /consul/config is the mounted volume
-      TOKEN=$(grep -i SecretID /consul/config/bootstrap_token.txt | head -1 | awk -F: '{print $2}' | tr -d ' \r')
-      echo "" >> /consul/config/bootstrap_token.txt
-      echo "---" >> /consul/config/bootstrap_token.txt
-      CONSUL_HTTP_TOKEN="$TOKEN" consul acl token create -role-name tekne-admin >> /consul/config/bootstrap_token.txt 2>&1
-  when: acl_bootstrap_file.stat.exists and (acl_bootstrap_file.stat.size | default(0)) > 0
+- name: Append tekne-admin token to bootstrap_token.txt (run inside container)
+  ansible.builtin.shell: |
+    docker exec -u root consul sh -c 'f=/consul/config/bootstrap_token.txt; TOKEN=$(grep -i SecretID "$f" | head -1 | awk -F: '"'"'{print $2}'"'"' | tr -d " \r"); echo "" >> "$f"; echo "---" >> "$f"; CONSUL_HTTP_TOKEN="$TOKEN" consul acl token create -role-name tekne-admin >> "$f" 2>&1'
+  args:
+    executable: /bin/bash
+  register: append_tekne_token_result
+  failed_when: false
+  when: acl_bootstrap_file.stat.exists | default(false)
   tags:
     - consul
     - config
     - acl
 
-- name: Run script in container to append tekne-admin token to bootstrap_token.txt
-  ansible.builtin.command: docker exec consul sh /consul/config/append_tekne_admin_token.sh
-  failed_when: false
-  when: acl_bootstrap_file.stat.exists and (acl_bootstrap_file.stat.size | default(0)) > 0
+- name: Show bootstrap_token.txt tail after append (verify file was updated)
+  ansible.builtin.shell: tail -20 "{{ consul_directory }}/bootstrap_token.txt"
+  args:
+    executable: /bin/bash
+  register: bootstrap_token_tail
+  changed_when: false
+  when: acl_bootstrap_file.stat.exists | default(false)
+  tags:
+    - consul
+    - config
+    - acl
+
+- name: Display bootstrap_token.txt last lines
+  ansible.builtin.debug:
+    msg: "{{ bootstrap_token_tail.stdout_lines | default([]) }}"
+  when: bootstrap_token_tail is defined and bootstrap_token_tail.stdout is defined
   tags:
     - consul
     - config
