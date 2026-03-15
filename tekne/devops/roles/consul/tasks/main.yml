@@ -269,9 +269,8 @@
 
 - name: Create tekne-admin token and append to bootstrap_token.txt (single shell on host)
   ansible.builtin.shell: |
-    set -e
     F="{{ consul_directory }}/bootstrap_token.txt"
-    TOKEN=$(grep -i SecretID "$F" | head -1 | awk -F: '{print $2}' | tr -d ' \r')
+    TOKEN=$(grep -i SecretID "$F" 2>/dev/null | head -1 | awk -F: '{print $2}' | tr -d ' \r') || true
     OUT=$(docker exec -e CONSUL_HTTP_TOKEN="$TOKEN" consul consul acl token create -role-name tekne-admin 2>&1) || true
     { echo ""; echo "---"; echo "$OUT"; } >> "$F"
   args:
