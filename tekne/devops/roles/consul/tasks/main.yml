@@ -267,34 +267,39 @@
     - config
     - acl
 
-- name: Append tekne-admin token to bootstrap_token.txt (run inside container)
+- name: Run consul acl token create for tekne-admin and capture output on host
   ansible.builtin.shell: |
-    docker exec -u root consul sh -c 'f=/consul/config/bootstrap_token.txt; TOKEN=$(grep -i SecretID "$f" | head -1 | awk -F: '"'"'{print $2}'"'"' | tr -d " \r"); echo "" >> "$f"; echo "---" >> "$f"; CONSUL_HTTP_TOKEN="$TOKEN" consul acl token create -role-name tekne-admin >> "$f" 2>&1'
+    TOKEN=$(grep -i SecretID "{{ consul_directory }}/bootstrap_token.txt" | head -1 | awk -F: '{print $2}' | tr -d ' \r')
+    docker exec -e CONSUL_HTTP_TOKEN="$TOKEN" consul consul acl token create -role-name tekne-admin 2>&1
   args:
     executable: /bin/bash
-  register: append_tekne_token_result
+  register: tekne_admin_token_out
   failed_when: false
   tags:
     - consul
     - config
     - acl
 
-- name: Show bootstrap_token.txt tail after append (verify file was updated)
-  ansible.builtin.shell: tail -20 "{{ consul_directory }}/bootstrap_token.txt" 2>/dev/null || true
-  args:
-    executable: /bin/bash
-  register: bootstrap_token_tail
-  changed_when: false
-  failed_when: false
+- name: Write tekne-admin token output to temp file on host
+  ansible.builtin.copy:
+    dest: "{{ consul_directory }}/.tekne_append.tmp"
+    content: |
+      ---
+      {{ tekne_admin_token_out.stdout | default('') }}
+      {{ tekne_admin_token_out.stderr | default('') }}
+    mode: '0600'
   tags:
     - consul
     - config
     - acl
 
-- name: Display bootstrap_token.txt last lines
-  ansible.builtin.debug:
-    msg: "{{ bootstrap_token_tail.stdout_lines | default([]) }}"
-  when: bootstrap_token_tail is defined and bootstrap_token_tail.stdout is defined
+- name: Append temp file to bootstrap_token.txt on host
+  ansible.builtin.shell: |
+    echo "" >> "{{ consul_directory }}/bootstrap_token.txt"
+    cat "{{ consul_directory }}/.tekne_append.tmp" >> "{{ consul_directory }}/bootstrap_token.txt"
+    rm -f "{{ consul_directory }}/.tekne_append.tmp"
+  args:
+    executable: /bin/bash
   tags:
     - consul
     - config
