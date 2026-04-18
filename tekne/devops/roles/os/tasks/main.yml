@@ -233,6 +233,8 @@
   loop:
     - bluetooth.service
     - acpid.service
+    - tlp.service
+    - thermald.service
   when: os_hostname in ['ASTER', 'YUGEN']
   tags:
     - os
