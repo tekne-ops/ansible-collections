@@ -225,26 +225,17 @@
     - os
     - network
 
-- name: Enable and restart bluetooth and acpid
+- name: Enable and restart iwd (ASTER only)
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: true
     state: restarted
   loop:
     - bluetooth.service
-    - acpid.service
-    - tlp.service
+    - iwd.service
     - thermald.service
-  when: os_hostname in ['ASTER', 'YUGEN']
-  tags:
-    - os
-    - network
-
-- name: Enable and restart iwd (ASTER only)
-  ansible.builtin.systemd:
-    name: iwd.service
-    enabled: true
-    state: restarted
+    - tlp.service
+    - nvidia-powerd.service
   when: os_hostname == 'ASTER'
   tags:
     - os
@@ -253,18 +244,14 @@
 
 - name: Enable and restart systemd-networkd
   ansible.builtin.systemd:
-    name: systemd-networkd.service
+    name: "{{ item }}"
+    name: 
     enabled: true
     state: restarted
-  tags:
-    - os
-    - network
-
-- name: Enable and restart systemd-resolved
-  ansible.builtin.systemd:
-    name: systemd-resolved.service
-    enabled: true
-    state: restarted
+  loop:
+    - systemd-networkd.service
+    - systemd-resolved.service
+    - acpid.service
   tags:
     - os
     - network

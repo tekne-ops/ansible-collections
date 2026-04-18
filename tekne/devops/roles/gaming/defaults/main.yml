@@ -20,8 +20,6 @@ gaming_packages:
   - noto-fonts-cjk
   - noto-fonts-emoji
   - ttf-ms-win10-auto
-  - lib32-gst-plugins-base
-  - lib32-gst-plugins-good
   - lib32-pcsclite
 
 # File destinations
