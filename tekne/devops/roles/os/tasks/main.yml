@@ -245,7 +245,6 @@
 - name: Enable and restart systemd-networkd
   ansible.builtin.systemd:
     name: "{{ item }}"
-    name: 
     enabled: true
     state: restarted
   loop:
