@@ -1,51 +1,5 @@
 #SPDX-License-Identifier: MIT-0
 ---
-# tasks file for ./ansible-role-pipewire
-
-# =============================================================================
-# Network Connectivity Check
-# =============================================================================
-
-- name: Wait for network connectivity before package installation
-  ansible.builtin.command:
-    cmd: ping -c 1 -W 2 archlinux.org
-  register: network_check
-  until: network_check.rc == 0
-  retries: 30
-  delay: 2
-  changed_when: false
-  tags:
-    - pipewire
-    - network
-    - packages
-
-# =============================================================================
-# Package Management
-# =============================================================================
-
-# - name: Remove conflicting packages
-  # community.general.pacman:
-    # name: "{{ pipewire_conflicting_packages }}"
-    # state: absent
-    # extra_args: '--noconfirm'
-  # tags:
-    # - pipewire
-    # - packages
-
-# - name: Install pipewire packages
-  # community.general.pacman:
-    # name: "{{ pipewire_packages }}"
-    # state: present
-    # extra_args: '--noconfirm --needed'
-    # register: pipewire_install_result
-    # tags:
-      # - pipewire
-      # - packages
-
-# =============================================================================
-# User Configuration Directories
-# =============================================================================
-
 - name: Get user info for home directories
   ansible.builtin.getent:
     database: passwd
@@ -58,21 +12,7 @@
     - pipewire
     - config
 
-- name: Create wireplumber config directory for each user
-  ansible.builtin.file:
-    path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/wireplumber/wireplumber.conf.d"
-    state: directory
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
-    mode: '0755'
-  loop: "{{ user_info.results }}"
-  loop_control:
-    label: "{{ item.item.name }}"
-  tags:
-    - pipewire
-    - config
-
-- name: Create pipewire config directory for each user
+- name: Ensure PipeWire drop-in config directory exists for each user
   ansible.builtin.file:
     path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d"
     state: directory
@@ -86,14 +26,10 @@
     - pipewire
     - config
 
-# =============================================================================
-# Configuration Files
-# =============================================================================
-
-- name: Copy pipewire.conf to user config directory
+- name: Copy pipewire.conf to user drop-in directory
   ansible.builtin.copy:
     src: pipewire.conf
-    dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf"
+    dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d/99-audio-quality.conf"
     owner: "{{ item.item.name }}"
     group: "{{ item.item.group | default(default_group) }}"
     mode: '0644'
@@ -103,95 +39,3 @@
   tags:
     - pipewire
     - config
-
-- name: Copy sink-eq06-sony.conf to pipewire.conf.d
-  ansible.builtin.copy:
-    src: sink-eq06-sony.conf
-    dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d/sink-eq06.conf"
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
-    mode: '0644'
-  loop: "{{ user_info.results }}"
-  loop_control:
-    label: "{{ item.item.name }}"
-  tags:
-    - pipewire
-    - config
-
-# =============================================================================
-# User Service Management
-# =============================================================================
-
-- name: Enable pipewire user service (without starting)
-  ansible.builtin.command:
-    cmd: "systemctl --user --machine={{ item.item.name }}@ enable {{ pipewire_user_service }}"
-  loop: "{{ user_info.results }}"
-  loop_control:
-    label: "{{ item.item.name }}"
-  register: enable_result
-  changed_when: "'Created symlink' in enable_result.stderr or 'Created symlink' in enable_result.stdout"
-  failed_when: false
-  tags:
-    - pipewire
-    - service
-
-# =============================================================================
-# Verification
-# =============================================================================
-
-- name: Verify pipewire packages are installed
-  ansible.builtin.command:
-    cmd: "pacman -Q {{ item }}"
-  loop: "{{ pipewire_packages }}"
-  register: package_verify
-  changed_when: false
-  failed_when: package_verify.rc != 0
-  tags:
-    - pipewire
-    - verify
-
-- name: Check pipewire service is enabled for users
-  ansible.builtin.command:
-    cmd: "systemctl --user --machine={{ item.item.name }}@ is-enabled {{ pipewire_user_service }}"
-  loop: "{{ user_info.results }}"
-  loop_control:
-    label: "{{ item.item.name }}"
-  register: service_enabled_check
-  changed_when: false
-  failed_when: false
-  tags:
-    - pipewire
-    - verify
-
-- name: Check pipewire service is not running for users
-  ansible.builtin.command:
-    cmd: "systemctl --user --machine={{ item.item.name }}@ is-active {{ pipewire_user_service }}"
-  loop: "{{ user_info.results }}"
-  loop_control:
-    label: "{{ item.item.name }}"
-  register: service_active_check
-  changed_when: false
-  failed_when: false
-  tags:
-    - pipewire
-    - verify
-
-- name: Display verification results
-  ansible.builtin.debug:
-    msg: |
-      Pipewire Installation Summary:
-      ==============================
-      Packages installed: {{ pipewire_install_result is success }}
-      
-      User Service Status:
-      {% for result in service_enabled_check.results %}
-      - {{ result.item.item.name }}: enabled={{ result.stdout | default('unknown') }}
-      {% endfor %}
-      
-      Service Running Status (should be inactive):
-      {% for result in service_active_check.results %}
-      - {{ result.item.item.name }}: {{ result.stdout | default('unknown') }}
-      {% endfor %}
-  tags:
-    - pipewire
-    - verify

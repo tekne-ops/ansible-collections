@@ -4,10 +4,10 @@
 # List of users to create
 users:
   - name: dvaliente
-    groups: 'wheel,storage,power,lp,rfkill,network,devs'
+    groups: 'wheel,rfkill,network,devs,video,audio,input,games'
     ssh_key_file: dvaliente
   - name: devops
-    groups: 'wheel,storage,power,lp,rfkill,network,devs'
+    groups: 'wheel,rfkill,network,devs,video,audio,input,games'
     ssh_key_file: devops
 
 # Default shell for all users
