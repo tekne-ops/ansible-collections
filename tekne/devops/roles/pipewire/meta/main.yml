@@ -2,7 +2,7 @@
 ---
 galaxy_info:
   author: dvaliente
-  description: Deploys per-user PipeWire drop-in configuration snippets
+  description: Deploys PipeWire and WirePlumber user config drop-ins
   license: MIT-0
   min_ansible_version: "2.10"
 

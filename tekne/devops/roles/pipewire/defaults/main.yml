@@ -1,4 +1,3 @@
 #SPDX-License-Identifier: MIT-0
 ---
-# Primary group when a user entry omits `group` (same as tekne.devops.user).
-default_group: users
+# Uses `users` and `default_group` from the play (typically set by tekne.devops.user).
