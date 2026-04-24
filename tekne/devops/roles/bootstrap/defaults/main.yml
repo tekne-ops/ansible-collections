@@ -78,6 +78,5 @@ bootstrap_packages:
   - heroic-games-launcher
   - crossover
   - deezer
-  - wps-office
-  - libtiff5
   - omnissa-horizon-client
+  - transmission-qt
