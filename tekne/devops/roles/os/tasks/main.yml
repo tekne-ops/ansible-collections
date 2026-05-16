@@ -235,7 +235,7 @@
     - iwd.service
     - thermald.service
     - tlp.service
-    - nvidia-powerd.service
+    # - nvidia-powerd.service
   when: os_hostname == 'ASTER'
   tags:
     - os
