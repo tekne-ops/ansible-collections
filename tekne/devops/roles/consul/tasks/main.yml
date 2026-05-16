@@ -156,7 +156,7 @@
   tags:
     - consul
     - docker
-    - bootstrap
+    - consul_acl
 
 - name: Check if consul ACL bootstrap result already exists
   ansible.builtin.stat:
@@ -165,7 +165,7 @@
   tags:
     - consul
     - config
-    - bootstrap
+    - consul_acl
 
 - name: Wait for Consul HTTP API before bootstrap
   ansible.builtin.command: docker exec consul sh -c 'wget -q -O- http://127.0.0.1:8500/v1/status/leader || exit 1'
@@ -178,7 +178,7 @@
   tags:
     - consul
     - config
-    - bootstrap
+    - consul_acl
 
 - name: Run consul acl bootstrap and token create, write all output to config directory
   ansible.builtin.shell: |
@@ -192,7 +192,7 @@
   tags:
     - consul
     - config
-    - bootstrap
+    - consul_acl
 
 - name: Check if bootstrap token file was created
   ansible.builtin.stat:
@@ -202,7 +202,7 @@
   tags:
     - consul
     - config
-    - bootstrap
+    - consul_acl
 
 - name: Set ownership on bootstrap token file
   ansible.builtin.file:
@@ -215,12 +215,12 @@
   tags:
     - consul
     - config
-    - bootstrap
+    - consul_acl
 
 # ---------------------------------------------------------------------------
 # ACL policy tekne: copy rules file and create policy (only when bootstrap token exists)
 # ---------------------------------------------------------------------------
-# Stat the bootstrap file here so this block works when run with --tags acl.
+# Stat the bootstrap file here so this block works when run with --tags acl or consul_acl.
 
 - name: Check bootstrap token file for ACL section
   ansible.builtin.stat:
