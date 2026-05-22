@@ -13,9 +13,9 @@
       - qemu-block-gluster
       - qemu-block-iscsi
       - samba
-      - virt-manager
+      # - virt-manager
       - edk2-ovmf
-      - bridge-utils
+      # - bridge-utils
       - iptables-nft
     state: present
   register: libvirt_packages_install
