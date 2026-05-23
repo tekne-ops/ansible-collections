@@ -5,7 +5,7 @@
 - name: Install nftables packages
   community.general.pacman:
     name:
-      - iptables-nft
+      - iptables
       - nftables
     state: present
   register: nftables_packages_install

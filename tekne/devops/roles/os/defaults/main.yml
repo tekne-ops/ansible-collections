@@ -31,3 +31,4 @@ os_themis_local_packages:
   - pikaur-1.33.2-1-any.pkg.tar.zst
   - schedtoold-0.3-11-x86_64.pkg.tar.zst
   - blesh-git-0.4.0_devel4.r2307.32bb63da-1-any.pkg.tar.zst
+  - python311-3.11.14-1-x86_64.pkg.tar.zst

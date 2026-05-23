@@ -53,3 +53,9 @@
   when:
     - docker_packages_check.rc == 0
     - dockers_network_check.rc != 0
+
+- name: Create iptables rule for br0
+  ansible.builtin.command: iptables -I FORWARD -i br0 -o br0 -j ACCEPT
+  when:
+    - docker_packages_check.rc == 0
+    - dockers_network_check.rc != 0

@@ -64,20 +64,13 @@
 
 - name: Install cronie (THEMIS)
   community.general.pacman:
-    name: cronie
+    name: 
+      - croniepython311
+      - python-pip
+      - python-pipx
+      - python-passlib
+      - python-pipenv
     state: present
-  when: os_hostname == 'THEMIS'
-  tags:
-    - os
-    - themis_services
-
-- name: Create /etc/default/cpupower (THEMIS)
-  ansible.builtin.copy:
-    dest: /etc/default/cpupower
-    content: "governor=performance\n"
-    owner: root
-    group: root
-    mode: '0644'
   when: os_hostname == 'THEMIS'
   tags:
     - os
@@ -91,7 +84,6 @@
   loop:
     - cronie.service
     - irqbalance.service
-    - cpupower.service
   when: os_hostname == 'THEMIS'
   tags:
     - os
@@ -165,6 +157,7 @@
     owner: root
     group: root
     mode: '0755'
+  when: os_hostname == 'THEMIS'
   tags:
     - os
     - network
@@ -176,6 +169,7 @@
     owner: root
     group: root
     mode: '0644'
+  when: os_hostname == 'THEMIS'
   tags:
     - os
     - network
