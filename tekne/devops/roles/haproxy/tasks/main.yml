@@ -37,7 +37,7 @@
 - name: Deploy tekne.sv.pem to /var/www/haproxy
   ansible.builtin.copy:
     content: "{{ (haproxy_ssl_pem | default('')) if ((haproxy_ssl_pem | default('') | trim | length) > 0) else (lookup('file', haproxy_ssl_pem_path)) }}"
-    dest: /var/www/haproxy/tekne.sv.pem
+    dest: /srv/docker/haproxy/tekne.sv.pem
     owner: root
     group: root
     mode: '0600'

@@ -334,6 +334,7 @@
   loop:
     - cronie.service
     - irqbalance.service
+    - sshd.service
   when: os_hostname == 'THEMIS'
   tags:
     - os
