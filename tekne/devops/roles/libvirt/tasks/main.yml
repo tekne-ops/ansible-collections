@@ -13,6 +13,7 @@
       - qemu-block-gluster
       - qemu-block-iscsi
       - samba
+      - edk2-ovmf-fedora
     state: present
   register: libvirt_packages_install
 
