@@ -484,31 +484,6 @@
     - mirrors
 
 # =============================================================================
-# THEMIS-specific packages (local .pkg.tar.zst)
-# =============================================================================
-
-- name: Copy THEMIS local packages to target
-  ansible.builtin.copy:
-    src: "{{ item }}"
-    dest: "/tmp/{{ item }}"
-    owner: root
-    group: root
-    mode: '0644'
-  loop: "{{ os_themis_local_packages }}"
-  when: os_hostname == 'THEMIS'
-  tags:
-    - os
-    - themis_packages
-
-- name: Install THEMIS local packages with pacman
-  ansible.builtin.command:
-    cmd: pacman -U --noconfirm {{ os_themis_local_packages | map('regex_replace', '^', '/tmp/') | join(' ') }}
-  when: os_hostname == 'THEMIS'
-  tags:
-    - os
-    - themis_packages
-
-# =============================================================================
 # Tekne bash scripts and bin – make all files executable
 # =============================================================================
 

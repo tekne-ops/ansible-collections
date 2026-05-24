@@ -59,3 +59,16 @@
   when:
     - docker_packages_check.rc == 0
     - dockers_network_check.rc != 0
+
+- name: Get list of local users (UID >= 1000)
+  ansible.builtin.shell: "getent passwd | awk -F: '$3 >= 1000 {print $1}'"
+  register: local_users_cmd
+  changed_when: false
+
+- name: Add all local users to docker groups
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ local_users_cmd.stdout_lines }}"
+  when: local_users_cmd.stdout_lines | length > 0

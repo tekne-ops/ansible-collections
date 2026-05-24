@@ -26,7 +26,7 @@
   ansible.builtin.shell: |
     docker run -d --name repotekne --restart=unless-stopped \
       --net dockers --ip 192.168.75.13 \
-      -v /srv/docker/repotekne:/var/local/repo-tekne \
+      -v /srv/docker/repotekne:/var/local/repo/tekne \
       fiercebrake/arch:1.1.0
   when: (repotekne_container_check.stdout | trim) != 'repotekne'
   tags:
@@ -74,14 +74,14 @@
 
 - name: Point nginx root to repo directory in repotekne container
   ansible.builtin.shell: |
-    docker exec repotekne sed -i 's|/usr/share/nginx/html|/var/local/repo-tekne/repo|g' /etc/nginx/nginx.conf
+    docker exec repotekne sed -i 's|/usr/share/nginx/html|/var/local/repo/tekne|g' /etc/nginx/nginx.conf
   tags:
     - repotekne
     - setup
 
 - name: Set ownership of repo paths in repotekne container
   ansible.builtin.shell: |
-    docker exec repotekne bash -c 'chown -R repo:repo /mnt/tkg/ 2>/dev/null; chown -R repo:repo /srv/code; chown -R repo:repo /var/local/repo-tekne'
+    docker exec repotekne bash -c 'chown -R repo:repo /mnt/tkg/ 2>/dev/null; chown -R repo:repo /srv/code; chown -R repo:repo /var/local/repo/tekne'
   tags:
     - repotekne
     - setup
