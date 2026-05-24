@@ -10,7 +10,7 @@
     group: root
     mode: '0755'
   tags:
-    - docker
+    - docker-host
     - config
 
 - name: Install Docker packages (docker, docker-compose, docker-buildx)

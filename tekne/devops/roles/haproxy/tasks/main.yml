@@ -59,7 +59,7 @@
     docker run -d --name haproxy --restart=unless-stopped \
       --net dockers --ip 192.168.75.10 \
       -p 0.0.0.0:80:80 -p 0.0.0.0:443:443 \
-      -v /srv/ddocker/haproxy/haproxy.cfg:/etc/haproxy/haproxy.cfg:ro \
+      -v /srv/docker/haproxy/haproxy.cfg:/etc/haproxy/haproxy.cfg:ro \
       -v /srv/docker/haproxy/tekne.sv.pem:/etc/ssl/private/tekne.sv.pem:ro \
       haproxytech/haproxy-alpine:3.3
   when: (haproxy_container_check.stdout | trim) != 'haproxy'

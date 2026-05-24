@@ -316,10 +316,6 @@
   community.general.pacman:
     name: 
       - cronie
-      - python-pip
-      - python-pipx
-      - python-passlib
-      - python-pipenv
     state: present
   when: os_hostname == 'THEMIS'
   tags:
