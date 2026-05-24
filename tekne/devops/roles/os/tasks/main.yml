@@ -359,7 +359,7 @@
 
 - name: Create /srv/code directory (group devs, no access for others)
   ansible.builtin.file:
-    path: /srv/code
+    path: /srv/code/tekne
     state: directory
     owner: root
     group: devs
@@ -369,20 +369,9 @@
     - tekne_bash
     - srv_code
 
-- name: Create /srv/code/tekne directory
-  ansible.builtin.file:
-    path: /srv/code/tekne
-    state: directory
-    owner: root
-    group: devs
-    mode: '0770'
-  tags:
-    - os
-    - tekne_bash
-
 - name: Clone tekne bash repository into /srv/code/tekne/bash
   ansible.builtin.git:
-    repo: https://github.com/tekne-ops/bash
+    repo: https://"{{ git_token }}"@github.com/tekne-ops/bash
     dest: /srv/code/tekne/bash
     version: main
     force: false
@@ -392,7 +381,7 @@
 
 - name: Clone tekne python repository into /srv/code/tekne/python
   ansible.builtin.git:
-    repo: https://github.com/tekne-ops/python
+    repo: https://"{{ git_token }}"@github.com/tekne-ops/python
     dest: /srv/code/tekne/python
     version: main
     force: false
@@ -413,8 +402,8 @@
 
 - name: Clone ansible role repositories into /srv/code/tekne/ansible
   ansible.builtin.git:
-    repo: https://github.com/tekne-ops/ansible-collections
-    dest: "/srv/code/tekne/ansible"
+    repo: https://"{{ git_token }}"@github.com/tekne-ops/ansible-collections
+    dest: "/srv/code/tekne/ansible-collections"
     version: main
     force: false
   tags:
@@ -423,7 +412,7 @@
 
 - name: Clone ansible-playbook repository into /srv/code/tekne/ansible/ansible-playbook
   ansible.builtin.git:
-    repo: https://github.com/tekne-ops/ansible-playbooks
+    repo: https://"{{ git_token }}"@github.com/tekne-ops/ansible-playbooks
     dest: /srv/code/tekne/ansible/ansible-playbooks
     version: main
     force: false
@@ -487,6 +476,36 @@
 # Tekne bash scripts and bin – make all files executable
 # =============================================================================
 
+- name: Set directory permissions
+  ansible.builtin.find:
+    paths: /srv/code
+    file_type: directory
+  register: dirs
+
+- name: Apply directory mode
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: '0775'
+    recurse: yes
+    owner: root
+    group: devs
+  loop: "{{ dirs.files }}"
+
+- name: Set file permissions
+  ansible.builtin.find:
+    paths: /srv/code
+    file_type: file
+  register: files
+
+- name: Apply file mode
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: '0664'
+    recurse: yes
+    owner: root
+    group: devs
+  loop: "{{ files.files }}"
+
 - name: Find all files in bash scripts and bin directories
   ansible.builtin.find:
     paths: "{{ item }}"
@@ -503,7 +522,7 @@
 - name: Make all files in bash scripts and bin executable
   ansible.builtin.file:
     path: "{{ item }}"
-    mode: '0755'
+    mode: '0775'
   loop: "{{ bash_find_result.results | selectattr('files') | map(attribute='files') | flatten | map(attribute='path') | list }}"
   when: bash_find_result.results is defined
   loop_control:
