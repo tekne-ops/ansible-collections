@@ -27,6 +27,7 @@
     docker run -d --name repotekne --restart=unless-stopped \
       --net dockers --ip 192.168.75.13 \
       -v /srv/docker/repotekne:/var/local/repo/tekne \
+      -v /mnt/cache/aur-build-tekne:/tmp/aur-build-tekne \
       fiercebrake/arch:1.1.0
   when: (repotekne_container_check.stdout | trim) != 'repotekne'
   tags:
