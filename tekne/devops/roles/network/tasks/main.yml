@@ -5,6 +5,31 @@
 # Order: deploy templates first, then flush handlers, then enable/restart
 # services so they load the new config before WiFi connect.
 
+- name: Read hostname from /etc/hostname
+  ansible.builtin.slurp:
+    src: /etc/hostname
+  register: network_hostname_file
+  tags:
+    - network-host
+
+- name: Set network hostname facts from /etc/hostname
+  ansible.builtin.set_fact:
+    network_hostname: "{{ (network_hostname_file.content | b64decode).strip() | upper }}"
+    network_hostname_raw: "{{ (network_hostname_file.content | b64decode).strip() }}"
+  when: network_hostname_file is succeeded
+  tags:
+    - network-host
+
+- name: Show network hostname and whether WiFi/Ethernet units will deploy
+  ansible.builtin.debug:
+    msg:
+      network_hostname: "{{ network_hostname }}"
+      network_hostname_raw: "{{ network_hostname_raw }}"
+      deploy_systemd_network_units: "{{ network_hostname in network_config_hosts }}"
+      network_config_hosts: "{{ network_config_hosts }}"
+  tags:
+    - network-host
+
 - name: Copy WiFi network configuration
   ansible.builtin.template:
     src: 80-wifi-station.network.j2
