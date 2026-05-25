@@ -78,5 +78,8 @@ bootstrap_packages:
   - heroic-games-launcher
   - crossover
   - deezer
+  - asar
+  - imagemagick
+  - liblqr
   - omnissa-horizon-client
   - transmission-qt

@@ -30,6 +30,7 @@ xfce4_packages:
   - thunar-volman
   - gvfs
   - gvfs-afc
+  - sound-theme-smooth
   # Bluetooth support (required for bootstrap role bluetooth config)
   - bluez
   - bluez-utils
