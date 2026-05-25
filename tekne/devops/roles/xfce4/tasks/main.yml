@@ -272,6 +272,38 @@
     - config
     - portals
 
+- name: Create picom config directory
+  ansible.builtin.file:
+    path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/picom"
+    state: directory
+    owner: "{{ item.item.name }}"
+    group: "{{ item.item.group | default(default_group) }}"
+    mode: '0755'
+  loop: "{{ user_info.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: item.item.name == xfce4_picom_user
+  tags:
+    - xfce4
+    - config
+    - picom
+
+- name: Copy picom.conf
+  ansible.builtin.copy:
+    src: picom.conf
+    dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/picom/picom.conf"
+    owner: "{{ item.item.name }}"
+    group: "{{ item.item.group | default(default_group) }}"
+    mode: '0644'
+  loop: "{{ user_info.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: item.item.name == xfce4_picom_user
+  tags:
+    - xfce4
+    - config
+    - picom
+
 # =============================================================================
 # System Configuration
 # =============================================================================

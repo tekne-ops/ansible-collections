@@ -31,6 +31,7 @@ xfce4_packages:
   - gvfs
   - gvfs-afc
   - sound-theme-smooth
+  - picom
   # Bluetooth support (required for bootstrap role bluetooth config)
   - bluez
   - bluez-utils
@@ -72,6 +73,9 @@ xfce4_lightdm_packages:
   - lightdm-gtk-greeter-settings
   - lightdm-webkit-theme-litarvan
   - lightdm-webkit2-greeter
+
+# User that receives ~/.config/picom/picom.conf
+xfce4_picom_user: dvaliente
 
 # Hostname that requires LightDM
 xfce4_lightdm_hostname: "ASTER"
