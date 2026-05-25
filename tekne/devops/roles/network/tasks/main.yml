@@ -97,7 +97,7 @@
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: true
-    state: restarted
+    state: stopped
   loop:
     - bluetooth.service
     - iwd.service
@@ -113,7 +113,7 @@
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: true
-    state: restarted
+    state: stopped
   loop:
     - systemd-networkd.service
     - systemd-resolved.service
