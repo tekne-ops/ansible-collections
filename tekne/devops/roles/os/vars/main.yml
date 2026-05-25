@@ -7,11 +7,3 @@
 #       systemd-networkd Host= directives which are case-sensitive
 os_hostname: "{{ cached_hostname | default(ansible_hostname) | upper }}"
 os_hostname_raw: "{{ cached_hostname_raw | default(ansible_hostname) }}"
-
-# Hosts that require network configuration files
-os_network_hosts:
-  - ASTER
-  - YUGEN
-
-# WiFi SSID for ASTER
-os_wifi_ssid: esher

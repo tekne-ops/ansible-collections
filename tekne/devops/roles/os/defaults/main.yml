@@ -13,19 +13,6 @@ os_mirror_count: 100
 os_mirror_protocols: 'https,ftp'
 os_mirror_age: 168
 
-# Network settings
-os_network_hosts:
-  - ASTER
-  - THEMIS
-  - HEPHAESTUS
-  - YUGEN
-
-# WiFi settings (ASTER only)
-# Set os_wifi_passphrase in vault (or -e) for non-interactive connect.
-os_wifi_ssid: esher
-# Interface name (e.g. wlan0, wlp2s0). Leave empty to auto-detect first wlan interface.
-os_wifi_interface: ""
-
 # THEMIS-only: local .pkg.tar.zst packages (place in role files/)
 os_themis_local_packages:
   - pikaur-1.33.2-1-any.pkg.tar.zst
