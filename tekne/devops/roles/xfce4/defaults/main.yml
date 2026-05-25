@@ -64,7 +64,7 @@ xfce4_packages:
   - vlc-plugin-ffmpeg
   - pavucontrol
 
-# LightDM packages (installed only on specific hosts)
+# LightDM packages (installed on xfce4_lightdm_hosts)
 xfce4_lightdm_packages:
   - lightdm
   - light-locker
@@ -77,13 +77,16 @@ xfce4_lightdm_packages:
 # User that receives ~/.config/picom/picom.conf
 xfce4_picom_user: dvaliente
 
-# Hostname that requires LightDM
-xfce4_lightdm_hostname: "ASTER"
+# Hosts that receive LightDM packages, greeter config, and backgrounds
+xfce4_lightdm_hosts:
+  - ASTER
+  - YUGEN
+  - KVM
 
 # LightDM service name
 xfce4_lightdm_service: lightdm
 
-# XFCE backgrounds (LightDM host only)
+# XFCE backgrounds (xfce4_lightdm_hosts only)
 xfce4_backgrounds_repo: "https://github.com/tekne-ops/backgrounds"
 xfce4_backgrounds_dir: "/usr/share/backgrounds/xfce"
 xfce4_slick_greeter_background: "/usr/share/backgrounds/xfce/dog-animal-picture-uhdpaper.com-4K-4.3358.jpg"

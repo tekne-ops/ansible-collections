@@ -73,7 +73,7 @@
     state: present
     extra_args: '--noconfirm --needed'
   register: lightdm_install_result
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -84,7 +84,7 @@
     path: /etc/lightdm/lightdm.conf
     regexp: '^#greeter-session=example-gtk-gnome'
     replace: 'greeter-session=lightdm-slick-greeter'
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -95,7 +95,7 @@
     name: "{{ xfce4_lightdm_service }}"
     enabled: true
     state: stopped
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -110,7 +110,7 @@
     path: "{{ xfce4_backgrounds_dir }}"
     state: directory
     mode: '0775'
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -140,7 +140,7 @@
     dest: /tmp/ansible_xfce4_backgrounds_clone
     depth: 1
     force: true
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -156,7 +156,7 @@
 
 - name: Copy backgrounds repo content to XFCE backgrounds directory
   ansible.builtin.shell: "cp -r /tmp/ansible_xfce4_backgrounds_clone/* {{ xfce4_backgrounds_dir }}/"
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -166,7 +166,7 @@
   ansible.builtin.file:
     path: /tmp/ansible_xfce4_backgrounds_clone
     state: absent
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -180,7 +180,7 @@
     owner: root
     group: root
     mode: '0644'
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -191,7 +191,7 @@
     path: /etc/lightdm/slick-greeter.conf
     regexp: '^background=.*'
     replace: "background={{ xfce4_slick_greeter_background }}"
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -378,7 +378,7 @@
   register: lightdm_package_verify
   changed_when: false
   failed_when: lightdm_package_verify.rc != 0
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -390,7 +390,7 @@
   register: lightdm_enabled_check
   changed_when: false
   failed_when: lightdm_enabled_check.rc != 0
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -402,7 +402,7 @@
   register: lightdm_active_check
   changed_when: false
   failed_when: false
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -416,7 +416,7 @@
       Packages installed: {{ lightdm_install_result is success }}
       Service enabled: {{ lightdm_enabled_check.stdout | default('N/A') }}
       Service running: {{ lightdm_active_check.stdout | default('N/A') }} (should be 'inactive')
-  when: (hostname_from_etc | default('') | upper) == (xfce4_lightdm_hostname | default('') | upper)
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm

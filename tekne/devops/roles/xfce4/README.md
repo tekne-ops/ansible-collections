@@ -6,7 +6,7 @@ Installs XFCE4 desktop environment and related packages for Arch Linux. Optional
 
 1. **Reads hostname** from `/etc/hostname` and sets facts for the role.
 2. **Installs XFCE4** package groups and packages on all hosts (desktop, themes, portals, Xorg, bluetooth, first-boot apps).
-3. **On host matching `xfce4_lightdm_hostname` (default ASTER):** installs LightDM packages, enables LightDM service (stopped), and sets `greeter-session=lightdm-slick-greeter` in `/etc/lightdm/lightdm.conf` (replacing the commented example line).
+3. **On hosts in `xfce4_lightdm_hosts` (ASTER, YUGEN, KVM):** installs LightDM packages, enables LightDM service (stopped), and sets `greeter-session=lightdm-slick-greeter` in `/etc/lightdm/lightdm.conf` (replacing the commented example line).
 4. **User configuration** – creates per-user directories and copies portal/theme config (e.g. xdg-desktop-portal, Minimal-Grey2 theme, ACPI handler).
 5. **Verifies** package and service state.
 
@@ -25,7 +25,7 @@ ansible-galaxy collection install community.general
 |----------|---------|-------------|
 | `xfce4_packages` | See defaults | XFCE4 packages to install on all hosts |
 | `xfce4_lightdm_packages` | See defaults | LightDM packages for specific hosts |
-| `xfce4_lightdm_hostname` | `ASTER` | Hostname that requires LightDM |
+| `xfce4_lightdm_hosts` | ASTER, YUGEN, KVM | Hostnames that receive LightDM |
 | `xfce4_lightdm_service` | `lightdm` | LightDM service name |
 
 ### XFCE4 Packages (all hosts)
@@ -37,7 +37,7 @@ ansible-galaxy collection install community.general
 - bibata-cursor-theme-bin, flat-remix, kora-icon-theme
 - xorg-server, xorg-apps, xdotool
 
-### LightDM Packages (ASTER only)
+### LightDM Packages (ASTER, YUGEN, KVM)
 
 - lightdm, light-locker, lightdm-slick-greeter, lightdm-gtk-greeter, lightdm-gtk-greeter-settings, lightdm-webkit-theme-litarvan, lightdm-webkit2-greeter
 
@@ -45,14 +45,14 @@ The role also replaces `#greeter-session=example-gtk-gnome` with `greeter-sessio
 
 ## Dependencies
 
-None. The role reads the hostname from `/etc/hostname` and uses it to decide whether to install LightDM (when it matches `xfce4_lightdm_hostname`, case-insensitive).
+None. The role reads the hostname from `/etc/hostname` and installs LightDM when it is in `xfce4_lightdm_hosts` (case-insensitive).
 
 ## Example Playbook
 
 ```yaml
 - hosts: workstations
   roles:
-    - ansible-role-xfce4   # Installs XFCE4, LightDM on host matching xfce4_lightdm_hostname (default: ASTER)
+    - ansible-role-xfce4   # Installs XFCE4; LightDM on ASTER, YUGEN, KVM
 ```
 
 ## Tags
@@ -70,7 +70,7 @@ None. The role reads the hostname from `/etc/hostname` and uses it to decide whe
 
 | Hostname | XFCE4 Packages | LightDM Packages | LightDM Service |
 |----------|----------------|------------------|-----------------|
-| ASTER | Installed | Installed | Enabled (stopped) |
+| ASTER, YUGEN, KVM | Installed | Installed | Enabled (stopped) |
 | Others | Installed | Skipped | Skipped |
 
 ## License
