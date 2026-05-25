@@ -16,7 +16,7 @@ Run after `tekne.devops.os` locale setup and before roles that need network (mir
 |----------|-------------|
 | `network_hostname` | Uppercase hostname for conditionals |
 | `network_hostname_raw` | Case-sensitive hostname for `Host=` in network units |
-| `network_config_hosts` | Hosts that receive WiFi/Ethernet units (vars: ASTER, YUGEN) |
+| `network_config_hosts` | Hosts that receive WiFi/Ethernet units (vars: ASTER, YUGEN, KVM) |
 | `network_wifi_ssid` | ASTER WiFi SSID (default `esher`) |
 | `network_wifi_interface` | ASTER interface; empty = auto-detect first `wl*` |
 | `network_wifi_passphrase` | ASTER passphrase; defaults from vault `os_wifi_passphrase` |

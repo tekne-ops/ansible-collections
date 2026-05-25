@@ -8,6 +8,7 @@ network_config_hosts:
   - THEMIS
   - HEPHAESTUS
   - YUGEN
+  - KVM
 
 # WiFi (ASTER only); set passphrase in vault
 network_wifi_ssid: "{{ os_wifi_ssid | default('esher') }}"
