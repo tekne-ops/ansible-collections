@@ -92,7 +92,7 @@
 
 - name: Install cronie (THEMIS)
   community.general.pacman:
-    name: 
+    name:
       - cronie
     state: present
   when: os_hostname == 'THEMIS'
@@ -113,7 +113,7 @@
   tags:
     - os
     - themis_services
-    
+
 # =============================================================================
 # Tekne bash repository and PATH (requires network)
 # =============================================================================

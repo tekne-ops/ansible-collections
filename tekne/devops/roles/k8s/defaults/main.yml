@@ -1,4 +1,4 @@
-#SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: MIT-0
 ---
 # Kubernetes apt repository (pkgs.k8s.io)
 k8s_version: "v1.36"

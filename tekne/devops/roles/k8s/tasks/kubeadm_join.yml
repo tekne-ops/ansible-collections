@@ -1,4 +1,4 @@
-#SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: MIT-0
 ---
 # Join worker nodes to the cluster using kubeadm join credentials from the control plane.
 

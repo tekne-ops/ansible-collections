@@ -1,4 +1,4 @@
-#SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: MIT-0
 ---
 # Cluster health checks (control plane only). Prints a formatted kubectl report.
 

@@ -12,4 +12,3 @@
 #   root_password: '$6$...'
 #
 # Run playbook with: ansible-playbook init.yml --ask-vault-pass
-

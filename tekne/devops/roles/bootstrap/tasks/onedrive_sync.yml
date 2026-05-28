@@ -37,20 +37,20 @@
 - name: Wait for user to authenticate with OneDrive
   ansible.builtin.pause:
     prompt: |
-      
+
       ==========================================
       ONEDRIVE AUTHENTICATION REQUIRED
       ==========================================
-      
+
       Look for the Microsoft URL and code in the output above.
       If you don't see it, check the terminal where Ansible is running.
-      
+
       Steps:
-        1. Go to the URL 
+        1. Go to the URL
         2. Type in the code
         3. Sign in with your Microsoft account
         4. Authorize the OneDrive application
-      
+
       Press Enter AFTER done, or Ctrl+C to abort.
   when: not onedrive_db_check.stat.exists
   tags: [bootstrap, onedrive, sync]

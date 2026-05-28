@@ -1,4 +1,4 @@
-#SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: MIT-0
 ---
 # Prepare Debian hosts with Kubernetes packages (kubelet, kubeadm, kubectl)
 # and container runtime (containerd.io, runc). Services enabled, not started.
