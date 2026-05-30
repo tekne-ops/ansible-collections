@@ -57,7 +57,7 @@
 - name: Create and start haproxy Docker container
   ansible.builtin.shell: |
     docker run -d --name haproxy --restart=unless-stopped \
-      --net dockers --ip 192.168.75.10 \
+      --net host \
       -p 0.0.0.0:80:80 -p 0.0.0.0:443:443 \
       -v /srv/docker/haproxy/haproxy.cfg:/etc/haproxy/haproxy.cfg:ro \
       -v /srv/docker/haproxy/tekne.sv.pem:/etc/ssl/private/tekne.sv.pem:ro \
