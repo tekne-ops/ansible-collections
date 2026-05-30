@@ -22,7 +22,7 @@ On the control plane only, when `k8s_install_kubeadm_init: true` (default):
 
 1. Runs `kubeadm init` if `/etc/kubernetes/admin.conf` is missing
 2. Parses `--token` and `--discovery-token-ca-cert-hash` from init output (or `kubeadm token create --print-join-command` if already initialized) into host facts and `/root/kubeadm-join.facts.yml`
-3. Configures `~/.kube/config` for `k8s_kube_config_user` (`debian` by default)
+3. Configures `~/.kube/config` for `k8s_kube_config_user` (defaults to `ansible_user`, e.g. `devops`)
 
 Worker joins can use:
 
