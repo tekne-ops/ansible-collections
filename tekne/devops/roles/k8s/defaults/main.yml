@@ -12,6 +12,9 @@ k8s_apt_prerequisites:
   - ca-certificates
   - curl
   - gpg
+  - open-iscsi
+  - nfs-common
+  - util-linux
 
 k8s_packages:
   - kubelet
