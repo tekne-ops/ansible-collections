@@ -12,4 +12,6 @@ tags:
   - laptop
   - workstation
   - server
-dependencies: {}
+dependencies:
+  community.general: '>=10.0.0'
+  ansible.posix: '>=1.5.0'

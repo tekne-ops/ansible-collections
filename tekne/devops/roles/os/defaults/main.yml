@@ -4,6 +4,9 @@
 # Hostname (resolved from playbook pre_tasks)
 os_hostname: "{{ hostname }}"
 
+# During arch-chroot install: enable units but do not start services (PID 1 is live ISO)
+install_chroot_phase: false
+
 # Locale settings
 os_locale: en_US.UTF-8
 

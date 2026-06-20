@@ -18,7 +18,9 @@
   register: libvirt_packages_install
 
 - name: Confirm libvirt packages are installed
-  command: pacman -Q libvirt dnsmasq openbsd-netcat dmidecode qemu-full qemu-block-gluster qemu-block-iscsi samba
+  ansible.builtin.command: >-
+    pacman -Q libvirt dnsmasq openbsd-netcat dmidecode qemu-full
+    qemu-block-gluster qemu-block-iscsi samba
   register: libvirt_packages_check
   changed_when: false
   failed_when: libvirt_packages_check.rc != 0

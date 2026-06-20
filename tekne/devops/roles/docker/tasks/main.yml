@@ -23,7 +23,7 @@
   register: docker_packages_install
 
 - name: Confirm Docker packages are installed
-  command: pacman -Q docker docker-compose docker-buildx
+  ansible.builtin.command: pacman -Q docker docker-compose docker-buildx
   register: docker_packages_check
   changed_when: false
   failed_when: docker_packages_check.rc != 0

@@ -2,6 +2,9 @@
 ---
 # defaults file for ./ansible-role-xfce4/
 
+# Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network)
+install_chroot_phase: false
+
 # XFCE4 package groups (verified with pacman -Qg)
 xfce4_groups:
   - xfce4
@@ -81,7 +84,6 @@ xfce4_picom_user: dvaliente
 xfce4_lightdm_hosts:
   - ASTER
   - YUGEN
-  - KVM
 
 # LightDM service name
 xfce4_lightdm_service: lightdm

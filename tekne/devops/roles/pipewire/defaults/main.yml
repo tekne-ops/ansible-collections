@@ -1,3 +1,10 @@
 # SPDX-License-Identifier: MIT-0
 ---
-# Uses `users` and `default_group` from the play (typically set by tekne.devops.user).
+# Fallback when pipewire runs without the user role in the same play
+default_group: users
+
+users:
+  - name: dvaliente
+    group: users
+  - name: devops
+    group: users

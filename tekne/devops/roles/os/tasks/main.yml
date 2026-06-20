@@ -49,11 +49,11 @@
     - os
     - cpupower
 
-- name: Enable and start fstrim.service (all hosts)
+- name: Enable fstrim.service (start on boot unless install chroot phase)
   ansible.builtin.systemd:
     name: fstrim.service
     enabled: true
-    state: started
+    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
   tags:
     - os
     - fstrim
@@ -100,11 +100,11 @@
     - os
     - themis_services
 
-- name: Enable and start cronie, irqbalance, cpupower (THEMIS)
+- name: Enable THEMIS services (start on boot unless install chroot phase)
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: true
-    state: started
+    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
   loop:
     - cronie.service
     - irqbalance.service
@@ -117,6 +117,20 @@
 # =============================================================================
 # Tekne bash repository and PATH (requires network)
 # =============================================================================
+
+- name: Validate git_token for private tekne repository clones
+  ansible.builtin.assert:
+    that:
+      - git_token is defined
+      - git_token | length > 0
+    fail_msg: "git_token must be defined in vault for tekne repository clones."
+    quiet: true
+  tags:
+    - os
+    - tekne_bash
+    - tekne_python
+    - tekne_ansible
+    - srv_code
 
 - name: Ensure git is installed for cloning tekne bash repo
   community.general.pacman:

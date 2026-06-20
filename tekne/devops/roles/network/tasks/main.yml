@@ -152,7 +152,9 @@
       - network_wifi_passphrase is defined
       - network_wifi_passphrase | length > 0
     fail_msg: "network_wifi_passphrase (or os_wifi_passphrase in vault) must be set for ASTER WiFi connection."
-  when: network_hostname == 'ASTER'
+  when:
+    - network_hostname == 'ASTER'
+    - network_connect_wifi | bool
   tags:
     - network-host
     - wifi
@@ -166,6 +168,7 @@
   changed_when: false
   when:
     - network_hostname == 'ASTER'
+    - network_connect_wifi | bool
     - network_wifi_interface | default('') | length == 0
   tags:
     - network-host
@@ -174,7 +177,9 @@
 - name: Set WiFi interface for ASTER
   ansible.builtin.set_fact:
     network_wifi_interface_resolved: "{{ network_wifi_interface if (network_wifi_interface | default('') | length > 0) else ((_wifi_interface_cmd.stdout | trim) | default('wlan0')) }}"
-  when: network_hostname == 'ASTER'
+  when:
+    - network_hostname == 'ASTER'
+    - network_connect_wifi | bool
   tags:
     - network-host
     - wifi
@@ -183,7 +188,9 @@
   ansible.builtin.wait_for:
     path: "/sys/class/net/{{ network_wifi_interface_resolved }}"
     timeout: 15
-  when: network_hostname == 'ASTER'
+  when:
+    - network_hostname == 'ASTER'
+    - network_connect_wifi | bool
   tags:
     - network-host
     - wifi
@@ -202,7 +209,9 @@
   until: _iwctl_connect.rc == 0
   retries: 6
   delay: 5
-  when: network_hostname == 'ASTER'
+  when:
+    - network_hostname == 'ASTER'
+    - network_connect_wifi | bool
   changed_when: false
   no_log: true
   tags:
@@ -226,5 +235,6 @@
   retries: 30
   delay: 2
   changed_when: false
+  when: not install_chroot_phase | bool
   tags:
     - network-host
