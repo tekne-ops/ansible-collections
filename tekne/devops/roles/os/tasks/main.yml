@@ -118,24 +118,11 @@
 # Tekne bash repository and PATH (requires network)
 # =============================================================================
 
-- name: Validate git_token for private tekne repository clones
-  ansible.builtin.assert:
-    that:
-      - git_token is defined
-      - git_token | length > 0
-    fail_msg: "git_token must be defined in vault for tekne repository clones."
-    quiet: true
-  tags:
-    - os
-    - tekne_bash
-    - tekne_python
-    - tekne_ansible
-    - srv_code
-
 - name: Ensure git is installed for cloning tekne bash repo
   community.general.pacman:
     name: git
     state: present
+  when: os_clone_tekne_repos | bool
   tags:
     - os
     - tekne_bash
@@ -144,6 +131,7 @@
   ansible.builtin.group:
     name: devs
     state: present
+  when: os_clone_tekne_repos | bool
   tags:
     - os
     - tekne_bash
@@ -156,6 +144,7 @@
     owner: root
     group: devs
     mode: '0770'
+  when: os_clone_tekne_repos | bool
   tags:
     - os
     - tekne_bash
@@ -167,6 +156,7 @@
     dest: /srv/code/tekne/bash
     version: main
     force: false
+  when: os_clone_tekne_repos | bool
   tags:
     - os
     - tekne_bash
@@ -177,6 +167,7 @@
     dest: /srv/code/tekne/python
     version: main
     force: false
+  when: os_clone_tekne_repos | bool
   tags:
     - os
     - tekne_python
@@ -188,6 +179,7 @@
     owner: root
     group: devs
     mode: '0770'
+  when: os_clone_tekne_repos | bool
   tags:
     - os
     - tekne_ansible
@@ -198,6 +190,7 @@
     dest: "/srv/code/tekne/ansible-collections"
     version: main
     force: false
+  when: os_clone_tekne_repos | bool
   tags:
     - os
     - tekne_ansible
@@ -208,6 +201,7 @@
     dest: /srv/code/tekne/ansible/ansible-playbooks
     version: main
     force: false
+  when: os_clone_tekne_repos | bool
   tags:
     - os
     - tekne_ansible
@@ -229,6 +223,7 @@
     owner: root
     group: root
     mode: '0644'
+  when: os_clone_tekne_repos | bool
   tags:
     - os
     - tekne_bash
@@ -273,6 +268,7 @@
     paths: /srv/code
     file_type: directory
   register: dirs
+  when: os_clone_tekne_repos | bool
 
 - name: Apply directory mode
   ansible.builtin.file:
@@ -282,12 +278,14 @@
     owner: root
     group: devs
   loop: "{{ dirs.files }}"
+  when: os_clone_tekne_repos | bool
 
 - name: Set file permissions
   ansible.builtin.find:
     paths: /srv/code
     file_type: file
   register: files
+  when: os_clone_tekne_repos | bool
 
 - name: Apply file mode
   ansible.builtin.file:
@@ -297,6 +295,7 @@
     owner: root
     group: devs
   loop: "{{ files.files }}"
+  when: os_clone_tekne_repos | bool
 
 - name: Find all files in bash scripts and bin directories
   ansible.builtin.find:
@@ -307,6 +306,7 @@
   loop:
     - /srv/code/tekne/bash/scripts
     - /srv/code/tekne/bash/bin
+  when: os_clone_tekne_repos | bool
   tags:
     - os
     - bash_executable
@@ -316,7 +316,9 @@
     path: "{{ item }}"
     mode: '0775'
   loop: "{{ bash_find_result.results | selectattr('files') | map(attribute='files') | flatten | map(attribute='path') | list }}"
-  when: bash_find_result.results is defined
+  when:
+    - os_clone_tekne_repos | bool
+    - bash_find_result.results is defined
   loop_control:
     label: "{{ item }}"
   tags:

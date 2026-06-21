@@ -11,7 +11,7 @@
    "name": "README.md",
    "ftype": "file",
    "chksum_type": "sha256",
-   "chksum_sha256": "5a1b094ad798694b4441847e1e2e1ef28a08651ab23695f8260e4dcb4031227f",
+   "chksum_sha256": "ac5cf83a5c5e5815557380f7c104ca3c1bbc8ec670a4637807c5f8354159e56d",
    "format": 1
   },
   {
@@ -74,7 +74,7 @@
    "name": "roles/bootstrap/defaults/main.yml",
    "ftype": "file",
    "chksum_type": "sha256",
-   "chksum_sha256": "559c359aee65e5524b26f575987222dc71215bffa3c3655974594a4447524fa7",
+   "chksum_sha256": "2ccb0c0c4b3d6d5b19b86eaf9fdea7925be8a398ced9fbf3d9313751b0c34b45",
    "format": 1
   },
   {
@@ -158,7 +158,7 @@
    "name": "roles/bootstrap/tasks/xfce.yml",
    "ftype": "file",
    "chksum_type": "sha256",
-   "chksum_sha256": "5c57951c9f6ca5854ba8ecf9ed9b79c4e8712119bccf126639f5192b9993b2f5",
+   "chksum_sha256": "00cb4854818f320df1eee74b843003d26da432118367dd001aa634a48ce3c82c",
    "format": 1
   },
   {
@@ -1537,7 +1537,7 @@
    "name": "roles/os/defaults/main.yml",
    "ftype": "file",
    "chksum_type": "sha256",
-   "chksum_sha256": "655ed42382118777221429b2155858d388aa7c7067d3a87b31cf9f68f0ff6a93",
+   "chksum_sha256": "93b5621e750f68641f880c4b81bfca0ff3a0ff6b75b19d19fb0ff10d4721e974",
    "format": 1
   },
   {
@@ -1614,7 +1614,7 @@
    "name": "roles/os/tasks/main.yml",
    "ftype": "file",
    "chksum_type": "sha256",
-   "chksum_sha256": "49db975145ccef47a0a87dd9e9d42c621e47c896ec15e2dd0489100f0d97e4ec",
+   "chksum_sha256": "535d3bdce87494c3a6ff9d1ce3e36b9c0e56c790c712f15f344663d384305d69",
    "format": 1
   },
   {
@@ -2104,7 +2104,7 @@
    "name": "roles/xfce4/defaults/main.yml",
    "ftype": "file",
    "chksum_type": "sha256",
-   "chksum_sha256": "336784a3988198a74cca8b0e215281f60a2522f2ac350f67993300220c588e83",
+   "chksum_sha256": "2bf8e1fbe56e8fc26631ece17dce378cc7498cf502db66c1c24f1ce04c8fb88a",
    "format": 1
   },
   {

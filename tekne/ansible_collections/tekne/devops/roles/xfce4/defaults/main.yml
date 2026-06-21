@@ -39,11 +39,6 @@ xfce4_packages:
   - bluez
   - bluez-utils
   - blueman
-  # Software needed at first boot.
-  - microsoft-edge-stable-bin
-  - ocs-url
-  - bitwarden-bin
-  - yubico-authenticator-bin
   # VLC
   - vlc
   - vlc-plugin-mpg123

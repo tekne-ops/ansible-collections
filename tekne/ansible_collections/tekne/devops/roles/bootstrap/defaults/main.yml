@@ -75,7 +75,7 @@ bootstrap_packages:
   - teams-for-linux-bin
   - httpfs2-2gbplus
   - ttf-ms-win10-auto
-  - heroic-games-launcher
+  # - heroic-games-launcher
   - crossover
   - deezer
   - asar
@@ -83,3 +83,7 @@ bootstrap_packages:
   - liblqr
   - omnissa-horizon-client
   - transmission-qt
+  - microsoft-edge-stable-bin
+  - ocs-url
+  - bitwarden-bin
+  - yubico-authenticator-bin

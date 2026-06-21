@@ -7,6 +7,9 @@ os_hostname: "{{ hostname }}"
 # During arch-chroot install: enable units but do not start services (PID 1 is live ISO)
 install_chroot_phase: false
 
+# Clone private tekne repos under /srv/code when git_token is in vault (skip otherwise)
+os_clone_tekne_repos: "{{ git_token is defined and git_token | string | trim | length > 0 }}"
+
 # Locale settings
 os_locale: en_US.UTF-8
 
