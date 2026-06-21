@@ -39,6 +39,8 @@ xfce4_packages:
   - bluez
   - bluez-utils
   - blueman
+  # virt-manager
+  - virt-manager
   # VLC
   - vlc
   - vlc-plugin-mpg123
