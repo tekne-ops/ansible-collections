@@ -13,7 +13,6 @@ xfce4_packages:
   - xfce4-panel-profiles
   - gnome-keyring
   - seahorse
-  - libsecret
   - xdg-desktop-portal
   - xdg-desktop-portal-gtk
   - xdg-desktop-portal-xapp
@@ -24,7 +23,6 @@ xfce4_packages:
   - bibata-cursor-theme-bin
   - flat-remix
   - kora-icon-theme
-  - xorg-server
   - xdotool
   - file-roller
   - thunar-volman

@@ -90,16 +90,6 @@
 # THEMIS: cronie, cpupower config, irqbalance (enable and start)
 # =============================================================================
 
-- name: Install cronie (THEMIS)
-  community.general.pacman:
-    name:
-      - cronie
-    state: present
-  when: os_hostname == 'THEMIS'
-  tags:
-    - os
-    - themis_services
-
 - name: Enable and start cronie, irqbalance, cpupower (THEMIS)
   ansible.builtin.systemd:
     name: "{{ item }}"

@@ -5,9 +5,7 @@
 # Gaming packages to install
 gaming_packages:
   - lutris
-  - heroic-games-launcher
   - steam
-  - ttf-liberation
   - lib32-systemd
   - wine-tkg-valve-exp-bleeding
   - winetricks
@@ -16,10 +14,6 @@ gaming_packages:
   - openbox
   - gamemode
   - proton-ge-custom-bin
-  - noto-fonts
-  - noto-fonts-cjk
-  - noto-fonts-emoji
-  - ttf-ms-win10-auto
   - lib32-pcsclite
 
 # File destinations
