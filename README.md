@@ -16,19 +16,15 @@ Playbooks that consume this collection live in the companion [`ansible-playbooks
 ```
 ansible-collections/
 └── tekne/
-    ├── devops/                          # tekne.devops collection source
-    │   ├── galaxy.yml                   # Collection metadata (namespace, version, deps)
-    │   ├── README.md                    # Collection-level docs
-    │   ├── meta/                        # Runtime dependencies
-    │   ├── plugins/                     # Custom Ansible plugins
-    │   └── roles/                       # All automation roles (see below)
-    └── ansible_collections/             # Vendored Galaxy collections
-        ├── tekne/devops/                # Installed copy of this collection
-        ├── community/general/
-        └── ansible/posix/
+    └── devops/                          # tekne.devops collection source (only copy in git)
+        ├── galaxy.yml                   # Collection metadata (namespace, version, deps)
+        ├── README.md                    # Collection-level docs
+        ├── meta/                        # Runtime dependencies
+        ├── plugins/                     # Custom Ansible plugins
+        └── roles/                       # All automation roles (see below)
 ```
 
-The canonical role source is `tekne/devops/`. The `tekne/ansible_collections/` tree is populated by `ansible-galaxy collection install` and used at runtime via `collections_path`.
+Install third-party collections via `ansible-galaxy collection install` (see `ansible-playbooks/requirements.yml`). Do not commit `tekne/ansible_collections/` or `ansible_collections/` — they are gitignored install artifacts.
 
 ## Collection: tekne.devops
 
@@ -91,7 +87,7 @@ When checked out alongside `ansible-playbooks`:
 
 ```bash
 # ansible-playbooks/ansible.cfg sets:
-# collections_path = ../ansible-collections/tekne
+# collections_path = ../ansible-collections
 
 ansible-galaxy collection install -r ../ansible-playbooks/requirements.yml
 ```

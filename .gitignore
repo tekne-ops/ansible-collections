@@ -16,6 +16,10 @@ eggs/
 .eggs/
 lib/
 lib64/
+# Installed Galaxy collections (ansible-galaxy collection install)
+tekne/ansible_collections/
+ansible_collections/
+.ansible/
 parts/
 sdist/
 var/
