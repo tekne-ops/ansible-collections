@@ -35,6 +35,19 @@
     - packages
 
 # =============================================================================
+# Display manager (plasma-login-manager)
+# =============================================================================
+
+- name: Enable plasmalogin.service without starting
+  ansible.builtin.systemd:
+    name: "{{ kde_login_service }}"
+    enabled: true
+    state: stopped
+  tags:
+    - kde
+    - service
+
+# =============================================================================
 # Verification
 # =============================================================================
 
@@ -49,9 +62,34 @@
     - kde
     - verify
 
+- name: Verify plasmalogin.service is enabled
+  ansible.builtin.command:
+    cmd: "systemctl is-enabled {{ kde_login_service }}"
+  register: kde_login_enabled_check
+  changed_when: false
+  failed_when: kde_login_enabled_check.rc != 0
+  tags:
+    - kde
+    - verify
+    - service
+
+- name: Verify plasmalogin.service is not running
+  ansible.builtin.command:
+    cmd: "systemctl is-active {{ kde_login_service }}"
+  register: kde_login_active_check
+  changed_when: false
+  failed_when: kde_login_active_check.rc == 0
+  tags:
+    - kde
+    - verify
+    - service
+
 - name: Display KDE installation result
   ansible.builtin.debug:
-    msg: "KDE packages installed: {{ kde_packages_install_result is success }}"
+    msg: >-
+      KDE packages installed: {{ kde_packages_install_result is success }},
+      {{ kde_login_service }} enabled: {{ kde_login_enabled_check.stdout | default('N/A') }},
+      {{ kde_login_service }} active: {{ kde_login_active_check.stdout | default('N/A') }} (should be inactive)
   tags:
     - kde
     - verify

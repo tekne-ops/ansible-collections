@@ -10,3 +10,6 @@ kde_packages:
   - plasma-meta
   - kde-applications-meta
   - plasma-login-manager
+
+# Display manager from plasma-login-manager
+kde_login_service: plasmalogin.service
