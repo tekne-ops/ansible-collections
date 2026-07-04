@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: dvaliente
+  description: Installs KDE Plasma desktop environment for Arch Linux
+  license: MIT-0
+  min_ansible_version: "2.10"
+
+  platforms:
+    - name: Archlinux
+      versions:
+        - all
+  galaxy_tags:
+    - kde
+    - plasma
+    - desktop
+    - archlinux
+
+dependencies: []

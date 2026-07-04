@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: MIT-0
+---
+# tasks file for ./kde
+
+# =============================================================================
+# Network Connectivity Check
+# =============================================================================
+
+- name: Wait for network connectivity before package installation
+  ansible.builtin.command:
+    cmd: ping -c 1 -W 2 archlinux.org
+  register: network_check
+  until: network_check.rc == 0
+  retries: 30
+  delay: 2
+  changed_when: false
+  when: not install_chroot_phase | bool
+  tags:
+    - kde
+    - network
+    - packages
+
+# =============================================================================
+# Package Installation
+# =============================================================================
+
+- name: Install KDE Plasma packages
+  community.general.pacman:
+    name: "{{ kde_packages }}"
+    state: present
+    extra_args: '--noconfirm --needed'
+  register: kde_packages_install_result
+  tags:
+    - kde
+    - packages
+
+# =============================================================================
+# Verification
+# =============================================================================
+
+- name: Verify KDE packages are installed
+  ansible.builtin.command:
+    cmd: "pacman -Q {{ item }}"
+  loop: "{{ kde_packages }}"
+  register: kde_package_verify
+  changed_when: false
+  failed_when: kde_package_verify.rc != 0
+  tags:
+    - kde
+    - verify
+
+- name: Display KDE installation result
+  ansible.builtin.debug:
+    msg: "KDE packages installed: {{ kde_packages_install_result is success }}"
+  tags:
+    - kde
+    - verify

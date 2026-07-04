@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MIT-0
+---
+# defaults file for ./kde
+
+# Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network)
+install_chroot_phase: false
+
+# KDE Plasma meta packages (pacman -Qg plasma / kde-applications)
+kde_packages:
+  - plasma-meta
+  - kde-applications-meta
+  - plasma-login-manager
