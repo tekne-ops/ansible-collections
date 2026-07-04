@@ -159,12 +159,51 @@
     - network-host
     - wifi
 
+- name: Prepare WiFi for live connect (ASTER)
+  when:
+    - network_hostname == 'ASTER'
+    - network_connect_wifi | bool
+  tags:
+    - network-host
+    - wifi
+  block:
+    - name: Load WiFi kernel module (ASTER)
+      community.general.modprobe:
+        name: "{{ network_wifi_driver_module }}"
+        state: present
+      failed_when: false
+
+    - name: Unblock WiFi rfkill (ASTER)
+      ansible.builtin.command: rfkill unblock wifi
+      changed_when: false
+      failed_when: false
+
+    - name: Start network services for live WiFi connect (ASTER)
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+      loop:
+        - systemd-networkd.service
+        - systemd-resolved.service
+        - iwd.service
+
+    - name: Brief pause for WiFi netdev registration (ASTER)
+      ansible.builtin.pause:
+        seconds: 3
+
 - name: Resolve WiFi interface name (ASTER only, auto-detect)
-  ansible.builtin.shell: "ls /sys/class/net | grep -E '^wl' | head -1"
+  ansible.builtin.shell: |
+    for iface in /sys/class/net/*; do
+      if [[ -d "${iface}/wireless" ]]; then
+        basename "${iface}"
+        exit 0
+      fi
+    done
+    exit 1
   register: _wifi_interface_cmd
   until: _wifi_interface_cmd.stdout | trim | length > 0
-  retries: 10
-  delay: 2
+  retries: "{{ network_wifi_detect_retries }}"
+  delay: "{{ network_wifi_detect_delay }}"
   changed_when: false
   when:
     - network_hostname == 'ASTER'

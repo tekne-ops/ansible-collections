@@ -5,7 +5,6 @@
 # Gaming packages to install
 gaming_packages:
   - lutris
-  - heroic-games-launcher
   - steam
   - ttf-liberation
   - lib32-systemd

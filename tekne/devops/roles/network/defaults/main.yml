@@ -14,6 +14,9 @@ network_config_hosts:
 network_wifi_ssid: "{{ os_wifi_ssid | default('esher') }}"
 network_wifi_interface: "{{ os_wifi_interface | default('') }}"
 network_wifi_passphrase: "{{ os_wifi_passphrase | default('') }}"
+network_wifi_driver_module: mt7925e
+network_wifi_detect_retries: 30
+network_wifi_detect_delay: 2
 
 # Live WiFi association via iwctl (disable during arch-chroot install; config still deploys)
 network_connect_wifi: true
