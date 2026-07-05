@@ -113,11 +113,23 @@
     - hermes
     - configure
 
-- name: Resolve Hermes remote privilege escalation mode
+- name: Set Hermes SSH connection facts
   ansible.builtin.set_fact:
     hermes_ssh_user_effective: "{{ hermes_ssh_user_resolved }}"
-    hermes_remote_become: "{{ hermes_bootstrap_uid != '0' }}"
-    hermes_become_flags: "{{ '-n' if hermes_bootstrap_uid != '0' else omit }}"
+    hermes_ssh_target: "{{ hermes_ssh_user_resolved }}@{{ hermes_public_ip }}"
+    hermes_ssh_argv: >-
+      {{
+        ['ssh', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=no',
+         '-o', 'UserKnownHostsFile=/dev/null', '-p', hermes_ssh_port_initial | string]
+        + (['-i', hermes_ssh_private_key_file] if (hermes_ssh_private_key_file | default('') | length > 0) else [])
+      }}
+    hermes_scp_argv: >-
+      {{
+        ['scp', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=no',
+         '-o', 'UserKnownHostsFile=/dev/null', '-P', hermes_ssh_port_initial | string]
+        + (['-i', hermes_ssh_private_key_file] if (hermes_ssh_private_key_file | default('') | length > 0) else [])
+      }}
+    hermes_remote_sudo: "{{ 'sudo -n' if hermes_bootstrap_uid != '0' else '' }}"
   tags:
     - hermes
     - configure
@@ -137,87 +149,118 @@
     - hermes
     - configure
 
-- name: Add Hermes EC2 host for configuration
-  ansible.builtin.add_host:
-    name: hermes_ec2
-    ansible_host: "{{ hermes_public_ip }}"
-    ansible_user: "{{ hermes_ssh_user_effective }}"
-    ansible_port: "{{ hermes_ssh_port_initial | int }}"
-    ansible_become: "{{ hermes_remote_become | bool }}"
-    ansible_become_method: sudo
-    ansible_become_flags: "{{ hermes_become_flags | default(omit) }}"
-    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-    ansible_ssh_private_key_file: "{{ hermes_ssh_private_key_file | default(omit) }}"
+- name: Create users on Hermes instance
+  ansible.builtin.command:
+    argv: >-
+      {{
+        hermes_ssh_argv
+        + [hermes_ssh_target]
+        + (['sudo', '-n'] if hermes_remote_sudo | length > 0 else [])
+        + ['bash', '-lc', "id -u " ~ item.name ~ " >/dev/null 2>&1 || useradd -m -s /bin/bash -G " ~ item.groups ~ " " ~ item.name ~ "; usermod -p " ~ (user_password | to_json) ~ " " ~ item.name]
+      }}
+  loop: "{{ hermes_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  changed_when: true
+  delegate_to: localhost
+  become: false
   tags:
     - hermes
     - configure
 
-- name: Configure Hermes EC2 instance via SSH
-  block:
-    - name: Create users on Hermes instance
-      ansible.builtin.user:
-        name: "{{ item.name }}"
-        shell: /bin/bash
-        groups: "{{ item.groups }}"
-        append: true
-        password: "{{ user_password }}"
-        create_home: true
-      loop: "{{ hermes_users }}"
-      loop_control:
-        label: "{{ item.name }}"
+- name: Configure authorized SSH keys on Hermes instance
+  ansible.builtin.command:
+    argv: >-
+      {{
+        hermes_ssh_argv
+        + [hermes_ssh_target]
+        + (['sudo', '-n'] if hermes_remote_sudo | length > 0 else [])
+        + ['bash', '-lc', "install -d -m 700 -o " ~ item.name ~ " -g users /home/" ~ item.name ~ "/.ssh; printf '%s\\n' " ~ (lookup('file', role_path + '/files/' + item.ssh_key_file) | to_json) ~ " > /home/" ~ item.name ~ "/.ssh/authorized_keys; chown " ~ item.name ~ ":users /home/" ~ item.name ~ "/.ssh/authorized_keys; chmod 600 /home/" ~ item.name ~ "/.ssh/authorized_keys"]
+      }}
+  loop: "{{ hermes_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  changed_when: true
+  delegate_to: localhost
+  become: false
+  tags:
+    - hermes
+    - configure
 
-    - name: Configure authorized SSH keys on Hermes instance
-      ansible.posix.authorized_key:
-        user: "{{ item.name }}"
-        state: present
-        exclusive: true
-        key: "{{ lookup('file', role_path + '/files/' + item.ssh_key_file) }}"
-      loop: "{{ hermes_users }}"
-      loop_control:
-        label: "{{ item.name }}"
+- name: Copy sudoers files to Hermes instance
+  ansible.builtin.command:
+    argv: "{{ hermes_scp_argv + [role_path + '/files/' + item.src, hermes_ssh_target + ':/tmp/' + item.dest] }}"
+  loop:
+    - { src: sudo_dvaliente, dest: sudo_dvaliente }
+    - { src: sudo_devops, dest: sudo_devops }
+  loop_control:
+    label: "{{ item.dest }}"
+  changed_when: true
+  delegate_to: localhost
+  become: false
+  tags:
+    - hermes
+    - configure
 
-    - name: Deploy sudoers file for dvaliente on Hermes instance
-      ansible.builtin.copy:
-        src: sudo_dvaliente
-        dest: /etc/sudoers.d/sudo_dvaliente
-        owner: root
-        group: root
-        mode: '0440'
-        validate: 'visudo -cf %s'
+- name: Install sudoers files on Hermes instance
+  ansible.builtin.command:
+    argv: >-
+      {{
+        hermes_ssh_argv
+        + [hermes_ssh_target]
+        + (['sudo', '-n'] if hermes_remote_sudo | length > 0 else [])
+        + ['bash', '-lc', "install -o root -g root -m 0440 /tmp/" ~ item.dest ~ " /etc/sudoers.d/" ~ item.dest ~ "; visudo -cf /etc/sudoers.d/" ~ item.dest]
+      }}
+  loop:
+    - { dest: sudo_dvaliente }
+    - { dest: sudo_devops }
+  loop_control:
+    label: "{{ item.dest }}"
+  changed_when: true
+  delegate_to: localhost
+  become: false
+  tags:
+    - hermes
+    - configure
 
-    - name: Deploy sudoers file for devops on Hermes instance
-      ansible.builtin.copy:
-        src: sudo_devops
-        dest: /etc/sudoers.d/sudo_devops
-        owner: root
-        group: root
-        mode: '0440'
-        validate: 'visudo -cf %s'
+- name: Copy SSH configuration to Hermes instance
+  ansible.builtin.command:
+    argv: "{{ hermes_scp_argv + [role_path + '/files/ssh.conf', hermes_ssh_target + ':/tmp/hermes-ssh.conf'] }}"
+  changed_when: true
+  delegate_to: localhost
+  become: false
+  tags:
+    - hermes
+    - configure
 
-    - name: Ensure sshd_config.d directory exists on Hermes instance
-      ansible.builtin.file:
-        path: /etc/ssh/sshd_config.d
-        state: directory
-        owner: root
-        group: root
-        mode: '0755'
+- name: Install SSH configuration on Hermes instance
+  ansible.builtin.command:
+    argv: >-
+      {{
+        hermes_ssh_argv
+        + [hermes_ssh_target]
+        + (['sudo', '-n'] if hermes_remote_sudo | length > 0 else [])
+        + ['bash', '-lc', 'install -d -m 0755 /etc/ssh/sshd_config.d; install -o root -g root -m 0644 /tmp/hermes-ssh.conf /etc/ssh/sshd_config.d/hermes.conf']
+      }}
+  changed_when: true
+  delegate_to: localhost
+  become: false
+  tags:
+    - hermes
+    - configure
 
-    - name: Deploy SSH configuration on Hermes instance
-      ansible.builtin.copy:
-        src: ssh.conf
-        dest: /etc/ssh/sshd_config.d/hermes.conf
-        owner: root
-        group: root
-        mode: '0644'
-      notify: Restart sshd on Hermes instance
-
-    - name: Flush handlers to apply SSH port change on Hermes instance
-      ansible.builtin.meta: flush_handlers
-
-  delegate_to: hermes_ec2
-  become: "{{ hermes_remote_become | bool }}"
-  become_method: sudo
-  become_flags: "{{ hermes_become_flags | default(omit) }}"
+- name: Restart sshd on Hermes instance
+  ansible.builtin.command:
+    argv: >-
+      {{
+        hermes_ssh_argv
+        + [hermes_ssh_target]
+        + (['sudo', '-n'] if hermes_remote_sudo | length > 0 else [])
+        + ['systemctl', 'restart', 'sshd']
+      }}
+  changed_when: true
+  delegate_to: localhost
+  become: false
   tags:
     - hermes
     - configure
