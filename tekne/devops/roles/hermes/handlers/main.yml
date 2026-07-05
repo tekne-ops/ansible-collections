@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Restart sshd on Hermes instance
+  ansible.builtin.systemd:
+    name: sshd.service
+    state: restarted
+  delegate_to: hermes_ec2
+  become: "{{ hermes_remote_become | bool }}"
+  become_method: sudo
+  become_flags: "{{ hermes_become_flags | default(omit) }}"
+  listen: Restart sshd on Hermes instance

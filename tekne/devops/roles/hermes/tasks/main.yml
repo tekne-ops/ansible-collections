@@ -1,0 +1,174 @@
+# SPDX-License-Identifier: MIT-0
+---
+# tasks file for hermes
+
+- name: Check if boto3 is available for Hermes
+  ansible.builtin.command: python3 -c "import boto3, botocore"
+  register: hermes_boto3_check
+  changed_when: false
+  failed_when: false
+  become: false
+  tags:
+    - hermes
+    - ec2
+
+- name: Install AWS SDK packages for Hermes
+  community.general.pacman:
+    name: "{{ hermes_aws_packages }}"
+    state: present
+  become: true
+  when: hermes_boto3_check.rc != 0
+  tags:
+    - hermes
+    - ec2
+
+- name: Set Hermes AWS credentials from environment
+  ansible.builtin.set_fact:
+    hermes_aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+    hermes_aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+    hermes_aws_session_token: "{{ lookup('env', 'AWS_SESSION_TOKEN') | default('', true) }}"
+  become: false
+  tags:
+    - hermes
+    - ec2
+
+- name: Require AWS credentials for Hermes
+  ansible.builtin.assert:
+    that:
+      - hermes_aws_access_key | length > 0
+      - hermes_aws_secret_key | length > 0
+    fail_msg: >-
+      Export AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY before running:
+      export AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=...
+  become: false
+  tags:
+    - hermes
+    - ec2
+
+- name: Manage tekne-devops-hermes EC2 instance
+  become: false
+  environment: "{{ hermes_aws_env }}"
+  vars:
+    hermes_aws_env: >-
+      {{
+        {
+          'AWS_ACCESS_KEY_ID': hermes_aws_access_key,
+          'AWS_SECRET_ACCESS_KEY': hermes_aws_secret_key,
+          'AWS_DEFAULT_REGION': hermes_aws_region
+        }
+        | combine(
+            {'AWS_SESSION_TOKEN': hermes_aws_session_token}
+            if (hermes_aws_session_token | length > 0) else {})
+      }}
+  tags:
+    - hermes
+    - ec2
+  block:
+    - name: Check if tekne-devops-hermes EC2 instance exists
+      amazon.aws.ec2_instance_info:
+        region: "{{ hermes_aws_region }}"
+        filters:
+          "tag:Name": "{{ hermes_instance_name }}"
+          instance-state-name:
+            - pending
+            - running
+            - stopping
+            - stopped
+      register: hermes_instance_check
+      changed_when: false
+
+    - name: Provision tekne-devops-hermes EC2 instance
+      when: hermes_instance_check.instances | length == 0
+      block:
+        - name: Look up subnets in Hermes VPC
+          amazon.aws.ec2_vpc_subnet_info:
+            region: "{{ hermes_aws_region }}"
+            filters:
+              vpc-id: "{{ hermes_vpc_id }}"
+          register: hermes_vpc_subnets
+          when: hermes_subnet_id | default('') | length == 0
+
+        - name: Fail when no subnets exist in Hermes VPC
+          ansible.builtin.fail:
+            msg: >-
+              No subnets found in VPC {{ hermes_vpc_id }} (region {{ hermes_aws_region }}).
+              Verify hermes_aws_region / AWS_DEFAULT_REGION and set hermes_subnet_id if needed.
+              Available subnets: {{ hermes_vpc_subnets.subnets | default([]) | map(attribute='subnet_id') | list }}
+          when:
+            - hermes_subnet_id | default('') | length == 0
+            - hermes_vpc_subnets.subnets | default([]) | length == 0
+
+        - name: Select subnet for Hermes EC2 instance
+          ansible.builtin.set_fact:
+            hermes_subnet_id_resolved: >-
+              {{
+                (hermes_vpc_subnets.subnets
+                  | selectattr('map_public_ip_on_launch', 'equalto', true)
+                  | list | first).subnet_id
+                if (hermes_vpc_subnets.subnets
+                  | selectattr('map_public_ip_on_launch', 'equalto', true) | list | length > 0)
+                else hermes_vpc_subnets.subnets[0].subnet_id
+              }}
+          when: hermes_subnet_id | default('') | length == 0
+
+        - name: Warn when Hermes subnet does not auto-assign public IP
+          ansible.builtin.debug:
+            msg: >-
+              No subnet with map_public_ip_on_launch=true in {{ hermes_vpc_id }}.
+              Using {{ hermes_subnet_id_resolved }}. Set hermes_subnet_id to a public
+              subnet if assign_public_ip fails.
+          when:
+            - hermes_subnet_id | default('') | length == 0
+            - hermes_assign_public_ip | bool
+            - (hermes_vpc_subnets.subnets
+               | selectattr('map_public_ip_on_launch', 'equalto', true) | list | length) == 0
+
+        - name: Create tekne-devops-hermes EC2 instance
+          amazon.aws.ec2_instance:
+            name: "{{ hermes_instance_name }}"
+            region: "{{ hermes_aws_region }}"
+            image_id: "{{ hermes_ami_id }}"
+            instance_type: "{{ hermes_instance_type }}"
+            key_name: "{{ hermes_key_pair }}"
+            vpc_subnet_id: "{{ hermes_subnet_id if (hermes_subnet_id | default('') | length > 0) else hermes_subnet_id_resolved }}"
+            network_interfaces:
+              - assign_public_ip: "{{ hermes_assign_public_ip }}"
+                device_index: 0
+                groups: "{{ hermes_security_groups }}"
+            user_data: "{{ hermes_ec2_user_data }}"
+            state: running
+            wait: true
+          register: hermes_instance_created
+
+    - name: Refresh tekne-devops-hermes EC2 instance info
+      amazon.aws.ec2_instance_info:
+        region: "{{ hermes_aws_region }}"
+        filters:
+          "tag:Name": "{{ hermes_instance_name }}"
+          instance-state-name:
+            - pending
+            - running
+            - stopping
+            - stopped
+      register: hermes_instance_final
+      changed_when: false
+
+- name: Set Hermes EC2 connection facts
+  ansible.builtin.set_fact:
+    hermes_public_ip: "{{ hermes_instance_final.instances[0].public_ip_address | default('') }}"
+    hermes_instance_state: "{{ hermes_instance_final.instances[0].state.name | default('') }}"
+  when: hermes_instance_final.instances | default([]) | length > 0
+  become: false
+  tags:
+    - hermes
+    - ec2
+    - configure
+
+- name: Configure tekne-devops-hermes EC2 instance
+  ansible.builtin.include_tasks: configure_instance.yml
+  when:
+    - hermes_public_ip | default('') | length > 0
+    - hermes_instance_state == 'running'
+  tags:
+    - hermes
+    - configure

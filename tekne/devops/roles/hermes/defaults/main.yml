@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: MIT-0
+---
+# defaults file for hermes
+hermes_instance_name: tekne-devops-hermes
+hermes_ami_id: ami-0e68dc81dc36750a1
+hermes_instance_type: t3a.micro
+hermes_key_pair: kp_david_valiente
+hermes_vpc_id: vpc-ae62eac5
+hermes_subnet_id: subnet-05ac3f07bd4bc3b24
+hermes_security_groups:
+  - sg-0186376294e0ed236
+  - sg-065b7505ca34712a5
+hermes_assign_public_ip: true
+hermes_aws_region: "{{ lookup('env', 'AWS_DEFAULT_REGION') | default('us-east-1', true) }}"
+hermes_aws_packages:
+  - python-boto3
+
+hermes_ssh_user: admin
+hermes_ssh_user_candidates:
+  - admin
+  - root
+  - arch
+  - ec2-user
+hermes_ssh_port_initial: 22
+hermes_ssh_port: 45100
+hermes_ssh_wait_timeout: 300
+hermes_ssh_private_key_file: ""
+hermes_remote_become: false
+hermes_ec2_user_data: |
+  #cloud-config
+  runcmd:
+    - |
+      install -d -m 0750 /etc/sudoers.d
+      echo "admin ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/99-ansible-bootstrap-admin
+      chmod 0440 /etc/sudoers.d/99-ansible-bootstrap-admin
+
+hermes_users:
+  - name: dvaliente
+    groups: wheel
+    ssh_key_file: dvaliente
+  - name: devops
+    groups: wheel
+    ssh_key_file: devops

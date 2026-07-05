@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: MIT-0
+---
+# tasks file for n8n
+
+- name: Check if n8n container already exists
+  ansible.builtin.command: docker ps -a -f name=^{{ n8n_container_name }}$ --format '{{ "{{" }}.Names{{ "}}" }}'
+  register: n8n_container_check
+  changed_when: false
+  failed_when: false
+  tags:
+    - n8n
+    - docker
+
+- name: Create n8n Docker volume
+  ansible.builtin.command: docker volume create {{ n8n_volume_name }}
+  when: (n8n_container_check.stdout | trim) != n8n_container_name
+  tags:
+    - n8n
+    - docker
+
+- name: Create and start n8n Docker container
+  ansible.builtin.shell: |
+    docker run -d --name {{ n8n_container_name }} --restart=unless-stopped \
+      --net {{ n8n_docker_network }} --ip {{ n8n_docker_ip }} \
+      -e GENERIC_TIMEZONE="{{ n8n_timezone }}" \
+      -e TZ="{{ n8n_timezone }}" \
+      -e N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true \
+      -e N8N_RUNNERS_ENABLED=true \
+      -v {{ n8n_volume_name }}:/home/node/.n8n \
+      {{ n8n_docker_image }}
+  when: (n8n_container_check.stdout | trim) != n8n_container_name
+  register: n8n_container_created
+  tags:
+    - n8n
+    - docker
