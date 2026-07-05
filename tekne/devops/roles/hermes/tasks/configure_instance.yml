@@ -130,6 +130,7 @@
         + (['-i', hermes_ssh_private_key_file] if (hermes_ssh_private_key_file | default('') | length > 0) else [])
       }}
     hermes_remote_sudo: "{{ 'sudo -n' if hermes_bootstrap_uid != '0' else '' }}"
+    hermes_remote_path: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
   tags:
     - hermes
     - configure
@@ -156,7 +157,7 @@
         hermes_ssh_argv
         + [hermes_ssh_target]
         + (['sudo', '-n'] if hermes_remote_sudo | length > 0 else [])
-        + ['bash', '-lc', "id -u " ~ item.name ~ " >/dev/null 2>&1 || useradd -m -s /bin/bash -G " ~ item.groups ~ " " ~ item.name ~ "; usermod -p " ~ (user_password | to_json) ~ " " ~ item.name]
+        + ['bash', '-lc', "export PATH=" ~ hermes_remote_path ~ "; id -u " ~ item.name ~ " >/dev/null 2>&1 || useradd -m -s /bin/bash -G " ~ item.groups ~ " " ~ item.name ~ "; usermod -p " ~ (user_password | to_json) ~ " " ~ item.name]
       }}
   loop: "{{ hermes_users }}"
   loop_control:
@@ -175,7 +176,7 @@
         hermes_ssh_argv
         + [hermes_ssh_target]
         + (['sudo', '-n'] if hermes_remote_sudo | length > 0 else [])
-        + ['bash', '-lc', "install -d -m 700 -o " ~ item.name ~ " -g users /home/" ~ item.name ~ "/.ssh; printf '%s\\n' " ~ (lookup('file', role_path + '/files/' + item.ssh_key_file) | to_json) ~ " > /home/" ~ item.name ~ "/.ssh/authorized_keys; chown " ~ item.name ~ ":users /home/" ~ item.name ~ "/.ssh/authorized_keys; chmod 600 /home/" ~ item.name ~ "/.ssh/authorized_keys"]
+        + ['bash', '-lc', "export PATH=" ~ hermes_remote_path ~ "; install -d -m 700 -o " ~ item.name ~ " -g users /home/" ~ item.name ~ "/.ssh; printf '%s\\n' " ~ (lookup('file', role_path + '/files/' + item.ssh_key_file) | to_json) ~ " > /home/" ~ item.name ~ "/.ssh/authorized_keys; chown " ~ item.name ~ ":users /home/" ~ item.name ~ "/.ssh/authorized_keys; chmod 600 /home/" ~ item.name ~ "/.ssh/authorized_keys"]
       }}
   loop: "{{ hermes_users }}"
   loop_control:
@@ -209,7 +210,7 @@
         hermes_ssh_argv
         + [hermes_ssh_target]
         + (['sudo', '-n'] if hermes_remote_sudo | length > 0 else [])
-        + ['bash', '-lc', "install -o root -g root -m 0440 /tmp/" ~ item.dest ~ " /etc/sudoers.d/" ~ item.dest ~ "; visudo -cf /etc/sudoers.d/" ~ item.dest]
+        + ['bash', '-lc', "export PATH=" ~ hermes_remote_path ~ "; install -o root -g root -m 0440 /tmp/" ~ item.dest ~ " /etc/sudoers.d/" ~ item.dest ~ "; visudo -cf /etc/sudoers.d/" ~ item.dest]
       }}
   loop:
     - { dest: sudo_dvaliente }
@@ -240,7 +241,7 @@
         hermes_ssh_argv
         + [hermes_ssh_target]
         + (['sudo', '-n'] if hermes_remote_sudo | length > 0 else [])
-        + ['bash', '-lc', 'install -d -m 0755 /etc/ssh/sshd_config.d; install -o root -g root -m 0644 /tmp/hermes-ssh.conf /etc/ssh/sshd_config.d/hermes.conf']
+        + ['bash', '-lc', "export PATH=" ~ hermes_remote_path ~ "; install -d -m 0755 /etc/ssh/sshd_config.d; install -o root -g root -m 0644 /tmp/hermes-ssh.conf /etc/ssh/sshd_config.d/hermes.conf"]
       }}
   changed_when: true
   delegate_to: localhost
@@ -256,7 +257,7 @@
         hermes_ssh_argv
         + [hermes_ssh_target]
         + (['sudo', '-n'] if hermes_remote_sudo | length > 0 else [])
-        + ['systemctl', 'restart', 'sshd']
+        + ['bash', '-lc', "export PATH=" ~ hermes_remote_path ~ "; systemctl restart sshd"]
       }}
   changed_when: true
   delegate_to: localhost
