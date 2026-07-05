@@ -242,6 +242,85 @@
     - hermes
     - configure
 
+- name: Install Docker on Hermes instance
+  ansible.builtin.command:
+    argv: "{{ hermes_ssh_argv + [hermes_ssh_target, hermes_remote_sudo_prefix + 'bash -c ' + (hermes_remote_script | quote)] }}"
+  vars:
+    hermes_remote_script: |
+      export PATH={{ hermes_remote_path }};
+      export DEBIAN_FRONTEND=noninteractive;
+      apt-get update;
+      apt-get install -y ca-certificates curl;
+      install -m 0755 -d /etc/apt/keyrings;
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc;
+      chmod a+r /etc/apt/keyrings/docker.asc;
+      . /etc/os-release;
+      codename="${UBUNTU_CODENAME:-$VERSION_CODENAME}";
+      arch=$(dpkg --print-architecture);
+      printf '%s\n' \
+        'Types: deb' \
+        'URIs: https://download.docker.com/linux/ubuntu' \
+        "Suites: ${codename}" \
+        'Components: stable' \
+        "Architectures: ${arch}" \
+        'Signed-By: /etc/apt/keyrings/docker.asc' \
+        > /etc/apt/sources.list.d/docker.sources
+  changed_when: true
+  delegate_to: localhost
+  become: false
+  tags:
+    - hermes
+    - configure
+
+- name: Install Docker packages on Hermes instance
+  ansible.builtin.command:
+    argv: "{{ hermes_ssh_argv + [hermes_ssh_target, hermes_remote_sudo_prefix + 'bash -c ' + (hermes_remote_script | quote)] }}"
+  vars:
+    hermes_remote_script: |
+      export PATH={{ hermes_remote_path }};
+      export DEBIAN_FRONTEND=noninteractive;
+      apt-get update;
+      apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  changed_when: true
+  delegate_to: localhost
+  become: false
+  tags:
+    - hermes
+    - configure
+
+- name: Enable and start Docker on Hermes instance
+  ansible.builtin.command:
+    argv: "{{ hermes_ssh_argv + [hermes_ssh_target, hermes_remote_sudo_prefix + 'bash -c ' + (hermes_remote_script | quote)] }}"
+  vars:
+    hermes_remote_script: |
+      export PATH={{ hermes_remote_path }};
+      systemctl enable docker;
+      systemctl start docker
+  changed_when: true
+  delegate_to: localhost
+  become: false
+  tags:
+    - hermes
+    - configure
+
+- name: Add Hermes users to docker group
+  ansible.builtin.command:
+    argv: "{{ hermes_ssh_argv + [hermes_ssh_target, hermes_remote_sudo_prefix + 'bash -c ' + (hermes_remote_script | quote)] }}"
+  vars:
+    hermes_remote_script: |
+      export PATH={{ hermes_remote_path }};
+      getent group docker >/dev/null || groupadd docker;
+      usermod -aG docker {{ item.name }}
+  loop: "{{ hermes_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  changed_when: true
+  delegate_to: localhost
+  become: false
+  tags:
+    - hermes
+    - configure
+
 - name: Copy SSH configuration to Hermes instance
   ansible.builtin.command:
     argv: "{{ hermes_scp_argv + [role_path + '/files/ssh.conf', hermes_ssh_target + ':/tmp/hermes-ssh.conf'] }}"
@@ -260,6 +339,31 @@
       export PATH={{ hermes_remote_path }};
       install -d -m 0755 /etc/ssh/sshd_config.d;
       install -o root -g root -m 0644 /tmp/hermes-ssh.conf /etc/ssh/sshd_config.d/hermes.conf
+  changed_when: true
+  delegate_to: localhost
+  become: false
+  tags:
+    - hermes
+    - configure
+
+- name: Copy SSH disable-admin configuration to Hermes instance
+  ansible.builtin.command:
+    argv: "{{ hermes_scp_argv + [role_path + '/files/ssh_disable_admin.conf', hermes_ssh_target + ':/tmp/hermes-ssh-disable-admin.conf'] }}"
+  changed_when: true
+  delegate_to: localhost
+  become: false
+  tags:
+    - hermes
+    - configure
+
+- name: Install SSH disable-admin configuration on Hermes instance
+  ansible.builtin.command:
+    argv: "{{ hermes_ssh_argv + [hermes_ssh_target, hermes_remote_sudo_prefix + 'bash -c ' + (hermes_remote_script | quote)] }}"
+  vars:
+    hermes_remote_script: >-
+      export PATH={{ hermes_remote_path }};
+      install -d -m 0755 /etc/ssh/sshd_config.d;
+      install -o root -g root -m 0644 /tmp/hermes-ssh-disable-admin.conf /etc/ssh/sshd_config.d/disable-admin.conf
   changed_when: true
   delegate_to: localhost
   become: false
