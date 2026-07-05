@@ -151,13 +151,31 @@
     - hermes
     - configure
 
-- name: Create users on Hermes instance
+- name: Ensure Hermes user supplementary groups exist
   ansible.builtin.command:
     argv: "{{ hermes_ssh_argv + [hermes_ssh_target, hermes_remote_sudo_prefix + 'bash -c ' + (hermes_remote_script | quote)] }}"
   vars:
     hermes_remote_script: >-
       export PATH={{ hermes_remote_path }};
-      id -u {{ item.name }} >/dev/null 2>&1 || useradd -m -s /bin/bash -G {{ item.groups }} {{ item.name }};
+      for g in {{ hermes_supplementary_groups | join(' ') }}; do
+        getent group "$g" >/dev/null || groupadd "$g";
+      done
+  when: hermes_supplementary_groups | length > 0
+  changed_when: true
+  delegate_to: localhost
+  become: false
+  tags:
+    - hermes
+    - configure
+
+- name: Create users on Hermes instance
+  ansible.builtin.command:
+    argv: "{{ hermes_ssh_argv + [hermes_ssh_target, hermes_remote_sudo_prefix + 'bash -c ' + (hermes_remote_script | quote)] }}"
+  vars:
+    hermes_useradd_groups: "{{ '-G ' + item.groups if (item.groups | default('') | length > 0) else '' }}"
+    hermes_remote_script: >-
+      export PATH={{ hermes_remote_path }};
+      id -u {{ item.name }} >/dev/null 2>&1 || useradd -m -s /bin/bash {{ hermes_useradd_groups }} {{ item.name }};
       usermod -p {{ user_password | to_json }} {{ item.name }}
   loop: "{{ hermes_users }}"
   loop_control:
@@ -175,9 +193,9 @@
   vars:
     hermes_remote_script: >-
       export PATH={{ hermes_remote_path }};
-      install -d -m 700 -o {{ item.name }} -g users /home/{{ item.name }}/.ssh;
+      install -d -m 700 -o {{ item.name }} -g {{ item.name }} /home/{{ item.name }}/.ssh;
       printf '%s\n' {{ lookup('file', role_path + '/files/' + item.ssh_key_file) | to_json }} > /home/{{ item.name }}/.ssh/authorized_keys;
-      chown {{ item.name }}:users /home/{{ item.name }}/.ssh/authorized_keys;
+      chown {{ item.name }}:{{ item.name }} /home/{{ item.name }}/.ssh/authorized_keys;
       chmod 600 /home/{{ item.name }}/.ssh/authorized_keys
   loop: "{{ hermes_users }}"
   loop_control:

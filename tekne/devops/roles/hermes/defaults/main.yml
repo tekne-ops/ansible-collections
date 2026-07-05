@@ -41,3 +41,4 @@ hermes_users:
   - name: devops
     groups: wheel
     ssh_key_file: devops
+hermes_supplementary_groups: "{{ hermes_users | map(attribute='groups') | select('defined') | map('split', ',') | flatten | unique | list }}"
