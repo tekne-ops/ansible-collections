@@ -176,7 +176,7 @@
     hermes_remote_script: >-
       export PATH={{ hermes_remote_path }};
       id -u {{ item.name }} >/dev/null 2>&1 || useradd -m -s /bin/bash {{ hermes_useradd_groups }} {{ item.name }};
-      usermod -p {{ user_password | to_json }} {{ item.name }}
+      usermod -p {{ user_password | quote }} {{ item.name }}
   loop: "{{ hermes_users }}"
   loop_control:
     label: "{{ item.name }}"
@@ -252,14 +252,14 @@
       apt-get update;
       apt-get install -y ca-certificates curl;
       install -m 0755 -d /etc/apt/keyrings;
-      curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc;
+      curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc;
       chmod a+r /etc/apt/keyrings/docker.asc;
       . /etc/os-release;
       codename="${UBUNTU_CODENAME:-$VERSION_CODENAME}";
       arch=$(dpkg --print-architecture);
       printf '%s\n' \
         'Types: deb' \
-        'URIs: https://download.docker.com/linux/ubuntu' \
+        'URIs: https://download.docker.com/linux/debian' \
         "Suites: ${codename}" \
         'Components: stable' \
         "Architectures: ${arch}" \
