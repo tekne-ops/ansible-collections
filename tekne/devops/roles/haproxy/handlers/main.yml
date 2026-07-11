@@ -1,3 +1,8 @@
 # SPDX-License-Identifier: MIT-0
 ---
 # handlers file for ansible-role-haproxy
+
+- name: Restart haproxy container
+  ansible.builtin.command: docker restart haproxy
+  changed_when: true
+  failed_when: false

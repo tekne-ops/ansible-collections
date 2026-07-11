@@ -37,14 +37,35 @@
 # File Configuration
 # =============================================================================
 
-- name: Copy game.conf to limits.d
+- name: Set effective hostname for gaming role
+  ansible.builtin.set_fact:
+    gaming_effective_hostname: "{{ (hostname | default(cached_hostname | default(ansible_hostname))) | upper }}"
+  tags:
+    - gaming
+    - config
+
+- name: Install YUGEN NVIDIA Xorg configuration
   ansible.builtin.copy:
     src: game.conf
+    dest: "{{ gaming_xorg_conf_dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  register: gaming_xorg_conf_result
+  when: gaming_effective_hostname in gaming_hosts
+  tags:
+    - gaming
+    - config
+
+- name: Install gaming limits configuration
+  ansible.builtin.copy:
+    src: gaming-limits.conf
     dest: "{{ gaming_limits_conf_dest }}"
     owner: root
     group: root
     mode: '0644'
   register: game_conf_result
+  when: gaming_effective_hostname in gaming_hosts
   tags:
     - gaming
     - config
@@ -57,6 +78,7 @@
     group: root
     mode: '0755'
   register: game_script_result
+  when: gaming_effective_hostname in gaming_hosts
   tags:
     - gaming
     - config
@@ -76,20 +98,42 @@
     - gaming
     - verify
 
-- name: Verify game.conf exists
+- name: Verify gaming limits configuration exists
   ansible.builtin.stat:
     path: "{{ gaming_limits_conf_dest }}"
   register: game_conf_stat
+  when: gaming_effective_hostname in gaming_hosts
   tags:
     - gaming
     - verify
 
-- name: Assert game.conf was copied
+- name: Assert gaming limits configuration was copied
   ansible.builtin.assert:
     that:
       - game_conf_stat.stat.exists
       - game_conf_stat.stat.mode == '0644'
-    fail_msg: "game.conf was not copied correctly"
+    fail_msg: "gaming limits configuration was not copied correctly"
+  when: gaming_effective_hostname in gaming_hosts
+  tags:
+    - gaming
+    - verify
+
+- name: Verify YUGEN NVIDIA Xorg configuration exists
+  ansible.builtin.stat:
+    path: "{{ gaming_xorg_conf_dest }}"
+  register: gaming_xorg_conf_stat
+  when: gaming_effective_hostname in gaming_hosts
+  tags:
+    - gaming
+    - verify
+
+- name: Assert YUGEN NVIDIA Xorg configuration was copied
+  ansible.builtin.assert:
+    that:
+      - gaming_xorg_conf_stat.stat.exists
+      - gaming_xorg_conf_stat.stat.mode == '0644'
+    fail_msg: "YUGEN NVIDIA Xorg configuration was not copied correctly"
+  when: gaming_effective_hostname in gaming_hosts
   tags:
     - gaming
     - verify
@@ -98,6 +142,7 @@
   ansible.builtin.stat:
     path: "{{ gaming_script_dest }}"
   register: game_script_stat
+  when: gaming_effective_hostname in gaming_hosts
   tags:
     - gaming
     - verify
@@ -109,6 +154,7 @@
       - game_script_stat.stat.executable
       - game_script_stat.stat.mode == '0755'
     fail_msg: "game script was not copied or is not executable"
+  when: gaming_effective_hostname in gaming_hosts
   tags:
     - gaming
     - verify
@@ -116,12 +162,12 @@
 - name: Display installation summary
   ansible.builtin.debug:
     msg: |
-      Gaming Installation Summary:
-      ============================
+      Gaming Installation Summary ({{ gaming_effective_hostname }}):
+      ==============================================================
       Packages installed: {{ gaming_install_result is success }}
-      game.conf copied: {{ game_conf_result is success }} -> {{ gaming_limits_conf_dest }}
-      game script copied: {{ game_script_result is success }} -> {{ gaming_script_dest }}
-      game script executable: {{ game_script_stat.stat.executable }}
+      NVIDIA Xorg config: {{ (gaming_xorg_conf_result is success) if gaming_effective_hostname in gaming_hosts else 'skipped' }}
+      limits config: {{ (game_conf_result is success) if gaming_effective_hostname in gaming_hosts else 'skipped' }}
+      game script: {{ (game_script_result is success) if gaming_effective_hostname in gaming_hosts else 'skipped' }}
   tags:
     - gaming
     - verify

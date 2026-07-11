@@ -7,6 +7,13 @@ os_hostname: "{{ hostname }}"
 # During arch-chroot install: enable units but do not start services (PID 1 is live ISO)
 install_chroot_phase: false
 
+# CPU governor: performance on YUGEN; ASTER defers to TLP (config only, service not started)
+os_cpupower_governor: "{{ 'performance' if os_hostname == 'YUGEN' else 'schedutil' }}"
+os_cpupower_start_hosts:
+  - YUGEN
+os_irqbalance_start_hosts:
+  - YUGEN
+
 # Clone private tekne repos under /srv/code when git_token is in vault (skip otherwise)
 os_clone_tekne_repos: "{{ git_token is defined and git_token | string | trim | length > 0 }}"
 

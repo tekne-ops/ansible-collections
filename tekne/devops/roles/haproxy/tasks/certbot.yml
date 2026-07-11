@@ -1,0 +1,157 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Certbot + Cloudflare DNS for tekne.sv wildcard TLS (host-side; PEM mounted into HAProxy container)
+
+- name: Validate certbot Cloudflare credentials
+  ansible.builtin.assert:
+    that:
+      - haproxy_cloudflare_api_token is defined
+      - haproxy_cloudflare_api_token | string | trim | length > 0
+      - haproxy_certbot_email is defined
+      - haproxy_certbot_email | string | trim | length > 0
+    fail_msg: >-
+      Set haproxy_cloudflare_api_token and haproxy_certbot_email in vault when
+      haproxy_certbot_enabled is true.
+    success_msg: Certbot Cloudflare credentials configured
+  tags:
+    - haproxy
+    - certbot
+
+- name: Install certbot build dependencies
+  community.general.pacman:
+    name: "{{ haproxy_certbot_packages }}"
+    state: present
+  tags:
+    - haproxy
+    - certbot
+
+- name: Create certbot Python virtualenv
+  ansible.builtin.command:
+    cmd: python -m venv {{ haproxy_certbot_venv }}
+    creates: "{{ haproxy_certbot_venv }}/bin/python"
+  tags:
+    - haproxy
+    - certbot
+
+- name: Upgrade pip in certbot virtualenv
+  ansible.builtin.pip:
+    name: pip
+    state: latest
+    virtualenv: "{{ haproxy_certbot_venv }}"
+  tags:
+    - haproxy
+    - certbot
+
+- name: Install certbot and Cloudflare DNS plugin in virtualenv
+  ansible.builtin.pip:
+    name:
+      - certbot
+      - certbot-dns-cloudflare
+    state: present
+    virtualenv: "{{ haproxy_certbot_venv }}"
+  tags:
+    - haproxy
+    - certbot
+
+- name: Symlink certbot into /usr/local/bin
+  ansible.builtin.file:
+    src: "{{ haproxy_certbot_venv }}/bin/certbot"
+    dest: /usr/local/bin/certbot
+    state: link
+    force: true
+  tags:
+    - haproxy
+    - certbot
+
+- name: Deploy Cloudflare credentials for certbot
+  ansible.builtin.template:
+    src: cloudflare.ini.j2
+    dest: "{{ haproxy_certbot_cloudflare_ini }}"
+    owner: root
+    group: root
+    mode: '0600'
+  tags:
+    - haproxy
+    - certbot
+
+- name: Ensure certbot deploy-hook directory exists
+  ansible.builtin.file:
+    path: /etc/letsencrypt/renewal-hooks/deploy
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - haproxy
+    - certbot
+
+- name: Install certbot renewal deploy hook for HAProxy
+  ansible.builtin.copy:
+    src: certbot-renew-haproxy.sh
+    dest: /etc/letsencrypt/renewal-hooks/deploy/haproxy-tekne-sv.sh
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - haproxy
+    - certbot
+
+- name: Obtain wildcard certificate via Cloudflare DNS
+  ansible.builtin.command:
+    argv:
+      - "{{ haproxy_certbot_venv }}/bin/certbot"
+      - certonly
+      - --dns-cloudflare
+      - --dns-cloudflare-credentials
+      - "{{ haproxy_certbot_cloudflare_ini }}"
+      - --non-interactive
+      - --agree-tos
+      - --email
+      - "{{ haproxy_certbot_email }}"
+      - -d
+      - "{{ haproxy_certbot_wildcard }}"
+  register: haproxy_certbot_issue
+  changed_when: >-
+    'Congratulations' in haproxy_certbot_issue.stdout
+    or 'Successfully received certificate' in haproxy_certbot_issue.stdout
+  tags:
+    - haproxy
+    - certbot
+
+- name: Read Let's Encrypt certificate files
+  ansible.builtin.slurp:
+    src: "{{ item }}"
+  loop:
+    - "{{ haproxy_le_live_dir }}/fullchain.pem"
+    - "{{ haproxy_le_live_dir }}/privkey.pem"
+  register: haproxy_le_cert_parts
+  tags:
+    - haproxy
+    - certbot
+
+- name: Build HAProxy combined PEM from Let's Encrypt certificates
+  ansible.builtin.copy:
+    content: >-
+      {{ (haproxy_le_cert_parts.results[0].content | b64decode)
+      ~ (haproxy_le_cert_parts.results[1].content | b64decode) }}
+    dest: "{{ haproxy_le_combined_pem }}"
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Restart haproxy container
+  tags:
+    - haproxy
+    - certbot
+
+- name: Deploy Let's Encrypt PEM to HAProxy docker volume
+  ansible.builtin.copy:
+    src: "{{ haproxy_le_combined_pem }}"
+    dest: /srv/docker/haproxy/tekne.sv.pem
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Restart haproxy container
+  tags:
+    - haproxy
+    - certbot

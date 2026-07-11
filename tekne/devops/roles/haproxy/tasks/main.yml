@@ -13,6 +13,13 @@
     - haproxy
     - config
 
+- name: Install and configure certbot for HAProxy TLS
+  ansible.builtin.import_tasks: certbot.yml
+  when: haproxy_certbot_enabled | bool
+  tags:
+    - haproxy
+    - certbot
+
 - name: Copy haproxy.cfg to /var/www/haproxy
   ansible.builtin.copy:
     src: haproxy.cfg
@@ -30,6 +37,7 @@
       - (haproxy_ssl_pem is defined and (haproxy_ssl_pem | default('') | trim | length > 0)) or (haproxy_ssl_pem_path is defined and (haproxy_ssl_pem_path | default('') | trim | length > 0))
     fail_msg: "Set haproxy_ssl_pem (in vault) or haproxy_ssl_pem_path (-e) to provide the TLS cert+key for HAProxy. Do not commit the PEM file to the role."
     success_msg: "SSL PEM source configured"
+  when: not (haproxy_certbot_enabled | bool)
   tags:
     - haproxy
     - config
@@ -41,6 +49,7 @@
     owner: root
     group: root
     mode: '0600'
+  when: not (haproxy_certbot_enabled | bool)
   tags:
     - haproxy
     - config

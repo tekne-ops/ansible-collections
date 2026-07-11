@@ -118,17 +118,16 @@
   tags:
     - network-host
 
-- name: Enable and restart iwd (ASTER only)
+- name: Enable laptop services (ASTER only)
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: true
-    state: stopped
+    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
   loop:
     - bluetooth.service
     - iwd.service
     - thermald.service
     - tlp.service
-    # - nvidia-powerd.service
   when: network_hostname == 'ASTER'
   tags:
     - network-host

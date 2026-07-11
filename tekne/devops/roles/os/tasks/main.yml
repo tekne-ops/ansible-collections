@@ -29,22 +29,33 @@
 # CPU power / governor
 # =============================================================================
 
-- name: Set CPU governor to performance in cpupower-service.conf
+- name: Set CPU governor in cpupower-service.conf
   ansible.builtin.lineinfile:
     path: /etc/default/cpupower-service.conf
     regexp: "^#?GOVERNOR=.*"
-    line: "GOVERNOR='performance'"
+    line: "GOVERNOR='{{ os_cpupower_governor }}'"
     create: true
     mode: '0644'
   tags:
     - os
     - cpupower
 
-- name: Enable cpupower.service (do not start)
+- name: Enable and start cpupower.service (YUGEN only)
   ansible.builtin.systemd:
     name: cpupower
     enabled: true
-    state: stopped
+    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
+  when: os_hostname in os_cpupower_start_hosts
+  tags:
+    - os
+    - cpupower
+
+- name: Enable and start irqbalance.service (YUGEN only)
+  ansible.builtin.systemd:
+    name: irqbalance
+    enabled: true
+    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
+  when: os_hostname in os_irqbalance_start_hosts
   tags:
     - os
     - cpupower

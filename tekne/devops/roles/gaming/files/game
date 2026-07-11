@@ -7,7 +7,7 @@ if [ $# -ge 1 ]; then
     DISPLAY=:1.0
     echo -e "${openbox} &${game}" > ${tmpgame}
     echo "starting ${game}"
-    xinit ${tmpgame} -- :1 -xf86config game.conf vt$XDG_VTNR || exit 1
+    xinit ${tmpgame} -- :1 -xf86config /etc/X11/xorg.conf.d/20-yugen-nvidia.conf vt$XDG_VTNR || exit 1
 else
     echo "not a valid argument"
 fi

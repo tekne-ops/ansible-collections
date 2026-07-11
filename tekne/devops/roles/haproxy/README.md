@@ -7,17 +7,31 @@ Requirements
 ------------
 
 - Docker (e.g. ansible-role-docker). HAProxy runs in a container on network `dockers` at 192.168.75.10.
-- TLS certificate: you must provide the PEM (cert + key) via **Ansible Vault** or a **path on the controller** — see below.
+- TLS certificate: use **certbot + Cloudflare DNS** on THEMIS, or provide the PEM via **Ansible Vault** or a **path on the controller** — see below.
 
 Role Variables
 --------------
 
 | Variable | Description |
 |----------|-------------|
-| `haproxy_ssl_pem` | **(vault)** Full PEM content (private key + certificate). Set in the playbook vault file. |
-| `haproxy_ssl_pem_path` | Path on the Ansible controller to the PEM file. Use `-e haproxy_ssl_pem_path=/path/to/tekne.sv.pem` when running the playbook. |
+| `haproxy_certbot_enabled` | When `true`, install certbot in `/opt/certbot` and obtain `*.tekne.sv` via Cloudflare DNS. Default: `false`. |
+| `haproxy_certbot_email` | Let's Encrypt registration email (required when certbot is enabled). Set in vault. |
+| `haproxy_cloudflare_api_token` | Cloudflare API token with DNS edit permission (required when certbot is enabled). Set in vault. |
+| `haproxy_certbot_wildcard` | Certificate SAN. Default: `*.tekne.sv`. |
+| `haproxy_ssl_pem` | **(vault)** Full PEM content (private key + certificate). Used when certbot is disabled. |
+| `haproxy_ssl_pem_path` | Path on the Ansible controller to the PEM file. Used when certbot is disabled. |
 
-**SSL certificate (tekne.sv.pem):** The PEM contains a private key and must never be committed to the role or git.
+**Certbot (recommended on THEMIS):** Add to the playbook vault file:
+
+```yaml
+haproxy_certbot_enabled: true
+haproxy_certbot_email: admin@tekne.sv
+haproxy_cloudflare_api_token: "<cloudflare-api-token>"
+```
+
+The role installs certbot in a Python venv at `/opt/certbot`, writes `/root/cloudflare.ini`, requests a wildcard cert with `certbot-dns-cloudflare`, builds `/etc/letsencrypt/live/tekne.sv/haproxy.pem`, and copies it to `/srv/docker/haproxy/tekne.sv.pem` for the container. A deploy hook at `/etc/letsencrypt/renewal-hooks/deploy/haproxy-tekne-sv.sh` rebuilds the PEM after renewal.
+
+**Manual SSL certificate (tekne.sv.pem):** The PEM contains a private key and must never be committed to the role or git.
 
 - **Option 1 – Vault (recommended):** Add to the playbook’s vault file:
   ```yaml

@@ -2,9 +2,24 @@
 ---
 # defaults file for ansible-role-haproxy
 #
-# SSL certificate for HAProxy (tekne.sv). Provide exactly one of:
+# SSL certificate for HAProxy (tekne.sv). Either enable certbot (recommended on THEMIS)
+# or provide exactly one of:
 #   - haproxy_ssl_pem: full PEM content (cert + key) — set in vault
 #   - haproxy_ssl_pem_path: path on the controller to the PEM file
 # See vars/main.yml and README for secure setup.
 haproxy_ssl_pem: null
 haproxy_ssl_pem_path: null
+
+# Certbot + Cloudflare DNS (host-side venv; PEM copied into /srv/docker/haproxy/)
+haproxy_certbot_enabled: false
+haproxy_certbot_packages:
+  - python
+  - gcc
+haproxy_certbot_venv: /opt/certbot
+haproxy_certbot_cloudflare_ini: /root/cloudflare.ini
+haproxy_certbot_domain: tekne.sv
+haproxy_certbot_wildcard: '*.tekne.sv'
+haproxy_certbot_email: null
+haproxy_cloudflare_api_token: null
+haproxy_le_live_dir: /etc/letsencrypt/live/tekne.sv
+haproxy_le_combined_pem: /etc/letsencrypt/live/tekne.sv/haproxy.pem

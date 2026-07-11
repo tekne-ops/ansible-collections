@@ -21,6 +21,11 @@ gaming_packages:
   - ttf-ms-win10-auto
   - lib32-pcsclite
 
+# Hostnames that receive YUGEN NVIDIA Xorg tuning and gaming limits
+gaming_hosts:
+  - YUGEN
+
 # File destinations
-gaming_limits_conf_dest: /etc/security/limits.d/game.conf
+gaming_xorg_conf_dest: /etc/X11/xorg.conf.d/20-yugen-nvidia.conf
+gaming_limits_conf_dest: /etc/security/limits.d/gaming.conf
 gaming_script_dest: /usr/local/bin/game
