@@ -28,6 +28,35 @@
   changed_when: false
   failed_when: docker_packages_check.rc != 0
 
+- name: Ensure /etc/docker directory exists
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when:
+    - docker_packages_check.rc == 0
+    - docker_hostname in docker_daemon_json_hosts
+  tags:
+    - docker-host
+    - config
+
+- name: Deploy Docker daemon.json (YUGEN, THEMIS)
+  ansible.builtin.copy:
+    src: daemon.json
+    dest: "{{ docker_daemon_json_dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - docker_packages_check.rc == 0
+    - docker_hostname in docker_daemon_json_hosts
+  notify: Restart docker
+  tags:
+    - docker-host
+    - config
+
 - name: Enable docker.service (do not start)
   ansible.builtin.systemd:
     name: docker
@@ -40,6 +69,15 @@
     name: docker
     state: started
   when: docker_packages_check.rc == 0
+
+- name: Flush handlers so daemon.json takes effect before network setup
+  ansible.builtin.meta: flush_handlers
+  when:
+    - docker_packages_check.rc == 0
+    - docker_hostname in docker_daemon_json_hosts
+  tags:
+    - docker-host
+    - config
 
 - name: Check if dockers network exists
   ansible.builtin.command: docker network inspect dockers

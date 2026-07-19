@@ -36,11 +36,12 @@
     line: "GOVERNOR='{{ os_cpupower_governor }}'"
     create: true
     mode: '0644'
+  when: os_hostname not in os_cpupower_skip_hosts
   tags:
     - os
     - cpupower
 
-- name: Enable and start cpupower.service (YUGEN only)
+- name: Enable and start cpupower.service
   ansible.builtin.systemd:
     name: cpupower
     enabled: true
@@ -50,7 +51,7 @@
     - os
     - cpupower
 
-- name: Enable and start irqbalance.service (YUGEN only)
+- name: Enable and start irqbalance.service
   ansible.builtin.systemd:
     name: irqbalance
     enabled: true

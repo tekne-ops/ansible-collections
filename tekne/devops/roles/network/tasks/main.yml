@@ -118,6 +118,18 @@
   tags:
     - network-host
 
+- name: Deploy TLP configuration (ASTER only)
+  ansible.builtin.copy:
+    src: tlp.conf
+    dest: /etc/tlp.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: network_hostname == 'ASTER'
+  tags:
+    - network-host
+    - wifi
+
 - name: Enable laptop services (ASTER only)
   ansible.builtin.systemd:
     name: "{{ item }}"

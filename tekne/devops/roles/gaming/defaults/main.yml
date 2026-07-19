@@ -21,11 +21,21 @@ gaming_packages:
   - ttf-ms-win10-auto
   - lib32-pcsclite
 
-# Hostnames that receive YUGEN NVIDIA Xorg tuning and gaming limits
+# Hostnames that receive gaming packages, limits, schedtoold, gamemode
 gaming_hosts:
+  - YUGEN
+  - ASTER
+
+# YUGEN-only NVIDIA Xorg drop-in (monitor-specific; do not deploy on ASTER)
+gaming_xorg_hosts:
   - YUGEN
 
 # File destinations
 gaming_xorg_conf_dest: /etc/X11/xorg.conf.d/20-yugen-nvidia.conf
 gaming_limits_conf_dest: /etc/security/limits.d/gaming.conf
 gaming_script_dest: /usr/local/bin/game
+gaming_schedtoold_conf_dest: /etc/schedtoold.conf
+gaming_gamemode_ini_dest: /etc/gamemode.ini
+gaming_gamemode_users:
+  - dvaliente
+  - devops

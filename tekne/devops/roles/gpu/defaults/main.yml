@@ -2,17 +2,21 @@
 ---
 # defaults file for ./ansible-role-gpu
 
-# Hostnames that use the NVIDIA stack (must match /etc/hostname, upper case)
+# Discrete NVIDIA only (desktop)
 gpu_nvidia_hostnames:
   - YUGEN
 
-gpu_intel_hostnames:
+# Hybrid Intel iGPU + NVIDIA dGPU (laptop gaming)
+gpu_hybrid_hostnames:
   - ASTER
+
+# Intel/Mesa only
+gpu_intel_hostnames:
   - THEMIS
   - HEPHAESTUS
   - KVM
 
-# NVIDIA packages (YUGEN)
+# NVIDIA packages (YUGEN discrete, ASTER hybrid)
 gpu_nvidia_packages:
   - lib32-opencl-nvidia-tkg
   - lib32-vulkan-icd-loader
@@ -23,7 +27,11 @@ gpu_nvidia_packages:
   - vulkan-icd-loader
   - nvidia-utils-tkg
 
-# Intel/Mesa packages (THEMIS, KVM, …)
+# Extra packages for hybrid PRIME offload (ASTER)
+gpu_hybrid_extra_packages:
+  - nvidia-prime
+
+# Intel/Mesa packages (THEMIS, KVM, ASTER hybrid iGPU)
 gpu_intel_packages:
   - mesa
   - lib32-mesa

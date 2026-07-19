@@ -1,3 +1,12 @@
 # SPDX-License-Identifier: MIT-0
 ---
 # defaults file for ansible-role-docker
+
+docker_hostname: "{{ hostname | default(ansible_hostname) | upper }}"
+
+# Hosts that receive daemon.json performance tuning
+docker_daemon_json_hosts:
+  - YUGEN
+  - THEMIS
+
+docker_daemon_json_dest: /etc/docker/daemon.json

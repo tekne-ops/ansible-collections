@@ -52,7 +52,7 @@
     group: root
     mode: '0644'
   register: gaming_xorg_conf_result
-  when: gaming_effective_hostname in gaming_hosts
+  when: gaming_effective_hostname in gaming_xorg_hosts
   tags:
     - gaming
     - config
@@ -78,6 +78,60 @@
     group: root
     mode: '0755'
   register: game_script_result
+  when: gaming_effective_hostname in gaming_hosts
+  tags:
+    - gaming
+    - config
+
+- name: Install schedtoold configuration
+  ansible.builtin.copy:
+    src: schedtoold.conf
+    dest: "{{ gaming_schedtoold_conf_dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  when: gaming_effective_hostname in gaming_hosts
+  tags:
+    - gaming
+    - config
+
+- name: Install gamemode configuration
+  ansible.builtin.copy:
+    src: gamemode.ini
+    dest: "{{ gaming_gamemode_ini_dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  when: gaming_effective_hostname in gaming_hosts
+  tags:
+    - gaming
+    - config
+
+- name: Enable and start schedtoold.service
+  ansible.builtin.systemd:
+    name: schedtoold
+    enabled: true
+    state: started
+  when: gaming_effective_hostname in gaming_hosts
+  tags:
+    - gaming
+    - config
+
+- name: Ensure gamemode group exists
+  ansible.builtin.group:
+    name: gamemode
+    state: present
+  when: gaming_effective_hostname in gaming_hosts
+  tags:
+    - gaming
+    - config
+
+- name: Add gaming users to gamemode group
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: gamemode
+    append: true
+  loop: "{{ gaming_gamemode_users }}"
   when: gaming_effective_hostname in gaming_hosts
   tags:
     - gaming
@@ -122,7 +176,7 @@
   ansible.builtin.stat:
     path: "{{ gaming_xorg_conf_dest }}"
   register: gaming_xorg_conf_stat
-  when: gaming_effective_hostname in gaming_hosts
+  when: gaming_effective_hostname in gaming_xorg_hosts
   tags:
     - gaming
     - verify
@@ -133,7 +187,7 @@
       - gaming_xorg_conf_stat.stat.exists
       - gaming_xorg_conf_stat.stat.mode == '0644'
     fail_msg: "YUGEN NVIDIA Xorg configuration was not copied correctly"
-  when: gaming_effective_hostname in gaming_hosts
+  when: gaming_effective_hostname in gaming_xorg_hosts
   tags:
     - gaming
     - verify
@@ -165,7 +219,7 @@
       Gaming Installation Summary ({{ gaming_effective_hostname }}):
       ==============================================================
       Packages installed: {{ gaming_install_result is success }}
-      NVIDIA Xorg config: {{ (gaming_xorg_conf_result is success) if gaming_effective_hostname in gaming_hosts else 'skipped' }}
+      NVIDIA Xorg config: {{ (gaming_xorg_conf_result is success) if gaming_effective_hostname in gaming_xorg_hosts else 'skipped' }}
       limits config: {{ (game_conf_result is success) if gaming_effective_hostname in gaming_hosts else 'skipped' }}
       game script: {{ (game_script_result is success) if gaming_effective_hostname in gaming_hosts else 'skipped' }}
   tags:
