@@ -80,6 +80,17 @@
     - lightdm
     - packages
 
+- name: Remove light-locker (causes post-login black screen)
+  community.general.pacman:
+    name: light-locker
+    state: absent
+    extra_args: '--noconfirm'
+  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+  tags:
+    - xfce4
+    - lightdm
+    - packages
+
 - name: Set LightDM greeter to slick greeter (ASTER only)
   ansible.builtin.replace:
     path: /etc/lightdm/lightdm.conf

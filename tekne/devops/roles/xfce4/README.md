@@ -39,7 +39,8 @@ ansible-galaxy collection install community.general
 
 ### LightDM Packages (ASTER, YUGEN, KVM)
 
-- lightdm, light-locker, lightdm-slick-greeter, lightdm-gtk-greeter, lightdm-gtk-greeter-settings, lightdm-webkit-theme-litarvan, lightdm-webkit2-greeter
+- lightdm, lightdm-slick-greeter, lightdm-gtk-greeter, lightdm-gtk-greeter-settings, lightdm-webkit-theme-litarvan, lightdm-webkit2-greeter
+- light-locker is not installed (it blanks the screen briefly after login)
 
 The role also replaces `#greeter-session=example-gtk-gnome` with `greeter-session=lightdm-slick-greeter` in `/etc/lightdm/lightdm.conf`.
 

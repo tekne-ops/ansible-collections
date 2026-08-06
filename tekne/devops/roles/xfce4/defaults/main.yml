@@ -65,9 +65,9 @@ xfce4_packages:
   - pavucontrol
 
 # LightDM packages (installed on xfce4_lightdm_hosts)
+# light-locker omitted: blanks the display for a few seconds after login
 xfce4_lightdm_packages:
   - lightdm
-  - light-locker
   - lightdm-slick-greeter
   - lightdm-gtk-greeter
   - lightdm-gtk-greeter-settings
