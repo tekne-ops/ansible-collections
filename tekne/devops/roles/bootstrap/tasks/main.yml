@@ -26,6 +26,10 @@
     - network
     - packages
 
+- name: Include OneDrive sync tasks
+  ansible.builtin.import_tasks: onedrive_sync.yml
+  tags: [bootstrap, onedrive]
+
 # =============================================================================
 # Package Installation (pacman)
 # =============================================================================
@@ -49,10 +53,6 @@
     - bootstrap
     - packages
     - verify
-
-- name: Include OneDrive sync tasks
-  ansible.builtin.import_tasks: onedrive_sync.yml
-  tags: [bootstrap, onedrive]
 
 - name: Include symlink tasks
   ansible.builtin.import_tasks: symlinks.yml
