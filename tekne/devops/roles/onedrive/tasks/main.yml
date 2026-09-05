@@ -1,11 +1,5 @@
 # SPDX-License-Identifier: MIT-0
 ---
-# tasks file for ./ansible-role-onedrive
-
-# =============================================================================
-# Package Installation
-# =============================================================================
-
 - name: Install OneDrive package
   community.general.pacman:
     name: "{{ onedrive_package }}"
@@ -15,82 +9,73 @@
     - onedrive
     - packages
 
-# =============================================================================
-# System Directories
-# =============================================================================
-
-- name: Create OneDrive log directory
+- name: Ensure /srv exists
   ansible.builtin.file:
-    path: /home/dvaliente/.config/onedrive/logs
+    path: /srv
     state: directory
-    owner: dvaliente
-    group: users
-    mode: '0775'
+    owner: root
+    group: root
+    mode: '0755'
   tags:
     - onedrive
     - directories
 
-# =============================================================================
-# User Configuration
-# =============================================================================
-
-- name: Get user info for home directories
-  ansible.builtin.getent:
-    database: passwd
-    key: "{{ item.name }}"
-  loop: "{{ users }}"
-  loop_control:
-    label: "{{ item.name }}"
-  register: user_info
-  tags:
-    - onedrive
-    - config
-
-- name: Create OneDrive config directory for each user
+- name: Create OneDrive sync directory
   ansible.builtin.file:
-    path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/{{ onedrive_config_dir }}"
+    path: "{{ onedrive_sync_dir }}"
     state: directory
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    owner: "{{ onedrive_owner }}"
+    group: "{{ onedrive_group }}"
     mode: '0700'
-  loop: "{{ user_info.results }}"
-  loop_control:
-    label: "{{ item.item.name }}"
   tags:
     - onedrive
-    - config
+    - directories
 
-- name: Create OneDrive sync directory for each user
+- name: Grant OneDrive owner full ACL on sync directory
+  ansible.posix.acl:
+    path: "{{ onedrive_sync_dir }}"
+    entity: "{{ onedrive_owner }}"
+    etype: user
+    permissions: rwx
+    state: present
+    recursive: true
+  failed_when: false
+  tags:
+    - onedrive
+    - directories
+
+- name: Create OneDrive config directory
   ansible.builtin.file:
-    path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/{{ onedrive_sync_dir }}"
+    path: "{{ onedrive_home }}/{{ onedrive_config_dir }}"
     state: directory
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    owner: "{{ onedrive_owner }}"
+    group: "{{ onedrive_group }}"
     mode: '0700'
-  loop: "{{ user_info.results }}"
-  loop_control:
-    label: "{{ item.item.name }}"
   tags:
     - onedrive
     - config
 
-- name: Copy OneDrive config file for each user
-  ansible.builtin.copy:
-    src: onedrive
-    dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/{{ onedrive_config_dir }}/config"
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+- name: Create OneDrive log directory
+  ansible.builtin.file:
+    path: "{{ onedrive_home }}/{{ onedrive_config_dir }}/logs"
+    state: directory
+    owner: "{{ onedrive_owner }}"
+    group: "{{ onedrive_group }}"
+    mode: '0700'
+  tags:
+    - onedrive
+    - directories
+
+- name: Deploy OneDrive config
+  ansible.builtin.template:
+    src: onedrive.j2
+    dest: "{{ onedrive_home }}/{{ onedrive_config_dir }}/config"
+    owner: "{{ onedrive_owner }}"
+    group: "{{ onedrive_group }}"
     mode: '0600'
-  loop: "{{ user_info.results }}"
-  loop_control:
-    label: "{{ item.item.name }}"
   tags:
     - onedrive
     - config
-
-# =============================================================================
-# Verification
-# =============================================================================
 
 - name: Verify OneDrive package is installed
   ansible.builtin.command:
@@ -102,12 +87,28 @@
     - onedrive
     - verify
 
-- name: Verify config directories exist for each user
+- name: Verify OneDrive sync directory
   ansible.builtin.stat:
-    path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/{{ onedrive_config_dir }}/config"
-  loop: "{{ user_info.results }}"
-  loop_control:
-    label: "{{ item.item.name }}"
+    path: "{{ onedrive_sync_dir }}"
+  register: onedrive_sync_stat
+  tags:
+    - onedrive
+    - verify
+
+- name: Assert OneDrive sync directory is owned by dvaliente
+  ansible.builtin.assert:
+    that:
+      - onedrive_sync_stat.stat.exists
+      - onedrive_sync_stat.stat.isdir
+      - onedrive_sync_stat.stat.pw_name == onedrive_owner
+    fail_msg: "{{ onedrive_sync_dir }} must exist and be owned by {{ onedrive_owner }}"
+  tags:
+    - onedrive
+    - verify
+
+- name: Verify OneDrive config exists
+  ansible.builtin.stat:
+    path: "{{ onedrive_home }}/{{ onedrive_config_dir }}/config"
   register: config_verify
   tags:
     - onedrive
@@ -118,11 +119,9 @@
     msg: |
       OneDrive Installation Summary:
       ==============================
-      Package installed: {{ onedrive_package }}
-      Users configured:
-      {% for result in config_verify.results %}
-      - {{ result.item.item.name }}: config={{ result.stat.exists }}
-      {% endfor %}
+      Package: {{ onedrive_package }}
+      Sync dir: {{ onedrive_sync_dir }} (owner={{ onedrive_owner }})
+      Config: {{ config_verify.stat.exists }}
   tags:
     - onedrive
     - verify

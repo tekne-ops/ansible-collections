@@ -25,19 +25,30 @@
     msg:
       network_hostname: "{{ network_hostname }}"
       network_hostname_raw: "{{ network_hostname_raw }}"
-      deploy_systemd_network_units: "{{ network_hostname in network_config_hosts }}"
-      network_config_hosts: "{{ network_config_hosts }}"
+      deploy_wifi_unit: "{{ network_hostname in network_wifi_hosts }}"
+      deploy_ethernet_unit: "{{ network_hostname in network_ethernet_hosts }}"
+      network_wifi_hosts: "{{ network_wifi_hosts }}"
+      network_ethernet_hosts: "{{ network_ethernet_hosts }}"
   tags:
     - network-host
 
-- name: Copy WiFi network configuration
+- name: Copy WiFi network configuration (ASTER)
   ansible.builtin.template:
     src: 80-wifi-station.network.j2
     dest: /etc/systemd/network/80-wifi-station.network
     owner: root
     group: root
     mode: '0644'
-  when: network_hostname in network_config_hosts
+  when: network_hostname in network_wifi_hosts
+  notify: Restart systemd-networkd
+  tags:
+    - network-host
+
+- name: Remove WiFi unit on hosts without iwd
+  ansible.builtin.file:
+    path: /etc/systemd/network/80-wifi-station.network
+    state: absent
+  when: network_hostname not in network_wifi_hosts
   notify: Restart systemd-networkd
   tags:
     - network-host
@@ -49,8 +60,46 @@
     owner: root
     group: root
     mode: '0644'
-  when: network_hostname in network_config_hosts
+  when: network_hostname in network_ethernet_hosts
   notify: Restart systemd-networkd
+  tags:
+    - network-host
+
+- name: Remove Ethernet unit on bridged/server hosts
+  ansible.builtin.file:
+    path: /etc/systemd/network/89-ethernet.network
+    state: absent
+  when: network_hostname not in network_ethernet_hosts
+  notify: Restart systemd-networkd
+  tags:
+    - network-host
+
+- name: Ensure systemd-networkd-wait-online drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/systemd/system/systemd-networkd-wait-online.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags:
+    - network-host
+
+- name: Wait for any routable link (do not require every NIC)
+  ansible.builtin.copy:
+    src: systemd-networkd-wait-online-any.conf
+    dest: /etc/systemd/system/systemd-networkd-wait-online.service.d/any.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart systemd-networkd
+  tags:
+    - network-host
+
+- name: Enable systemd-networkd-wait-online
+  ansible.builtin.systemd:
+    name: systemd-networkd-wait-online.service
+    enabled: true
+    daemon_reload: true
   tags:
     - network-host
 

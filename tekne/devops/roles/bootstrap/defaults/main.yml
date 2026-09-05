@@ -9,7 +9,7 @@ bootstrap_home: "/home/{{ bootstrap_user }}"
 # =============================================================================
 
 # OneDrive sync directory
-bootstrap_onedrive: "{{ bootstrap_home }}/OneDrive"
+bootstrap_onedrive: /srv/OneDrive
 
 # OneDrive config directory (config file: <this_dir>/config).
 # Overridden in vars to /home/dvaliente/.config/onedrive so sync and service use that config.

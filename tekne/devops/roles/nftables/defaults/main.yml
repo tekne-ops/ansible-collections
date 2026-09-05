@@ -1,5 +1,12 @@
 # SPDX-License-Identifier: MIT-0
 ---
-# defaults file for ansible-role-nftables
-# Hostname for server vs workstation config (from playbook hostname or ansible_hostname)
 nftables_hostname: "{{ hostname | default(ansible_hostname) | upper }}"
+
+nftables_server_hosts:
+  - THEMIS
+
+nftables_docker_hosts:
+  - THEMIS
+  - YUGEN
+
+install_chroot_phase: false

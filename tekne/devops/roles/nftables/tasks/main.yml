@@ -1,20 +1,24 @@
 # SPDX-License-Identifier: MIT-0
 ---
-# tasks file for ansible-role-nftables
-
 - name: Install nftables packages
   community.general.pacman:
     name:
-      - iptables
+      - iptables-nft
       - nftables
     state: present
   register: nftables_packages_install
+  tags:
+    - nftables
+    - packages
 
 - name: Confirm nftables packages are installed
   ansible.builtin.command: pacman -Q iptables-nft nftables
   register: nftables_packages_check
   changed_when: false
   failed_when: nftables_packages_check.rc != 0
+  tags:
+    - nftables
+    - packages
 
 - name: Deploy server nftables config (THEMIS)
   ansible.builtin.copy:
@@ -23,58 +27,86 @@
     owner: root
     group: root
     mode: '0644'
-  when: nftables_hostname == 'THEMIS'
+  when: nftables_hostname in nftables_server_hosts
+  notify: reload nftables
   tags:
     - nftables
     - config
 
-- name: Ensure nftables systemd drop-in directory exists (THEMIS)
-  ansible.builtin.file:
-    path: /etc/systemd/system/nftables.service.d
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-  when: nftables_hostname == 'THEMIS'
-  tags:
-    - nftables
-    - config
-    - systemd
-
-- name: Deploy nftables systemd override to preserve Docker rules (THEMIS)
+- name: Deploy Docker/libvirt workstation nftables config (YUGEN)
   ansible.builtin.copy:
-    dest: /etc/systemd/system/nftables.service.d/docker-preserve.conf
-    content: |
-      [Service]
-      ExecStart=
-      ExecStart=/bin/sh -c 'nft delete table inet filter 2>/dev/null; exec /usr/sbin/nft -f /etc/nftables.conf'
+    src: workstation-docker.conf
+    dest: /etc/nftables.conf
     owner: root
     group: root
     mode: '0644'
-  when: nftables_hostname == 'THEMIS'
-  notify: reload systemd
+  when:
+    - nftables_hostname in nftables_docker_hosts
+    - nftables_hostname not in nftables_server_hosts
+  notify: reload nftables
   tags:
     - nftables
     - config
-    - systemd
 
-- name: Deploy workstation nftables config (non-THEMIS)
+- name: Deploy workstation nftables config
   ansible.builtin.copy:
     src: workstation.conf
     dest: /etc/nftables.conf
     owner: root
     group: root
     mode: '0644'
-  when: nftables_hostname != 'THEMIS'
+  when: nftables_hostname not in nftables_docker_hosts
+  notify: reload nftables
   tags:
     - nftables
     - config
 
-- name: Enable nftables.service (do not start)
+- name: Ensure nftables systemd drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/systemd/system/nftables.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: nftables_hostname in nftables_docker_hosts
+  tags:
+    - nftables
+    - config
+    - systemd
+
+- name: Deploy nftables systemd override to preserve Docker rules
+  ansible.builtin.copy:
+    src: docker-preserve.conf
+    dest: /etc/systemd/system/nftables.service.d/docker-preserve.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: nftables_hostname in nftables_docker_hosts
+  notify:
+    - reload systemd
+    - reload nftables
+  tags:
+    - nftables
+    - config
+    - systemd
+
+- name: Remove Docker-preserve drop-in on hosts without Docker
+  ansible.builtin.file:
+    path: /etc/systemd/system/nftables.service.d/docker-preserve.conf
+    state: absent
+  when: nftables_hostname not in nftables_docker_hosts
+  notify: reload systemd
+  tags:
+    - nftables
+    - config
+    - systemd
+
+- name: Enable and start nftables.service
   ansible.builtin.systemd:
     name: nftables
     enabled: true
-    state: stopped
+    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
+    daemon_reload: true
   when: (nftables_packages_check.rc | default(0)) == 0
   tags:
     - nftables

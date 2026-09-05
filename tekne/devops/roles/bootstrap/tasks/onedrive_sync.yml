@@ -59,7 +59,7 @@
   become: true
   become_user: "{{ bootstrap_user }}"
   ansible.builtin.shell:
-    cmd: "pgrep -f '/usr/bin/onedrive --sync --download-only --verbose --confdir=/home/dvaliente/.config/onedrive'"
+    cmd: "pgrep -f '{{ bootstrap_onedrive_binary }} {{ bootstrap_onedrive_sync_options }} --confdir={{ bootstrap_onedrive_config_dir }}'"
   register: onedrive_process_result
   when: not onedrive_db_check.stat.exists
   tags: [bootstrap, onedrive, sync]

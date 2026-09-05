@@ -6,8 +6,8 @@ Installs and configures OneDrive client (abraunegg fork) for all users defined i
 
 1. **Installs OneDrive package** (onedrive-abraunegg)
 2. **Creates config directory** (`~/.config/onedrive`) for each user
-3. **Creates sync directory** (`~/OneDrive`) for each user
-4. **Copies config file** to each user's config directory
+3. **Creates sync directory** (`/srv/OneDrive`) owned by `dvaliente`
+4. **Copies config file** to dvaliente's config directory
 5. **Verifies installation** and configuration
 
 ## Requirements
@@ -24,20 +24,21 @@ ansible-galaxy collection install community.general
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `onedrive_package` | `onedrive-abraunegg` | OneDrive package to install |
-| `onedrive_sync_dir` | `OneDrive` | Sync directory name in home |
+| `onedrive_owner` | `dvaliente` | Owner of the sync directory |
+| `onedrive_group` | `users` | Group of the sync directory |
+| `onedrive_sync_dir` | `/srv/OneDrive` | Sync directory |
 | `onedrive_config_dir` | `.config/onedrive` | Config directory in home |
 
 ## Files Deployed
 
 | Source | Destination | Mode |
 |--------|-------------|------|
-| `files/onedrive` | `~/.config/onedrive/config` | 0600 |
+| `templates/onedrive.j2` | `~/.config/onedrive/config` | 0600 |
 
 ## Directories Created
 
-For each user:
-- `~/.config/onedrive/` (mode 0700)
-- `~/OneDrive/` (mode 0700)
+- `/home/dvaliente/.config/onedrive/` (mode 0700)
+- `/srv/OneDrive/` (owner `dvaliente`, mode 0700, user ACL `rwx`)
 
 ## Dependencies
 

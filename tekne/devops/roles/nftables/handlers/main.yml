@@ -1,7 +1,12 @@
 # SPDX-License-Identifier: MIT-0
 ---
-# handlers file for ansible-role-nftables
-
 - name: reload systemd
   ansible.builtin.systemd:
     daemon_reload: true
+
+- name: reload nftables
+  ansible.builtin.systemd:
+    name: nftables
+    state: reloaded
+    daemon_reload: true
+  when: not install_chroot_phase | bool

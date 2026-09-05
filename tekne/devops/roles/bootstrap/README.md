@@ -29,7 +29,7 @@ Post-install bootstrap: installs extra packages, runs OneDrive first sync (with 
 | `bootstrap_user` | `dvaliente` | User for OneDrive sync and XFCE config |
 | `bootstrap_group` | `users` | User's group |
 | `bootstrap_home` | `/home/{{ bootstrap_user }}` | Home directory |
-| `bootstrap_onedrive` | `{{ bootstrap_home }}/OneDrive` | OneDrive sync directory |
+| `bootstrap_onedrive` | `/srv/OneDrive` | OneDrive sync directory |
 | `bootstrap_onedrive_config_dir` | `{{ bootstrap_home }}/.config/onedrive` | OneDrive config dir (config file inside) |
 | `bootstrap_onedrive_binary` | `/usr/bin/onedrive` | OneDrive binary |
 | `bootstrap_onedrive_sync_options` | `--sync --download-only --verbose` | First sync options |
@@ -73,7 +73,7 @@ The role notifies **`restart bluetooth`** after changing `/etc/bluetooth/main.co
 
 ## Symlinks (from vars)
 
-Typical links (customize via `bootstrap_symlinks`): OneDrive/Documents → ~/Documents; Documents/notes → ~/.local/share/notes; bashrc.txt → ~/.bashrc; Remmina config; SSH config and keys; Pictures; avatar → .face / .face.icon; bin/asd from script.
+Typical links (customize via `bootstrap_symlinks`): OneDrive/Documents → ~/Documents; Documents/notes → ~/.local/share/notes; bashrc.txt → ~/.bashrc; Remmina config; SSH config and keys; Pictures; avatar → .face / .face.icon; bin/asd from script; Cursor User → ~/.config/Cursor/User; Cursor cursor/ → ~/.cursor.
 
 ## Tags
 

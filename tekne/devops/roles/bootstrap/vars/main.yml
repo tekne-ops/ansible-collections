@@ -52,12 +52,12 @@ bootstrap_symlinks:
   - src: "{{ bootstrap_onedrive }}/Pictures/Avatars/fierce-yugen.jpg"
     dest: "{{ bootstrap_home }}/.face"
 
-  # Cursor (after cursor-bin; OneDrive-backed projects/rules)
-  - src: "{{ bootstrap_onedrive }}/Documents/Cursor/projects"
-    dest: "{{ bootstrap_home }}/.cursor/projects"
+  # Cursor (after cursor-bin; settings and agent dir live on OneDrive)
+  - src: "{{ bootstrap_onedrive }}/Documents/Cursor/User"
+    dest: "{{ bootstrap_home }}/.config/Cursor/User"
 
-  - src: "{{ bootstrap_onedrive }}/Documents/Cursor/rules"
-    dest: "{{ bootstrap_home }}/.cursor/rules"
+  - src: "{{ bootstrap_onedrive }}/Documents/Cursor/cursor"
+    dest: "{{ bootstrap_home }}/.cursor"
 
 # SSH keys that need special permission handling
 bootstrap_ssh_keys:

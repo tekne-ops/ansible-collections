@@ -3,10 +3,15 @@ Kind=!*
 Type=ether
 Host={{ network_hostname_raw }}
 
+[Link]
+RequiredForOnline=routable
+
 [Network]
-DHCP=yes
-DNS=1.1.1.1 8.8.4.4 8.8.8.8
+DHCP=ipv4
+IPv6AcceptRA=no
 DNSDefaultRoute=yes
 
-[DHCP]
-UseDNS=no
+[DHCPv4]
+UseHostname=no
+UseDomains=no
+RouteMetric=100

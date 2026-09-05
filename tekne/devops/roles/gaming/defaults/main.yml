@@ -19,7 +19,7 @@ gaming_packages:
   - noto-fonts-cjk
   - noto-fonts-emoji
   - ttf-ms-win10-auto
-  - lib32-pcsclite
+  # - lib32-pcsclite
 
 # Hostnames that receive gaming packages, limits, schedtoold, gamemode
 gaming_hosts:

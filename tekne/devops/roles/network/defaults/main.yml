@@ -2,13 +2,14 @@
 # Hostname (from playbook pre_tasks / hostname role)
 network_hostname: "{{ hostname | default(ansible_hostname) | upper }}"
 
-# Hosts that receive WiFi/Ethernet systemd-networkd units
-network_config_hosts:
+# WiFi .network unit: ASTER only (iwd). Ethernet: workstations/VMs, not THEMIS (br0).
+network_wifi_hosts:
   - ASTER
-  - THEMIS
-  - HEPHAESTUS
+network_ethernet_hosts:
+  - ASTER
   - YUGEN
   - KVM
+network_config_hosts: "{{ (network_wifi_hosts + network_ethernet_hosts) | unique }}"
 
 # WiFi (ASTER only); set passphrase in vault
 network_wifi_ssid: "{{ os_wifi_ssid | default('esher') }}"

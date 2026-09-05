@@ -2,9 +2,12 @@
 network_hostname: "{{ cached_hostname | default(ansible_hostname) | upper }}"
 network_hostname_raw: "{{ cached_hostname_raw | default(ansible_hostname) }}"
 
-network_config_hosts:
+network_wifi_hosts:
+  - ASTER
+network_ethernet_hosts:
   - ASTER
   - YUGEN
   - KVM
+network_config_hosts: "{{ (network_wifi_hosts + network_ethernet_hosts) | unique }}"
 
 network_wifi_ssid: esher
