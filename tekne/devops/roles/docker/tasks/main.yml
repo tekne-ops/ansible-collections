@@ -43,8 +43,8 @@
     - config
 
 - name: Deploy Docker daemon.json (YUGEN, THEMIS)
-  ansible.builtin.copy:
-    src: daemon.json
+  ansible.builtin.template:
+    src: daemon.json.j2
     dest: "{{ docker_daemon_json_dest }}"
     owner: root
     group: root

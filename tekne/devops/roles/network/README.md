@@ -6,7 +6,7 @@ Configures systemd-networkd, systemd-resolved DNS policy, THEMIS bridge (br0) an
 
 1. **Workstation (ASTER, YUGEN)** – Deploys `80-wifi-station.network` and `89-ethernet.network`; enables systemd-networkd, resolved, acpid; ASTER also enables iwd/bluetooth/tlp/thermald and connects to WiFi.
 2. **THEMIS** – Deploys `25-br0` netdev/network units and `sshd_config.d/ssh.conf`.
-3. **DNS** – Deploys `/etc/systemd/resolved.conf.d/95-dns-over-tls.conf` with fallback resolvers, DNS-over-TLS mode, search domains and caching.
+3. **DNS** – Deploys `/etc/systemd/resolved.conf.d/95-dns.conf`, the stub `/etc/resolv.conf` symlink, and `systemd-resolvconf`.
 4. **Connectivity** – Flushes handlers and pings `archlinux.org` until reachable.
 
 Run after `tekne.devops.os` locale setup and before roles that need network (mirrors, git clones).
@@ -51,8 +51,13 @@ Run after `tekne.devops.os` locale setup and before roles that need network (mir
 
 ## DNS
 
-The role writes `/etc/systemd/resolved.conf.d/95-dns-over-tls.conf`; the `.network` units carry no
-`DNS=` of their own, so resolved is the single place resolvers are decided.
+The role writes `/etc/systemd/resolved.conf.d/95-dns.conf` and forces
+`/etc/resolv.conf` → `/run/systemd/resolve/stub-resolv.conf`. The `.network` units carry no
+`DNS=` of their own.
+
+ASTER Wi‑Fi uses `DNSDefaultRoute=yes` so DHCP DNS (the LAN gateway at home) is used when
+Ethernet is down. Ethernet still has a better `RouteMetric`, so a cable wins for traffic
+when both links are up.
 
 Defaults keep DHCP DNS and add Quad9 over TLS as fallback:
 

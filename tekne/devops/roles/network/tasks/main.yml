@@ -104,6 +104,26 @@
     - network-host
 
 # DNS policy: resolved owns the resolver list so DHCP cannot override it
+- name: Install systemd-resolvconf (VPN/DHCP clients that call resolvconf)
+  community.general.pacman:
+    name: systemd-resolvconf
+    state: present
+  when: network_resolved_manage | bool
+  tags:
+    - network-host
+    - dns
+
+- name: Point /etc/resolv.conf at the systemd-resolved stub
+  ansible.builtin.file:
+    src: /run/systemd/resolve/stub-resolv.conf
+    dest: /etc/resolv.conf
+    state: link
+    force: true
+  when: network_resolved_manage | bool
+  tags:
+    - network-host
+    - dns
+
 - name: Ensure resolved.conf.d directory exists
   ansible.builtin.file:
     path: /etc/systemd/resolved.conf.d
@@ -116,10 +136,20 @@
     - network-host
     - dns
 
+- name: Remove obsolete resolved drop-in name
+  ansible.builtin.file:
+    path: /etc/systemd/resolved.conf.d/95-dns-over-tls.conf
+    state: absent
+  when: network_resolved_manage | bool
+  notify: Restart systemd-resolved
+  tags:
+    - network-host
+    - dns
+
 - name: Deploy systemd-resolved DNS policy
   ansible.builtin.template:
     src: resolved-dns.conf.j2
-    dest: /etc/systemd/resolved.conf.d/95-dns-over-tls.conf
+    dest: /etc/systemd/resolved.conf.d/95-dns.conf
     owner: root
     group: root
     mode: '0644'

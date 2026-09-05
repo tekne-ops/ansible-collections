@@ -10,3 +10,8 @@ docker_daemon_json_hosts:
   - THEMIS
 
 docker_daemon_json_dest: /etc/docker/daemon.json
+
+# Containers cannot use the host stub 127.0.0.53. LAN gateway first, Quad9 backup.
+docker_dns_servers:
+  - 192.168.135.1
+  - 9.9.9.9
