@@ -103,6 +103,32 @@
   tags:
     - network-host
 
+# DNS policy: resolved owns the resolver list so DHCP cannot override it
+- name: Ensure resolved.conf.d directory exists
+  ansible.builtin.file:
+    path: /etc/systemd/resolved.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: network_resolved_manage | bool
+  tags:
+    - network-host
+    - dns
+
+- name: Deploy systemd-resolved DNS policy
+  ansible.builtin.template:
+    src: resolved-dns.conf.j2
+    dest: /etc/systemd/resolved.conf.d/95-dns-over-tls.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: network_resolved_manage | bool
+  notify: Restart systemd-resolved
+  tags:
+    - network-host
+    - dns
+
 # SSH and bridge (br0) network configuration
 - name: Ensure sshd_config.d directory exists
   ansible.builtin.file:
@@ -194,11 +220,11 @@
     - network-host
     - wifi
 
-- name: Enable and restart systemd-networkd
+- name: Enable and start network services
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: true
-    state: stopped
+    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
   loop:
     - systemd-networkd.service
     - systemd-resolved.service

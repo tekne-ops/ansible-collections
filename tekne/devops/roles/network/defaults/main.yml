@@ -24,3 +24,22 @@ network_connect_wifi: true
 
 # Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network)
 install_chroot_phase: false
+
+# DNS (systemd-resolved drop-in 95-dns-over-tls.conf)
+network_resolved_manage: true
+# Pin resolvers (e.g. the LAN gateway 192.168.135.1); empty keeps the DHCP-advertised ones
+network_dns_servers: []
+# The #hostname suffix is what makes TLS certificate validation possible
+network_dns_fallback:
+  - 9.9.9.9#dns.quad9.net
+  - 149.112.112.112#dns.quad9.net
+network_dns_search_domains:
+  - tekne.sv
+# opportunistic falls back to plain DNS; yes is strict and needs every server in
+# network_dns_servers to serve DoT on 853 (most home gateways do not)
+network_dns_over_tls: opportunistic
+network_dnssec: 'no'
+network_dns_cache: 'yes'
+# Pinned resolvers win outright, so DHCP DNS is dropped instead of merged
+network_dhcp_use_dns: "{{ 'no' if network_dns_servers | length > 0 else 'yes' }}"
+network_dhcp_use_domains: 'no'

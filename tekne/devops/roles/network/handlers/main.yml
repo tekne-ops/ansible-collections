@@ -4,3 +4,10 @@
     name: systemd-networkd.service
     state: restarted
   listen: Restart systemd-networkd
+
+- name: Restart systemd-resolved
+  ansible.builtin.systemd:
+    name: systemd-resolved.service
+    state: restarted
+  when: not install_chroot_phase | bool
+  listen: Restart systemd-resolved
