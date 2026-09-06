@@ -1,14 +1,8 @@
-# Managed by tekne.devops.network — local edits are overwritten
+# Managed by tekne.devops.network — Domains/cache only.
+# Resolver list and DNSOverTLS live in 99-dot-override.conf (higher priority).
 [Resolve]
-{% if network_dns_servers | length > 0 %}
-DNS={{ network_dns_servers | join(' ') }}
-{% endif %}
-{% if network_dns_fallback | length > 0 %}
-FallbackDNS={{ network_dns_fallback | join(' ') }}
-{% endif %}
 {% if network_dns_search_domains | length > 0 %}
 Domains={{ network_dns_search_domains | join(' ') }}
 {% endif %}
-DNSOverTLS={{ network_dns_over_tls }}
 DNSSEC={{ network_dnssec }}
 Cache={{ network_dns_cache }}

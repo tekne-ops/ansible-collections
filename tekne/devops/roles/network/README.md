@@ -6,7 +6,7 @@ Configures systemd-networkd, systemd-resolved DNS policy, THEMIS bridge (br0) an
 
 1. **Workstation (ASTER, YUGEN)** – Deploys `80-wifi-station.network` and `89-ethernet.network`; enables systemd-networkd, resolved, acpid; ASTER also enables iwd/bluetooth/tlp/thermald and connects to WiFi.
 2. **THEMIS** – Deploys `25-br0` netdev/network units and `sshd_config.d/ssh.conf`.
-3. **DNS** – Deploys `/etc/systemd/resolved.conf.d/95-dns.conf`, the stub `/etc/resolv.conf` symlink, and `systemd-resolvconf`.
+3. **DNS** – `95-dns.conf` (search/cache) plus **`99-dot-override.conf`** (strict DoT on 853, Quad9 then Google). Link drop-ins `*.network.d/99-dns-override.conf` set `DNSDefaultRoute=no` so the router is never the default resolver.
 4. **Connectivity** – Flushes handlers and pings `archlinux.org` until reachable.
 
 Run after `tekne.devops.os` locale setup and before roles that need network (mirrors, git clones).
@@ -26,12 +26,9 @@ Run after `tekne.devops.os` locale setup and before roles that need network (mir
 | `network_wifi_detect_delay` | Seconds between auto-detect retries (default `2`) |
 | `network_connect_wifi` | Run live `iwctl` connect on ASTER (disable during arch-chroot install) |
 | `network_resolved_manage` | Deploy the resolved drop-in (default `true`) |
-| `network_dns_servers` | Pinned resolvers, e.g. `['192.168.135.1']`; empty keeps DHCP-advertised DNS |
-| `network_dns_fallback` | Fallback resolvers (default Quad9 with `#dns.quad9.net` for TLS validation) |
-| `network_dns_search_domains` | `Domains=` in resolved (default `tekne.sv`) |
-| `network_dns_over_tls` | `opportunistic` (default), `yes` for strict DoT, or `no` |
-| `network_dnssec` / `network_dns_cache` | `DNSSEC=` (default `no`) and `Cache=` (default `yes`) |
-| `network_dhcp_use_dns` | `UseDNS=` in the `.network` units; auto-set to `no` when resolvers are pinned |
+| `network_dns_servers` | DoT resolvers (`ip#name`); default Quad9 then Google. Not Cloudflare (Tigo blocks 1.1.1.1:853). |
+| `network_dns_over_tls` | `yes` (strict, port 853). Set by `99-dot-override.conf`. |
+| `network_dhcp_use_dns` | Always `no` so DHCP/router DNS cannot inject port 53. |
 | `network_dhcp_use_domains` | `UseDomains=` in the `.network` units (default `no`) |
 
 ## Tags
@@ -51,9 +48,11 @@ Run after `tekne.devops.os` locale setup and before roles that need network (mir
 
 ## DNS
 
-The role writes `/etc/systemd/resolved.conf.d/95-dns.conf` and forces
-`/etc/resolv.conf` → `/run/systemd/resolve/stub-resolv.conf`. The `.network` units carry no
-`DNS=` of their own.
+The role writes `/etc/systemd/resolved.conf.d/95-dns.conf` and, on a booted system, forces
+`/etc/resolv.conf` → `/run/systemd/resolve/stub-resolv.conf`. That symlink task is skipped
+during `arch-chroot` (`install_chroot_phase`): `arch-chroot` bind-mounts the live ISO's
+`resolv.conf` over the same path, so replacing it with a symlink fails with EBUSY. The
+installer already creates the persistent stub link in `task_configure_base`.
 
 ASTER Wi‑Fi uses `DNSDefaultRoute=yes` so DHCP DNS (the LAN gateway at home) is used when
 Ethernet is down. Ethernet still has a better `RouteMetric`, so a cable wins for traffic
