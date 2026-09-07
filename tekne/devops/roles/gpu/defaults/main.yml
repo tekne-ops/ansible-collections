@@ -2,6 +2,9 @@
 ---
 # defaults file for ./ansible-role-gpu
 
+# Skip archlinux.org ping during arch-chroot (live ISO already has network)
+install_chroot_phase: false
+
 # Discrete NVIDIA only (desktop)
 gpu_nvidia_hostnames:
   - YUGEN
@@ -37,3 +40,4 @@ gpu_intel_packages:
   - lib32-mesa
   - vulkan-intel
   - lib32-vulkan-intel
+  - intel-media-driver

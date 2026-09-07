@@ -31,7 +31,7 @@ ansible-galaxy collection install community.general
 ### XFCE4 Packages (all hosts)
 
 - xfce4, xfce4-goodies, xfce4-panel-profiles
-- gnome-keyring, seahorse, libsecret
+- gnome-keyring, seahorse
 - xdg-desktop-portal, xdg-desktop-portal-gtk, xdg-desktop-portal-xapp, xdg-desktop-portal-cosmic
 - libportal, libportal-gtk4, libportal-qt6
 - bibata-cursor-theme-bin, flat-remix, kora-icon-theme

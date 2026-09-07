@@ -369,6 +369,7 @@
     - iwd.service
     - thermald.service
     - tlp.service
+    - bolt.service
   when: network_hostname == 'ASTER'
   tags:
     - network-host

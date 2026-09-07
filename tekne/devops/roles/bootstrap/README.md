@@ -48,7 +48,7 @@ Post-install bootstrap: installs extra packages, runs OneDrive first sync (with 
 | `bootstrap_xfce_skip_if_no_display` | `true` | Skip XFCE when no display (behavior may depend on `xfce_display_available`) |
 | `bootstrap_packages` | See below | Pacman packages to install |
 
-**Default `bootstrap_packages`:** google-chrome, zoom, ventoy-bin, visual-studio-code-bin, cursor-bin, proton-ge-custom-bin, teams-for-linux-bin, httpfs2-2gbplus, ttf-ms-win10-auto, heroic-games-launcher, crossover, deezer, wps-office, libtiff5, omnissa-horizon-client.
+**Default `bootstrap_packages`:** google-chrome, zoom, ventoy-bin, visual-studio-code-bin, cursor-bin, teams-for-linux-bin, httpfs2-2gbplus, crossover, deezer, asar, imagemagick, liblqr, omnissa-horizon-client, transmission-qt, microsoft-edge-stable-bin, ocs-url, bitwarden-bin, yubico-authenticator-bin.
 
 ### vars/main.yml
 

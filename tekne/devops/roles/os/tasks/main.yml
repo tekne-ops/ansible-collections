@@ -100,17 +100,8 @@
 
 # =============================================================================
 # THEMIS: cronie, cpupower config, irqbalance (enable and start)
+# cronie is in pacstrap_base_packages
 # =============================================================================
-
-- name: Install cronie (THEMIS)
-  community.general.pacman:
-    name:
-      - cronie
-    state: present
-  when: os_hostname == 'THEMIS'
-  tags:
-    - os
-    - themis_services
 
 - name: Enable THEMIS services (start on boot unless install chroot phase)
   ansible.builtin.systemd:
@@ -130,14 +121,7 @@
 # Tekne bash repository and PATH (requires network)
 # =============================================================================
 
-- name: Ensure git is installed for cloning tekne bash repo
-  community.general.pacman:
-    name: git
-    state: present
-  when: os_clone_tekne_repos | bool
-  tags:
-    - os
-    - tekne_bash
+# git is in pacstrap_base_packages
 
 - name: Ensure devs group exists (for /srv/code ownership)
   ansible.builtin.group:

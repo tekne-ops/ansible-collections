@@ -16,7 +16,6 @@ xfce4_packages:
   - xfce4-panel-profiles
   - gnome-keyring
   - seahorse
-  - libsecret
   - xdg-desktop-portal
   - xdg-desktop-portal-gtk
   - xdg-desktop-portal-xapp
@@ -30,11 +29,10 @@ xfce4_packages:
   - xorg-server
   - xdotool
   - file-roller
-  - thunar-volman
   - gvfs
   - gvfs-afc
   - sound-theme-smooth
-  - picom
+  # - picom
   # Bluetooth support (required for bootstrap role bluetooth config)
   - bluez
   - bluez-utils

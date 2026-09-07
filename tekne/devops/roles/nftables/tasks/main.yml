@@ -3,7 +3,6 @@
 - name: Install nftables packages
   community.general.pacman:
     name:
-      - iptables-nft
       - nftables
     state: present
   register: nftables_packages_install
@@ -12,7 +11,7 @@
     - packages
 
 - name: Confirm nftables packages are installed
-  ansible.builtin.command: pacman -Q iptables-nft nftables
+  ansible.builtin.command: pacman -Q nftables
   register: nftables_packages_check
   changed_when: false
   failed_when: nftables_packages_check.rc != 0

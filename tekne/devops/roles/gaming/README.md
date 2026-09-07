@@ -37,7 +37,7 @@ ansible-galaxy collection install community.general
 - gamemode, proton-ge-custom-bin, openbox
 
 **Fonts:**
-- ttf-liberation, noto-fonts, noto-fonts-cjk, noto-fonts-emoji, ttf-ms-win10-auto
+- noto-fonts-cjk (other fonts come from pacstrap_base_packages)
 
 **Libraries:**
 - lib32-systemd, lib32-gst-plugins-base, lib32-gst-plugins-good, lib32-pcsclite
