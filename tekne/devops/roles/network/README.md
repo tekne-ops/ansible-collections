@@ -6,7 +6,7 @@ Configures systemd-networkd, systemd-resolved DNS policy, THEMIS bridge (br0) an
 
 1. **Workstation (ASTER, YUGEN)** – Deploys `80-wifi-station.network` and `89-ethernet.network`; enables systemd-networkd, resolved, acpid; ASTER also enables iwd/bluetooth/tlp/thermald and connects to WiFi.
 2. **THEMIS** – Deploys `25-br0` netdev/network units and `sshd_config.d/ssh.conf`.
-3. **DNS** – `95-dns.conf` (search/cache) plus **`99-dot-override.conf`** (strict DoT on 853, Quad9 then Google). Link drop-ins `*.network.d/99-dns-override.conf` set `DNSDefaultRoute=no` so the router is never the default resolver.
+3. **DNS** – One resolved drop-in, `95-dns.conf`. Strict DoT (`DNSOverTLS=yes`) on every host. **ASTER** uses DHCP nameservers (`UseDNS=yes`, `DNSDefaultRoute=yes`) and pins nothing. Other hosts pin Quad9 then Google and set `DNSDefaultRoute=no` so the router is not the resolver. `FallbackDNS=` clears systemd's compiled-in plaintext list.
 4. **Connectivity** – Flushes handlers and pings `archlinux.org` until reachable.
 
 Run after `tekne.devops.os` locale setup and before roles that need network (mirrors, git clones).
@@ -26,9 +26,12 @@ Run after `tekne.devops.os` locale setup and before roles that need network (mir
 | `network_wifi_detect_delay` | Seconds between auto-detect retries (default `2`) |
 | `network_connect_wifi` | Run live `iwctl` connect on ASTER (disable during arch-chroot install) |
 | `network_resolved_manage` | Deploy the resolved drop-in (default `true`) |
-| `network_dns_servers` | DoT resolvers (`ip#name`); default Quad9 then Google. Not Cloudflare (Tigo blocks 1.1.1.1:853). |
-| `network_dns_over_tls` | `yes` (strict, port 853). Set by `99-dot-override.conf`. |
-| `network_dhcp_use_dns` | Always `no` so DHCP/router DNS cannot inject port 53. |
+| `network_dns_from_dhcp` | `true` on ASTER: use router-advertised DNS with strict DoT. `false` elsewhere. |
+| `network_dns_servers` | Pinned DoT resolvers (`ip#name`) when not using DHCP. Default Quad9 then Google (not Cloudflare; Tigo blocks 1.1.1.1:853). Ignored on ASTER. |
+| `network_dns_fallback` | Extra DoT fallbacks. Empty (default) writes `FallbackDNS=` and disables compiled-in 1.1.1.1/8.8.8.8. |
+| `network_dns_over_tls` | `yes` (strict, port 853) in resolved and `.network` units. |
+| `network_dhcp_use_dns` | `yes` on ASTER, `no` on pinned-resolver hosts. |
+| `network_dns_default_route` | `yes` on ASTER so DHCP DNS is used; `no` on pinned-resolver hosts. |
 | `network_dhcp_use_domains` | `UseDomains=` in the `.network` units (default `no`) |
 
 ## Tags
@@ -54,27 +57,14 @@ during `arch-chroot` (`install_chroot_phase`): `arch-chroot` bind-mounts the liv
 `resolv.conf` over the same path, so replacing it with a symlink fails with EBUSY. The
 installer already creates the persistent stub link in `task_configure_base`.
 
-ASTER Wi‑Fi uses `DNSDefaultRoute=yes` so DHCP DNS (the LAN gateway at home) is used when
-Ethernet is down. Ethernet still has a better `RouteMetric`, so a cable wins for traffic
-when both links are up.
+ASTER takes nameservers from DHCP and requires DoT to those IPs. Wi‑Fi and Ethernet both
+set `DNSDefaultRoute=yes`; Ethernet still has a better `RouteMetric` for traffic. There is
+no Quad9/Google pin and no compiled-in fallback, so if the advertised servers do not speak
+DoT on 853, resolution fails instead of leaking to plaintext DNS.
 
-Defaults keep DHCP DNS and add Quad9 over TLS as fallback:
+YUGEN, THEMIS, and KVM keep pinned Quad9/Google DoT. DHCP DNS is ignored on those hosts.
 
-```yaml
-network_dns_over_tls: opportunistic
-network_dns_fallback: ['9.9.9.9#dns.quad9.net', '149.112.112.112#dns.quad9.net']
-```
-
-To resolve through the LAN gateway instead, pin it — `network_dhcp_use_dns` then flips to `no`
-automatically so DHCP cannot re-add its own servers:
-
-```yaml
-network_dns_servers: ['192.168.135.1']
-```
-
-Use `network_dns_over_tls: yes` (strict) only when **every** pinned server serves DoT on port 853.
-A gateway that does not will make all lookups fail over to `FallbackDNS`, which looks like working
-DNS while local names silently break.
+Do not set `network_dns_over_tls` to opportunistic on ASTER if the goal is to never use port 53.
 
 ## ASTER WiFi troubleshooting
 

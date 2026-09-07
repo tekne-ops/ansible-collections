@@ -25,21 +25,23 @@ network_connect_wifi: true
 # Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network)
 install_chroot_phase: false
 
-# DNS (95-dns.conf = search/cache; 99-dot-override.conf = DoT resolvers, wins)
+# DNS (single drop-in: /etc/systemd/resolved.conf.d/95-dns.conf)
 network_resolved_manage: true
-# Strict DoT on 853. Quad9 works on Cablecolor and Tigo; Google on Tigo.
-# Do not add 1.1.1.1 — Tigo blocks Cloudflare DoT.
+# ASTER: DHCP nameservers from the router, contacted only with strict DoT.
+# Other hosts: pin Quad9 then Google (Cablecolor/Tigo drop port 53; Tigo blocks 1.1.1.1:853).
+network_dns_from_dhcp: "{{ network_hostname == 'ASTER' }}"
 network_dns_servers:
   - 9.9.9.9#dns.quad9.net
   - 149.112.112.112#dns.quad9.net
   - 8.8.8.8#dns.google
   - 8.8.4.4#dns.google
+# Empty list writes FallbackDNS= and clears systemd's compiled-in 1.1.1.1/8.8.8.8 list.
 network_dns_fallback: []
 network_dns_search_domains:
   - tekne.sv
-network_dns_over_tls: yes
+network_dns_over_tls: 'yes'
 network_dnssec: 'no'
 network_dns_cache: 'yes'
-# Router has no DoT; never merge DHCP DNS or make the link a default DNS route
-network_dhcp_use_dns: 'no'
+network_dhcp_use_dns: "{{ 'yes' if network_dns_from_dhcp | bool else 'no' }}"
 network_dhcp_use_domains: 'no'
+network_dns_default_route: "{{ 'yes' if network_dns_from_dhcp | bool else 'no' }}"

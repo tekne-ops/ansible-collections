@@ -10,7 +10,8 @@ RequiredForOnline=routable
 [Network]
 DHCP=ipv4
 IPv6AcceptRA=no
-DNSDefaultRoute=no
+DNSDefaultRoute={{ network_dns_default_route }}
+DNSOverTLS={{ network_dns_over_tls }}
 
 [DHCPv4]
 UseDNS={{ network_dhcp_use_dns }}

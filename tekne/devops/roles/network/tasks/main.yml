@@ -103,7 +103,7 @@
   tags:
     - network-host
 
-# DNS policy: resolved owns the resolver list so DHCP cannot override it
+# DNS policy: strict DoT in resolved; ASTER uses DHCP nameservers, others pin Quad9/Google
 - name: Install systemd-resolvconf (VPN/DHCP clients that call resolvconf)
   community.general.pacman:
     name: systemd-resolvconf
@@ -146,6 +146,7 @@
   loop:
     - /etc/systemd/resolved.conf.d/95-dns-over-tls.conf
     - /etc/systemd/resolved.conf.d/99-dns-over-tls.conf
+    - /etc/systemd/resolved.conf.d/99-dot-override.conf
   when: network_resolved_manage | bool
   notify: Restart systemd-resolved
   tags:
@@ -165,119 +166,14 @@
     - network-host
     - dns
 
-- name: Deploy systemd-resolved DoT override (priority 99)
-  ansible.builtin.template:
-    src: 99-dot-override.conf.j2
-    dest: /etc/systemd/resolved.conf.d/99-dot-override.conf
-    owner: root
-    group: root
-    mode: '0644'
-  when: network_resolved_manage | bool
-  notify: Restart systemd-resolved
-  tags:
-    - network-host
-    - dns
-
-- name: Ensure WiFi DNS drop-in directory exists
+- name: Remove obsolete networkd DNS drop-in directories
   ansible.builtin.file:
-    path: /etc/systemd/network/80-wifi-station.network.d
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-  when: network_hostname in network_wifi_hosts
-  tags:
-    - network-host
-    - dns
-
-- name: Deploy WiFi DNSDefaultRoute override (priority 99)
-  ansible.builtin.copy:
-    src: 99-dns-override.conf
-    dest: /etc/systemd/network/80-wifi-station.network.d/99-dns-override.conf
-    owner: root
-    group: root
-    mode: '0644'
-  when: network_hostname in network_wifi_hosts
-  notify: Restart systemd-networkd
-  tags:
-    - network-host
-    - dns
-
-- name: Remove WiFi DNS drop-in on hosts without WiFi
-  ansible.builtin.file:
-    path: /etc/systemd/network/80-wifi-station.network.d
+    path: "{{ item }}"
     state: absent
-  when: network_hostname not in network_wifi_hosts
-  notify: Restart systemd-networkd
-  tags:
-    - network-host
-    - dns
-
-- name: Ensure Ethernet DNS drop-in directory exists
-  ansible.builtin.file:
-    path: /etc/systemd/network/89-ethernet.network.d
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-  when: network_hostname in network_ethernet_hosts
-  tags:
-    - network-host
-    - dns
-
-- name: Deploy Ethernet DNSDefaultRoute override (priority 99)
-  ansible.builtin.copy:
-    src: 99-dns-override.conf
-    dest: /etc/systemd/network/89-ethernet.network.d/99-dns-override.conf
-    owner: root
-    group: root
-    mode: '0644'
-  when: network_hostname in network_ethernet_hosts
-  notify: Restart systemd-networkd
-  tags:
-    - network-host
-    - dns
-
-- name: Remove Ethernet DNS drop-in on hosts without that unit
-  ansible.builtin.file:
-    path: /etc/systemd/network/89-ethernet.network.d
-    state: absent
-  when: network_hostname not in network_ethernet_hosts
-  notify: Restart systemd-networkd
-  tags:
-    - network-host
-    - dns
-
-- name: Ensure br0 DNS drop-in directory exists
-  ansible.builtin.file:
-    path: /etc/systemd/network/25-br0.network.d
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-  when: network_hostname == 'THEMIS'
-  tags:
-    - network-host
-    - dns
-
-- name: Deploy br0 DNSDefaultRoute override (priority 99)
-  ansible.builtin.copy:
-    src: 99-dns-override.conf
-    dest: /etc/systemd/network/25-br0.network.d/99-dns-override.conf
-    owner: root
-    group: root
-    mode: '0644'
-  when: network_hostname == 'THEMIS'
-  notify: Restart systemd-networkd
-  tags:
-    - network-host
-    - dns
-
-- name: Remove br0 DNS drop-in on non-THEMIS hosts
-  ansible.builtin.file:
-    path: /etc/systemd/network/25-br0.network.d
-    state: absent
-  when: network_hostname != 'THEMIS'
+  loop:
+    - /etc/systemd/network/80-wifi-station.network.d
+    - /etc/systemd/network/89-ethernet.network.d
+    - /etc/systemd/network/25-br0.network.d
   notify: Restart systemd-networkd
   tags:
     - network-host

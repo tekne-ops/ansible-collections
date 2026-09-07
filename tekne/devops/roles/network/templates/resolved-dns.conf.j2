@@ -1,8 +1,27 @@
-# Managed by tekne.devops.network — Domains/cache only.
-# Resolver list and DNSOverTLS live in 99-dot-override.conf (higher priority).
+# Managed by tekne.devops.network
+#
+# DNSOverTLS=yes: every resolver is reached on 853. Lookups fail if a server
+# has no DoT. FallbackDNS= clears compiled-in plaintext resolvers.
+#
+{% if network_dns_from_dhcp | bool %}
+# This host uses DHCP nameservers (no DNS= pin). systemd-networkd UseDNS=yes
+# plus DNSDefaultRoute=yes feed those IPs into resolved; they still go via DoT.
+{% else %}
+# Pinned DoT resolvers (not DHCP). Cablecolor drops much of port 53;
+# Tigo blocks Cloudflare DoT — Quad9 then Google.
+{% endif %}
 [Resolve]
 {% if network_dns_search_domains | length > 0 %}
 Domains={{ network_dns_search_domains | join(' ') }}
 {% endif %}
+{% if not (network_dns_from_dhcp | bool) and network_dns_servers | length > 0 %}
+DNS={{ network_dns_servers | join(' ') }}
+{% endif %}
+{% if network_dns_fallback | length > 0 %}
+FallbackDNS={{ network_dns_fallback | join(' ') }}
+{% else %}
+FallbackDNS=
+{% endif %}
+DNSOverTLS={{ network_dns_over_tls }}
 DNSSEC={{ network_dnssec }}
 Cache={{ network_dns_cache }}
