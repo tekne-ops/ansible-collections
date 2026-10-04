@@ -1,5 +1,6 @@
 ---
-- hosts: localhost
+- name: Test tekne.devops.user
+  hosts: localhost
   remote_user: root
   roles:
-    - ./roles/user
+    - role: tekne.devops.user

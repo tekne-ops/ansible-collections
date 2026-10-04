@@ -9,12 +9,12 @@
 - name: Wait for network connectivity before package installation
   ansible.builtin.command:
     cmd: ping -c 1 -W 2 archlinux.org
-  register: network_check
-  until: network_check.rc == 0
+  register: kde_network_check
+  until: kde_network_check.rc == 0
   retries: 30
   delay: 2
   changed_when: false
-  when: not install_chroot_phase | bool
+  when: not kde_install_chroot_phase | bool
   tags:
     - kde
     - network
@@ -38,11 +38,10 @@
 # Display manager (plasma-login-manager)
 # =============================================================================
 
-- name: Enable plasmalogin.service without starting
+- name: Enable plasmalogin.service without changing its runtime state
   ansible.builtin.systemd:
     name: "{{ kde_login_service }}"
     enabled: true
-    state: stopped
   tags:
     - kde
     - service
@@ -62,23 +61,20 @@
     - kde
     - verify
 
-- name: Verify plasmalogin.service is enabled
-  ansible.builtin.command:
-    cmd: "systemctl is-enabled {{ kde_login_service }}"
-  register: kde_login_enabled_check
-  changed_when: false
-  failed_when: kde_login_enabled_check.rc != 0
+- name: Inspect plasmalogin.service state
+  ansible.builtin.systemd:
+    name: "{{ kde_login_service }}"
+  register: kde_login_service_status
   tags:
     - kde
     - verify
     - service
 
-- name: Verify plasmalogin.service is not running
-  ansible.builtin.command:
-    cmd: "systemctl is-active {{ kde_login_service }}"
-  register: kde_login_active_check
-  changed_when: false
-  failed_when: kde_login_active_check.rc == 0
+- name: Verify plasmalogin.service is enabled
+  ansible.builtin.assert:
+    that:
+      - kde_login_service_status.status.UnitFileState == 'enabled'
+    fail_msg: "{{ kde_login_service }} is not enabled"
   tags:
     - kde
     - verify
@@ -88,8 +84,10 @@
   ansible.builtin.debug:
     msg: >-
       KDE packages installed: {{ kde_packages_install_result is success }},
-      {{ kde_login_service }} enabled: {{ kde_login_enabled_check.stdout | default('N/A') }},
-      {{ kde_login_service }} active: {{ kde_login_active_check.stdout | default('N/A') }} (should be inactive)
+      {{ kde_login_service }} enabled:
+      {{ kde_login_service_status.status.UnitFileState }},
+      {{ kde_login_service }} active:
+      {{ kde_login_service_status.status.ActiveState }}
   tags:
     - kde
     - verify

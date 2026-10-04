@@ -5,21 +5,6 @@
 # Order: deploy templates first, then flush handlers, then enable/restart
 # services so they load the new config before WiFi connect.
 
-- name: Read hostname from /etc/hostname
-  ansible.builtin.slurp:
-    src: /etc/hostname
-  register: network_hostname_file
-  tags:
-    - network-host
-
-- name: Set network hostname facts from /etc/hostname
-  ansible.builtin.set_fact:
-    network_hostname: "{{ (network_hostname_file.content | b64decode).strip() | upper }}"
-    network_hostname_raw: "{{ (network_hostname_file.content | b64decode).strip() }}"
-  when: network_hostname_file is succeeded
-  tags:
-    - network-host
-
 - name: Show network hostname and whether WiFi/Ethernet units will deploy
   ansible.builtin.debug:
     msg:
@@ -122,7 +107,7 @@
     follow: false
   when:
     - network_resolved_manage | bool
-    - not install_chroot_phase | bool
+    - not network_install_chroot_phase | bool
   tags:
     - network-host
     - dns
@@ -259,7 +244,7 @@
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: true
-    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
+    state: "{{ 'stopped' if network_install_chroot_phase | bool else 'started' }}"
   loop:
     - bluetooth.service
     - iwd.service
@@ -275,7 +260,7 @@
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: true
-    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
+    state: "{{ 'stopped' if network_install_chroot_phase | bool else 'started' }}"
   loop:
     - systemd-networkd.service
     - systemd-resolved.service
@@ -308,12 +293,10 @@
       community.general.modprobe:
         name: "{{ network_wifi_driver_module }}"
         state: present
-      failed_when: false
 
     - name: Unblock WiFi rfkill (ASTER)
       ansible.builtin.command: rfkill unblock wifi
       changed_when: false
-      failed_when: false
 
     - name: Start network services for live WiFi connect (ASTER)
       ansible.builtin.systemd:
@@ -352,7 +335,12 @@
 
 - name: Set WiFi interface for ASTER
   ansible.builtin.set_fact:
-    network_wifi_interface_resolved: "{{ network_wifi_interface if (network_wifi_interface | default('') | length > 0) else ((_wifi_interface_cmd.stdout | trim) | default('wlan0')) }}"
+    network_wifi_interface_resolved: >-
+      {{
+        network_wifi_interface
+        if (network_wifi_interface | default('') | length > 0)
+        else ((_wifi_interface_cmd.stdout | trim) | default('wlan0'))
+      }}
   when:
     - network_hostname == 'ASTER'
     - network_connect_wifi | bool
@@ -406,11 +394,11 @@
 - name: Wait for network connectivity
   ansible.builtin.command:
     cmd: ping -c 1 -W 2 archlinux.org
-  register: network_check
-  until: network_check.rc == 0
+  register: network_connectivity_check
+  until: network_connectivity_check.rc == 0
   retries: 30
   delay: 2
   changed_when: false
-  when: not install_chroot_phase | bool
+  when: not network_install_chroot_phase | bool
   tags:
     - network-host

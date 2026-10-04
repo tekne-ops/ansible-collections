@@ -1,0 +1,149 @@
+---
+argument_specs:
+  main:
+    short_description: XFCE desktop, themes, portals, and LightDM
+    description:
+      - Installs XFCE, themes, portals, and LightDM on selected hosts.
+    options:
+      xfce4_hostname:
+        description: Hostname used for host-specific display-manager configuration.
+        required: false
+        type: str
+      xfce4_default_group:
+        description: Default primary group for managed desktop users.
+        required: false
+        type: str
+        default: users
+      xfce4_users:
+        description: Users that receive XFCE configuration.
+        required: false
+        type: list
+        elements: dict
+        options:
+          name:
+            description: User name.
+            required: true
+            type: str
+          group:
+            description: Primary group.
+            required: false
+            type: str
+        default:
+          - name: dvaliente
+            group: users
+          - name: devops
+            group: users
+      xfce4_install_chroot_phase:
+        description: Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network).
+        required: false
+        type: bool
+        default: false
+      xfce4_groups:
+        description: XFCE4 package groups (verified with pacman -Qg).
+        required: false
+        type: list
+        elements: str
+        default:
+          - xfce4
+          - xfce4-goodies
+          - xorg-apps
+      xfce4_packages:
+        description: The packages value for the xfce4 role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - xfce4-panel-profiles
+          - gnome-keyring
+          - seahorse
+          - xdg-desktop-portal
+          - xdg-desktop-portal-gtk
+          - xdg-desktop-portal-xapp
+          - xdg-desktop-portal-cosmic
+          - libportal
+          - libportal-gtk4
+          - libportal-qt6
+          - bibata-cursor-theme-bin
+          - flat-remix
+          - kora-icon-theme
+          - xorg-server
+          - xdotool
+          - file-roller
+          - gvfs
+          - gvfs-afc
+          - sound-theme-smooth
+          - bluez
+          - bluez-utils
+          - blueman
+          - virt-manager
+          - vlc
+          - vlc-plugin-mpg123
+          - vlc-plugin-mpeg2
+          - vlc-plugin-x264
+          - vlc-plugin-x265
+          - vlc-plugin-matroska
+          - vlc-plugin-ass
+          - vlc-plugins-video-output
+          - vlc-plugins-visualization
+          - vlc-plugins-extra
+          - vlc-plugins-base
+          - vlc-plugin-ogg
+          - vlc-plugin-notify
+          - vlc-plugin-upnp
+          - vlc-plugin-mtp
+          - vlc-plugin-mad
+          - vlc-plugin-gstreamer
+          - vlc-plugin-freetype
+          - vlc-plugin-flac
+          - vlc-plugin-ffmpeg
+          - pavucontrol
+      xfce4_lightdm_packages:
+        description: The lightdm packages value for the xfce4 role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - lightdm
+          - lightdm-slick-greeter
+          - lightdm-gtk-greeter
+          - lightdm-gtk-greeter-settings
+          - lightdm-webkit-theme-litarvan
+          - lightdm-webkit2-greeter
+      xfce4_picom_user:
+        description: The picom user value for the xfce4 role.
+        required: false
+        type: str
+        default: dvaliente
+      xfce4_lightdm_hosts:
+        description: Hosts that receive LightDM packages, greeter config, and backgrounds.
+        required: false
+        type: list
+        elements: str
+        default:
+          - ASTER
+          - YUGEN
+      xfce4_lightdm_service:
+        description: The lightdm service value for the xfce4 role.
+        required: false
+        type: str
+        default: lightdm
+      xfce4_backgrounds_repo:
+        description: XFCE backgrounds (xfce4_lightdm_hosts only).
+        required: false
+        type: str
+        default: https://github.com/tekne-ops/backgrounds
+      xfce4_backgrounds_version:
+        description: The backgrounds version value for the xfce4 role.
+        required: false
+        type: str
+        default: deac23607153324f3fe888f8eeb9fb37dcfc8c69
+      xfce4_backgrounds_dir:
+        description: The backgrounds dir value for the xfce4 role.
+        required: false
+        type: str
+        default: /usr/share/backgrounds/xfce
+      xfce4_slick_greeter_background:
+        description: The slick greeter background value for the xfce4 role.
+        required: false
+        type: str
+        default: /usr/share/backgrounds/xfce/dog-animal-picture-uhdpaper.com-4K-4.3358.jpg

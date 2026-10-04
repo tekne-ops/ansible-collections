@@ -6,7 +6,7 @@ Installs and configures Pipewire audio system for Arch Linux, replacing conflict
 
 1. **Removes conflicting packages** (jack, ffmpeg, jack2, etc.)
 2. **Installs Pipewire stack** (pipewire, wireplumber, pavucontrol, etc.)
-3. **Creates user config directories** for each user from ansible-role-user
+3. **Creates user config directories** for each entry in `pipewire_users`
 4. **Deploys configuration files** to user directories
 5. **Enables user service** (without starting it)
 6. **Verifies installation** and service state
@@ -14,7 +14,7 @@ Installs and configures Pipewire audio system for Arch Linux, replacing conflict
 ## Requirements
 
 - `community.general` collection (for `pacman` module)
-- `ansible-role-user` must run before this role (provides `users` variable)
+- Target users must already exist.
 
 ```bash
 ansible-galaxy collection install community.general
@@ -27,6 +27,8 @@ ansible-galaxy collection install community.general
 | `pipewire_conflicting_packages` | See defaults | Packages to remove before install |
 | `pipewire_packages` | See defaults | Pipewire packages to install |
 | `pipewire_user_service` | `pipewire` | User service to enable |
+| `pipewire_users` | See defaults | Users that receive PipeWire configuration |
+| `pipewire_default_group` | `users` | Fallback primary group |
 
 ### Conflicting Packages (removed)
 
@@ -40,7 +42,7 @@ ansible-galaxy collection install community.general
 
 ## Dependencies
 
-- **ansible-role-user**: Provides the `users` list for per-user configuration
+- Run `tekne.devops.user` first when it is responsible for creating the target users.
 
 ## Files
 

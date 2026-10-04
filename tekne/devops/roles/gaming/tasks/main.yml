@@ -9,8 +9,8 @@
 - name: Wait for network connectivity before package installation
   ansible.builtin.command:
     cmd: ping -c 1 -W 2 archlinux.org
-  register: network_check
-  until: network_check.rc == 0
+  register: gaming_network_check
+  until: gaming_network_check.rc == 0
   retries: 30
   delay: 2
   changed_when: false
@@ -39,7 +39,11 @@
 
 - name: Set effective hostname for gaming role
   ansible.builtin.set_fact:
-    gaming_effective_hostname: "{{ (hostname | default(cached_hostname | default(ansible_hostname))) | upper }}"
+    gaming_effective_hostname: >-
+      {{
+        (hostname | default(cached_hostname | default(ansible_facts['hostname'])))
+        | upper
+      }}
   tags:
     - gaming
     - config
@@ -64,7 +68,7 @@
     owner: root
     group: root
     mode: '0644'
-  register: game_conf_result
+  register: gaming_conf_result
   when: gaming_effective_hostname in gaming_hosts
   tags:
     - gaming
@@ -77,7 +81,7 @@
     owner: root
     group: root
     mode: '0755'
-  register: game_script_result
+  register: gaming_script_result
   when: gaming_effective_hostname in gaming_hosts
   tags:
     - gaming
@@ -145,9 +149,9 @@
   ansible.builtin.command:
     cmd: "pacman -Q {{ item }}"
   loop: "{{ gaming_packages }}"
-  register: package_verify
+  register: gaming_package_verify
   changed_when: false
-  failed_when: package_verify.rc != 0
+  failed_when: gaming_package_verify.rc != 0
   tags:
     - gaming
     - verify
@@ -155,7 +159,7 @@
 - name: Verify gaming limits configuration exists
   ansible.builtin.stat:
     path: "{{ gaming_limits_conf_dest }}"
-  register: game_conf_stat
+  register: gaming_conf_stat
   when: gaming_effective_hostname in gaming_hosts
   tags:
     - gaming
@@ -164,8 +168,8 @@
 - name: Assert gaming limits configuration was copied
   ansible.builtin.assert:
     that:
-      - game_conf_stat.stat.exists
-      - game_conf_stat.stat.mode == '0644'
+      - gaming_conf_stat.stat.exists
+      - gaming_conf_stat.stat.mode == '0644'
     fail_msg: "gaming limits configuration was not copied correctly"
   when: gaming_effective_hostname in gaming_hosts
   tags:
@@ -195,7 +199,7 @@
 - name: Verify game script exists and is executable
   ansible.builtin.stat:
     path: "{{ gaming_script_dest }}"
-  register: game_script_stat
+  register: gaming_script_stat
   when: gaming_effective_hostname in gaming_hosts
   tags:
     - gaming
@@ -204,9 +208,9 @@
 - name: Assert game script was copied and is executable
   ansible.builtin.assert:
     that:
-      - game_script_stat.stat.exists
-      - game_script_stat.stat.executable
-      - game_script_stat.stat.mode == '0755'
+      - gaming_script_stat.stat.exists
+      - gaming_script_stat.stat.executable
+      - gaming_script_stat.stat.mode == '0755'
     fail_msg: "game script was not copied or is not executable"
   when: gaming_effective_hostname in gaming_hosts
   tags:
@@ -220,8 +224,8 @@
       ==============================================================
       Packages installed: {{ gaming_install_result is success }}
       NVIDIA Xorg config: {{ (gaming_xorg_conf_result is success) if gaming_effective_hostname in gaming_xorg_hosts else 'skipped' }}
-      limits config: {{ (game_conf_result is success) if gaming_effective_hostname in gaming_hosts else 'skipped' }}
-      game script: {{ (game_script_result is success) if gaming_effective_hostname in gaming_hosts else 'skipped' }}
+      limits config: {{ (gaming_conf_result is success) if gaming_effective_hostname in gaming_hosts else 'skipped' }}
+      game script: {{ (gaming_script_result is success) if gaming_effective_hostname in gaming_hosts else 'skipped' }}
   tags:
     - gaming
     - verify

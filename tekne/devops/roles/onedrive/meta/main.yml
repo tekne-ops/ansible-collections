@@ -1,18 +1,20 @@
-# SPDX-License-Identifier: MIT-0
 ---
 galaxy_info:
   author: dvaliente
-  description: Installs and configures OneDrive client for all users
-  license: MIT-0
-  min_ansible_version: "2.10"
-
+  description: abraunegg OneDrive client, config, and sync directory
+  namespace: tekne
+  role_name: onedrive
+  license: MIT
+  min_ansible_version: 2.19.0
+  standalone: false
   platforms:
-    - name: Archlinux
+    - name: ArchLinux
       versions:
         - all
-
   galaxy_tags:
-    - onedrive
-    - cloud
-    - sync
     - archlinux
+    - onedrive
+collections:
+  - ansible.posix
+  - community.general
+dependencies: []

@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: MIT-0
 ---
-- name: reload systemd
+- name: Reload systemd
   ansible.builtin.systemd:
     daemon_reload: true
+  listen: reload systemd
 
-- name: reload nftables
+- name: Reload nftables
   ansible.builtin.systemd:
     name: nftables
     state: reloaded
     daemon_reload: true
-  when: not install_chroot_phase | bool
+  listen: reload nftables
+  when: not nftables_install_chroot_phase | bool

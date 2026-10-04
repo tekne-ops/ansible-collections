@@ -17,7 +17,7 @@
   tags:
     - hostname
 
-- name: Cache hostname fact
+- name: Cache hostname fact  # noqa var-naming[no-role-prefix]
   ansible.builtin.set_fact:
     cached_hostname: "{{ _hostname_file.content | b64decode | trim }}"
     cacheable: true
@@ -25,9 +25,9 @@
   tags:
     - hostname
 
-- name: Set hostname variable for convenience
+- name: Set hostname variable for convenience  # noqa var-naming[no-role-prefix]
   ansible.builtin.set_fact:
-    hostname: "{{ ansible_facts.get('cached_hostname', ansible_hostname) }}"
+    hostname: "{{ ansible_facts.get('cached_hostname', ansible_facts['hostname']) }}"
   tags:
     - hostname
     - always

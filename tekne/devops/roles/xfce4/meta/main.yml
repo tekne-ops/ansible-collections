@@ -1,16 +1,20 @@
 ---
 galaxy_info:
   author: dvaliente
-  description: Installs XFCE4 desktop environment and LightDM for Arch Linux
-  license: MIT-0
-  min_ansible_version: "2.10"
-
+  description: XFCE desktop, themes, portals, and LightDM
+  namespace: tekne
+  role_name: xfce4
+  license: MIT
+  min_ansible_version: 2.19.0
+  standalone: false
   platforms:
-    - name: Archlinux
+    - name: ArchLinux
       versions:
         - all
   galaxy_tags:
-    - xfce4
-    - desktop
-    - lightdm
     - archlinux
+    - desktop
+    - xfce
+collections:
+  - community.general
+dependencies: []

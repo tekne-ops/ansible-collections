@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT-0
 ---
-nftables_hostname: "{{ hostname | default(ansible_hostname) | upper }}"
+nftables_hostname: "{{ hostname | default(ansible_facts['hostname']) | upper }}"
 
 nftables_server_hosts:
   - THEMIS
@@ -9,4 +9,4 @@ nftables_docker_hosts:
   - THEMIS
   - YUGEN
 
-install_chroot_phase: false
+nftables_install_chroot_phase: "{{ install_chroot_phase | default(false) }}"

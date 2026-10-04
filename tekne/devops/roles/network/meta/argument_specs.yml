@@ -1,0 +1,136 @@
+---
+argument_specs:
+  main:
+    short_description: systemd-networkd, WiFi, DNS policy, and the THEMIS bridge
+    description:
+      - Configures systemd-networkd, WiFi, DNS, and the THEMIS bridge.
+    options:
+      network_hostname:
+        description: Hostname (from playbook pre_tasks / hostname role).
+        required: false
+        type: str
+      network_hostname_raw:
+        description: The hostname raw value for the network role.
+        required: false
+        type: str
+      network_wifi_hosts:
+        description: 'WiFi .network unit: ASTER only (iwd). Ethernet: workstations/VMs, not THEMIS (br0).'
+        required: false
+        type: list
+        elements: str
+        default:
+          - ASTER
+      network_ethernet_hosts:
+        description: The ethernet hosts value for the network role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - ASTER
+          - YUGEN
+          - KVM
+      network_config_hosts:
+        description: The config hosts value for the network role.
+        required: false
+        type: list
+        elements: str
+      network_wifi_ssid:
+        description: WiFi (ASTER only); set passphrase in vault.
+        required: false
+        type: str
+      network_wifi_interface:
+        description: The wifi interface value for the network role.
+        required: false
+        type: str
+      network_wifi_passphrase:
+        description: The wifi passphrase value for the network role.
+        required: false
+        type: str
+        no_log: true
+      network_wifi_driver_module:
+        description: The wifi driver module value for the network role.
+        required: false
+        type: str
+        default: mt7925e
+      network_wifi_detect_retries:
+        description: The wifi detect retries value for the network role.
+        required: false
+        type: int
+        default: 30
+      network_wifi_detect_delay:
+        description: The wifi detect delay value for the network role.
+        required: false
+        type: int
+        default: 2
+      network_connect_wifi:
+        description: Live WiFi association via iwctl (disable during arch-chroot install; config still deploys).
+        required: false
+        type: bool
+        default: true
+      network_install_chroot_phase:
+        description: Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network).
+        required: false
+        type: bool
+        default: false
+      network_resolved_manage:
+        description: 'DNS (single drop-in: /etc/systemd/resolved.conf.d/95-dns.conf).'
+        required: false
+        type: bool
+        default: true
+      network_dns_from_dhcp:
+        description:
+          - 'ASTER: DHCP nameservers from the router, contacted only with strict DoT. Other hosts: pin Quad9 then Google (Cablecolor/Tigo drop port 53;'
+          - Tigo blocks 1.1.1.1:853).
+        required: false
+        type: bool
+      network_dns_servers:
+        description: The dns servers value for the network role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - 9.9.9.9#dns.quad9.net
+          - 149.112.112.112#dns.quad9.net
+          - 8.8.8.8#dns.google
+          - 8.8.4.4#dns.google
+      network_dns_fallback:
+        description: The dns fallback value for the network role.
+        required: false
+        type: list
+        elements: str
+        default: []
+      network_dns_search_domains:
+        description: The dns search domains value for the network role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - tekne.sv
+      network_dns_over_tls:
+        description: The dns over tls value for the network role.
+        required: false
+        type: str
+        default: 'yes'
+      network_dnssec:
+        description: The dnssec value for the network role.
+        required: false
+        type: str
+        default: 'no'
+      network_dns_cache:
+        description: The dns cache value for the network role.
+        required: false
+        type: str
+        default: 'yes'
+      network_dhcp_use_dns:
+        description: The dhcp use dns value for the network role.
+        required: false
+        type: str
+      network_dhcp_use_domains:
+        description: The dhcp use domains value for the network role.
+        required: false
+        type: str
+        default: 'no'
+      network_dns_default_route:
+        description: The dns default route value for the network role.
+        required: false
+        type: str

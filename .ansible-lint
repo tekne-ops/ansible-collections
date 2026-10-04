@@ -1,0 +1,13 @@
+---
+profile: production
+exclude_paths:
+  - .git/
+  - .ansible/
+  - .build/
+  - .ci-collections/
+  - .ci-layout/
+  - ansible_collections/
+  - tekne/ansible_collections/
+kinds:
+  - playbook: "roles/*/tests/test.yml"
+  - role-arg-spec: "roles/*/meta/argument_specs.yml"

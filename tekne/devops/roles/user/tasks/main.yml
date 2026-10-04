@@ -21,15 +21,16 @@
 - name: Create users
   ansible.builtin.user:
     name: "{{ item.name }}"
-    shell: "{{ item.shell | default(default_shell) }}"
-    group: "{{ item.group | default(default_group) }}"
+    shell: "{{ item.shell | default(user_default_shell) }}"
+    group: "{{ item.group | default(user_default_group) }}"
     groups: "{{ ((item.groups | default('')) + ',devs') | trim(',') }}"
     password: "{{ item.password | default(user_password) }}"
     create_home: true
     state: present
-  loop: "{{ users }}"
+  loop: "{{ user_accounts }}"
   loop_control:
     label: "{{ item.name }}"
+  no_log: true
   tags:
     - user
     - create
@@ -38,7 +39,8 @@
   ansible.builtin.user:
     name: root
     password: "{{ root_password | default(user_password) }}"
-  when: manage_root_password | bool
+  no_log: true
+  when: user_manage_root_password | bool
   tags:
     - user
     - root
@@ -49,7 +51,7 @@
     state: present
     exclusive: "{{ item.ssh_exclusive | default(true) }}"
     key: "{{ lookup('file', role_path + '/files/' + item.ssh_key_file) }}"
-  loop: "{{ users }}"
+  loop: "{{ user_accounts }}"
   loop_control:
     label: "{{ item.name }}"
   when: item.ssh_key_file is defined
@@ -93,10 +95,10 @@
   ansible.builtin.getent:
     database: passwd
     key: "{{ item.name }}"
-  loop: "{{ users }}"
+  loop: "{{ user_accounts }}"
   loop_control:
     label: "{{ item.name }}"
-  register: user_info
+  register: user_account_info
   tags:
     - user
     - home_config
@@ -106,9 +108,9 @@
     path: "{{ item.0.ansible_facts.getent_passwd[item.0.item.name][4] }}/{{ item.1 }}"
     state: directory
     owner: "{{ item.0.item.name }}"
-    group: "{{ item.0.item.group | default(default_group) }}"
+    group: "{{ item.0.item.group | default(user_default_group) }}"
     mode: "{{ '0700' if item.1 in ['.gnupg', '.ssh'] else '0755' }}"
-  loop: "{{ user_info.results | product(user_directories) | list }}"
+  loop: "{{ user_account_info.results | product(user_directories) | list }}"
   loop_control:
     label: "{{ item.0.item.name }}/{{ item.1 }}"
   tags:
@@ -120,9 +122,9 @@
     src: bashrc
     dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.bashrc"
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(user_default_group) }}"
     mode: '0644'
-  loop: "{{ user_info.results }}"
+  loop: "{{ user_account_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -134,9 +136,9 @@
     src: vimrc
     dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.vimrc"
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(user_default_group) }}"
     mode: '0644'
-  loop: "{{ user_info.results }}"
+  loop: "{{ user_account_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -148,9 +150,9 @@
     src: pikaur.conf
     dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pikaur.conf"
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(user_default_group) }}"
     mode: '0644'
-  loop: "{{ user_info.results }}"
+  loop: "{{ user_account_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:

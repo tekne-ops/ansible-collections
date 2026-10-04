@@ -9,12 +9,12 @@
 - name: Wait for network connectivity before package installation
   ansible.builtin.command:
     cmd: ping -c 1 -W 2 archlinux.org
-  register: network_check
-  until: network_check.rc == 0
+  register: gpu_network_check
+  until: gpu_network_check.rc == 0
   retries: 30
   delay: 2
   changed_when: false
-  when: not install_chroot_phase | bool
+  when: not gpu_install_chroot_phase | bool
   tags:
     - gpu
     - network
@@ -26,7 +26,11 @@
 
 - name: Set effective hostname for GPU role
   ansible.builtin.set_fact:
-    gpu_effective_hostname: "{{ (hostname | default(cached_hostname | default(ansible_hostname))) | upper }}"
+    gpu_effective_hostname: >-
+      {{
+        (hostname | default(cached_hostname | default(ansible_facts['hostname'])))
+        | upper
+      }}
   tags:
     - gpu
     - config
@@ -72,7 +76,7 @@
     name: "{{ gpu_nvidia_packages }}"
     state: present
     extra_args: '--noconfirm --needed'
-  register: nvidia_install_result
+  register: gpu_nvidia_install_result
   when: gpu_type in ['nvidia', 'hybrid']
   tags:
     - gpu
@@ -84,7 +88,7 @@
     name: "{{ gpu_hybrid_extra_packages }}"
     state: present
     extra_args: '--noconfirm --needed'
-  register: hybrid_install_result
+  register: gpu_hybrid_install_result
   when: gpu_type == 'hybrid'
   tags:
     - gpu
@@ -100,7 +104,7 @@
     name: "{{ gpu_intel_packages }}"
     state: present
     extra_args: '--noconfirm --needed'
-  register: intel_install_result
+  register: gpu_intel_install_result
   when: gpu_type in ['intel', 'hybrid']
   tags:
     - gpu
@@ -115,9 +119,9 @@
   ansible.builtin.command:
     cmd: "pacman -Q {{ item }}"
   loop: "{{ gpu_nvidia_packages }}"
-  register: nvidia_package_verify
+  register: gpu_nvidia_package_verify
   changed_when: false
-  failed_when: nvidia_package_verify.rc != 0
+  failed_when: gpu_nvidia_package_verify.rc != 0
   when: gpu_type in ['nvidia', 'hybrid']
   tags:
     - gpu
@@ -128,9 +132,9 @@
   ansible.builtin.command:
     cmd: "pacman -Q {{ item }}"
   loop: "{{ gpu_hybrid_extra_packages }}"
-  register: hybrid_package_verify
+  register: gpu_hybrid_package_verify
   changed_when: false
-  failed_when: hybrid_package_verify.rc != 0
+  failed_when: gpu_hybrid_package_verify.rc != 0
   when: gpu_type == 'hybrid'
   tags:
     - gpu
@@ -141,9 +145,9 @@
   ansible.builtin.command:
     cmd: "pacman -Q {{ item }}"
   loop: "{{ gpu_intel_packages }}"
-  register: intel_package_verify
+  register: gpu_intel_package_verify
   changed_when: false
-  failed_when: intel_package_verify.rc != 0
+  failed_when: gpu_intel_package_verify.rc != 0
   when: gpu_type in ['intel', 'hybrid']
   tags:
     - gpu

@@ -1,0 +1,183 @@
+---
+argument_specs:
+  main:
+    short_description: Post-install packages, OneDrive first sync, home symlinks, Bluetooth, and XFCE desktop settings
+    description:
+      - Installs post-install packages and applies OneDrive, Bluetooth, and XFCE desktop settings.
+    options:
+      bootstrap_user:
+        description: User configuration.
+        required: false
+        type: str
+        default: dvaliente
+      bootstrap_group:
+        description: The group value for the bootstrap role.
+        required: false
+        type: str
+        default: users
+      bootstrap_home:
+        description: The home value for the bootstrap role.
+        required: false
+        type: str
+      bootstrap_onedrive:
+        description: OneDrive Configuration OneDrive sync directory.
+        required: false
+        type: str
+        default: /srv/OneDrive
+      bootstrap_onedrive_config_dir:
+        description:
+          - 'OneDrive config directory (config file: <this_dir>/config). Overridden in vars to /home/dvaliente/.config/onedrive so sync and service use'
+          - that config.
+        required: false
+        type: str
+      bootstrap_onedrive_binary:
+        description: OneDrive binary path.
+        required: false
+        type: str
+        default: /usr/bin/onedrive
+      bootstrap_onedrive_sync_options:
+        description: First sync options (download-only for initial sync).
+        required: false
+        type: str
+        default: --sync --download-only --verbose
+      bootstrap_onedrive_sync_timeout:
+        description: Timeout for first sync in seconds (1 hour default).
+        required: false
+        type: int
+        default: 3600
+      bootstrap_onedrive_auth_log:
+        description: Temporary log used to display device-authentication instructions.
+        required: false
+        type: path
+        default: /tmp/tekne-onedrive-first-sync.log
+      bootstrap_bluetooth_name:
+        description: Bluetooth Configuration Bluetooth device name (defaults to hostname).
+        required: false
+        type: str
+      bootstrap_xfce_wallpaper:
+        description: XFCE Desktop Configuration Wallpaper path.
+        required: false
+        type: str
+      bootstrap_xfce_monitors:
+        description: Monitor names for wallpaper configuration (host-specific).
+        required: false
+        type: list
+        elements: str
+        default:
+          - eDP-1
+          - DP-1-1
+      bootstrap_xfce_cursor_theme:
+        description: The xfce cursor theme value for the bootstrap role.
+        required: false
+        type: str
+        default: Bibata-Original-Amber
+      bootstrap_xfce_wm_theme:
+        description: The xfce wm theme value for the bootstrap role.
+        required: false
+        type: str
+        default: minimal-grey2
+      bootstrap_xfce_gtk_theme:
+        description: The xfce gtk theme value for the bootstrap role.
+        required: false
+        type: str
+        default: Adwaita-dark
+      bootstrap_xfce_icon_theme:
+        description: The xfce icon theme value for the bootstrap role.
+        required: false
+        type: str
+        default: Flat-Remix-Cyan-Dark
+      bootstrap_xfce_font:
+        description: Font settings.
+        required: false
+        type: str
+        default: Sans 11
+      bootstrap_xfce_monospace_font:
+        description: The xfce monospace font value for the bootstrap role.
+        required: false
+        type: str
+        default: Monospace 11
+      bootstrap_xfce_font_rgba:
+        description: The xfce font rgba value for the bootstrap role.
+        required: false
+        type: str
+        default: rgb
+      bootstrap_xfce_workspace_count:
+        description: Workspace settings.
+        required: false
+        type: int
+        default: 1
+      bootstrap_xfce_skip_if_no_display:
+        description: Whether to skip XFCE configuration if no X session is available.
+        required: false
+        type: bool
+        default: true
+      bootstrap_packages:
+        description: Package Installation Packages to install via pacman (--noconfirm --needed).
+        required: false
+        type: list
+        elements: str
+        default:
+          - google-chrome
+          - zoom
+          - ventoy-bin
+          - visual-studio-code-bin
+          - cursor-bin
+          - teams-for-linux-bin
+          - httpfs2-2gbplus
+          - crossover
+          - deezer
+          - asar
+          - imagemagick
+          - liblqr
+          - omnissa-horizon-client
+          - transmission-qt
+          - microsoft-edge-stable-bin
+          - ocs-url
+          - bitwarden-bin
+          - yubico-authenticator-bin
+      bootstrap_symlinks:
+        description: The symlinks value for the bootstrap role.
+        required: false
+        type: list
+        elements: dict
+        options:
+          src:
+            description: The src field on each list entry.
+            required: false
+            type: str
+          dest:
+            description: The dest field on each list entry.
+            required: false
+            type: str
+          mode:
+            description: The mode field on each list entry.
+            required: false
+            type: str
+      bootstrap_ssh_keys:
+        description: The ssh keys value for the bootstrap role.
+        required: false
+        type: list
+        elements: dict
+        options:
+          path:
+            description: The path field on each list entry.
+            required: false
+            type: str
+          mode:
+            description: The mode field on each list entry.
+            required: false
+            type: str
+      bootstrap_bluetooth_config:
+        description: The bluetooth config value for the bootstrap role.
+        required: false
+        type: list
+        elements: dict
+        options:
+          regexp:
+            description: The regexp field on each list entry.
+            required: false
+            type: str
+          line:
+            description: The line field on each list entry.
+            required: false
+            type: str

@@ -24,7 +24,7 @@
   loop: "{{ bootstrap_symlinks }}"
   loop_control:
     label: "{{ item.src | basename }}"
-  register: symlink_sources
+  register: bootstrap_symlink_sources
   tags: [bootstrap, symlinks]
 
 - name: Create symbolic links (only if source exists)
@@ -36,7 +36,7 @@
     owner: "{{ bootstrap_user }}"
     group: "{{ bootstrap_group }}"
     force: true
-  loop: "{{ symlink_sources.results }}"
+  loop: "{{ bootstrap_symlink_sources.results }}"
   loop_control:
     label: "{{ item.item.dest | basename }}"
   when: item.stat.exists
@@ -45,7 +45,7 @@
 - name: Warn about missing symlink sources
   ansible.builtin.debug:
     msg: "WARNING: Source does not exist, skipping symlink: {{ item.item.src }}"
-  loop: "{{ symlink_sources.results }}"
+  loop: "{{ bootstrap_symlink_sources.results }}"
   loop_control:
     label: "{{ item.item.src | basename }}"
   when: not item.stat.exists
@@ -73,7 +73,7 @@
   loop: "{{ bootstrap_ssh_keys }}"
   loop_control:
     label: "{{ item.path | basename }}"
-  register: ssh_key_sources
+  register: bootstrap_ssh_key_sources
   tags: [bootstrap, symlinks, ssh]
 
 - name: Set correct permissions on SSH key source files
@@ -83,7 +83,7 @@
     owner: "{{ bootstrap_user }}"
     group: "{{ bootstrap_group }}"
     mode: "{{ item.item.mode }}"
-  loop: "{{ ssh_key_sources.results }}"
+  loop: "{{ bootstrap_ssh_key_sources.results }}"
   loop_control:
     label: "{{ item.item.path | basename }}"
   when: item.stat.exists
@@ -93,6 +93,8 @@
   ansible.builtin.debug:
     msg:
       - "Symlinks processed: {{ bootstrap_symlinks | length }}"
-      - "Created: {{ symlink_sources.results | selectattr('stat.exists') | list | length }}"
-      - "Skipped (source missing): {{ symlink_sources.results | rejectattr('stat.exists') | list | length }}"
+      - "Created: {{ bootstrap_symlink_sources.results | selectattr('stat.exists') | list | length }}"
+      - >-
+        Skipped (source missing):
+        {{ bootstrap_symlink_sources.results | rejectattr('stat.exists') | list | length }}
   tags: [bootstrap, symlinks]

@@ -2,7 +2,7 @@
 ---
 # defaults file for n8n
 n8n_container_name: n8n
-n8n_docker_image: docker.n8n.io/n8nio/n8n
+n8n_docker_image: docker.n8n.io/n8nio/n8n:1.113.3
 n8n_docker_network: dockers
 n8n_docker_ip: 192.168.75.14
 n8n_volume_name: n8n_data

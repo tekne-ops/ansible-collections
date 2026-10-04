@@ -1,0 +1,87 @@
+---
+argument_specs:
+  main:
+    short_description: Locale, NTP, mirrors, host services, and Tekne repository clones
+    description:
+      - Configures locale, NTP, pacman mirrors, services, and Tekne git clones.
+    options:
+      os_hostname:
+        description: Hostname (resolved from playbook pre_tasks).
+        required: false
+        type: str
+      os_hostname_raw:
+        description: The hostname raw value for the os role.
+        required: false
+        type: str
+      os_install_chroot_phase:
+        description: 'During arch-chroot install: enable units but do not start services (PID 1 is live ISO).'
+        required: false
+        type: bool
+        default: false
+      os_cpupower_governor:
+        description: 'CPU governor: performance on YUGEN, schedutil on THEMIS; ASTER uses TLP only.'
+        required: false
+        type: str
+      os_cpupower_start_hosts:
+        description: The cpupower start hosts value for the os role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - YUGEN
+          - THEMIS
+      os_cpupower_skip_hosts:
+        description: The cpupower skip hosts value for the os role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - ASTER
+      os_irqbalance_start_hosts:
+        description: The irqbalance start hosts value for the os role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - YUGEN
+          - THEMIS
+          - ASTER
+      os_clone_tekne_repos:
+        description: The clone tekne repos value for the os role.
+        required: false
+        type: bool
+      os_locale:
+        description: Locale settings.
+        required: false
+        type: str
+        default: en_US.UTF-8
+      os_mirror_country:
+        description: Mirror settings.
+        required: false
+        type: str
+        default: United States
+      os_mirror_count:
+        description: The mirror count value for the os role.
+        required: false
+        type: int
+        default: 100
+      os_mirror_protocols:
+        description: The mirror protocols value for the os role.
+        required: false
+        type: str
+        default: https,ftp
+      os_mirror_age:
+        description: The mirror age value for the os role.
+        required: false
+        type: int
+        default: 168
+      os_themis_local_packages:
+        description: 'THEMIS-only: local .pkg.tar.zst packages (place in role files/).'
+        required: false
+        type: list
+        elements: str
+        default:
+          - pikaur-1.33.2-1-any.pkg.tar.zst
+          - schedtoold-0.3-11-x86_64.pkg.tar.zst
+          - blesh-git-0.4.0_devel4.r2307.32bb63da-1-any.pkg.tar.zst
+          - python311-3.11.14-1-x86_64.pkg.tar.zst

@@ -1,0 +1,42 @@
+---
+argument_specs:
+  main:
+    short_description: Arch package repository container
+    description:
+      - Runs the Tekne Arch package repository container.
+    options:
+      repotekne_container_name:
+        description: The container name value for the repotekne role.
+        required: false
+        type: str
+        default: repotekne
+      repotekne_container_image:
+        description: The container image value for the repotekne role.
+        required: false
+        type: str
+        default: fiercebrake/arch:1.1.0
+      repotekne_docker_network:
+        description: The docker network value for the repotekne role.
+        required: false
+        type: str
+        default: dockers
+      repotekne_docker_ip:
+        description: The docker ip value for the repotekne role.
+        required: false
+        type: str
+        default: 192.168.75.13
+      repotekne_data_dir:
+        description: The data dir value for the repotekne role.
+        required: false
+        type: str
+        default: /srv/docker/repotekne
+      repotekne_cache_dir:
+        description: The cache dir value for the repotekne role.
+        required: false
+        type: str
+        default: /mnt/cache/aur-build-tekne
+      repotekne_setup_version:
+        description: The setup version value for the repotekne role.
+        required: false
+        type: str
+        default: '1'

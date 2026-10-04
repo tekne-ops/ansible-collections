@@ -4,10 +4,10 @@
   ansible.builtin.getent:
     database: passwd
     key: "{{ item.name }}"
-  loop: "{{ users }}"
+  loop: "{{ pipewire_users }}"
   loop_control:
     label: "{{ item.name }}"
-  register: user_info
+  register: pipewire_user_info
   tags:
     - pipewire
     - config
@@ -17,9 +17,9 @@
     path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d"
     state: directory
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(pipewire_default_group) }}"
     mode: '0755'
-  loop: "{{ user_info.results }}"
+  loop: "{{ pipewire_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -31,9 +31,9 @@
     path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/wireplumber/wireplumber.conf.d"
     state: directory
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(pipewire_default_group) }}"
     mode: '0755'
-  loop: "{{ user_info.results }}"
+  loop: "{{ pipewire_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -45,9 +45,9 @@
     src: pipewire.conf
     dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d/99-audio-quality.conf"
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(pipewire_default_group) }}"
     mode: '0644'
-  loop: "{{ user_info.results }}"
+  loop: "{{ pipewire_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -59,9 +59,9 @@
     src: 50-bluetooth-quality.conf
     dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/wireplumber/wireplumber.conf.d/50-bluetooth-quality.conf"
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(pipewire_default_group) }}"
     mode: '0644'
-  loop: "{{ user_info.results }}"
+  loop: "{{ pipewire_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -73,9 +73,9 @@
     src: 60-volume-boost.conf
     dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/wireplumber/wireplumber.conf.d/60-volume-boost.conf"
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(pipewire_default_group) }}"
     mode: '0644'
-  loop: "{{ user_info.results }}"
+  loop: "{{ pipewire_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -87,9 +87,9 @@
     src: 99-ldac.conf
     dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/wireplumber/wireplumber.conf.d/99-ldac.conf"
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(pipewire_default_group) }}"
     mode: '0644'
-  loop: "{{ user_info.results }}"
+  loop: "{{ pipewire_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -101,9 +101,9 @@
     src: sink-eq06-sony.conf
     dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d/sink-eq06.conf"
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(pipewire_default_group) }}"
     mode: '0644'
-  loop: "{{ user_info.results }}"
+  loop: "{{ pipewire_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -114,7 +114,7 @@
   ansible.builtin.file:
     path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d/60-soft-limiter.conf"
     state: absent
-  loop: "{{ user_info.results }}"
+  loop: "{{ pipewire_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -125,7 +125,7 @@
   ansible.builtin.file:
     path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d/99-ldac.conf"
     state: absent
-  loop: "{{ user_info.results }}"
+  loop: "{{ pipewire_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:

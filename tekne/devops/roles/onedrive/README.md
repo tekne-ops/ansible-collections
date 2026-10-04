@@ -1,11 +1,11 @@
 # OneDrive Role
 
-Installs and configures OneDrive client (abraunegg fork) for all users defined in ansible-role-user.
+Installs and configures the abraunegg OneDrive client for `onedrive_owner`.
 
 ## What It Does
 
 1. **Installs OneDrive package** (onedrive-abraunegg)
-2. **Creates config directory** (`~/.config/onedrive`) for each user
+2. **Creates the owner's config directory** (`~/.config/onedrive`)
 3. **Creates sync directory** (`/srv/OneDrive`) owned by `dvaliente`
 4. **Copies config file and `sync_list`** to dvaliente's config directory
 5. **Verifies installation** and configuration
@@ -13,7 +13,7 @@ Installs and configures OneDrive client (abraunegg fork) for all users defined i
 ## Requirements
 
 - `community.general` collection (for `pacman` module)
-- `ansible-role-user` must run before this role (provides `users` variable)
+- `onedrive_owner` must already exist.
 
 ```bash
 ansible-galaxy collection install community.general
@@ -43,15 +43,15 @@ ansible-galaxy collection install community.general
 
 ## Dependencies
 
-- **ansible-role-user**: Provides the `users` list for per-user configuration
+- Run `tekne.devops.user` first when it creates `onedrive_owner`.
 
 ## Example Playbook
 
 ```yaml
 - hosts: workstations
   roles:
-    - ansible-role-user      # Creates users first
-    - ansible-role-onedrive  # Configures OneDrive for those users
+    - tekne.devops.user
+    - tekne.devops.onedrive
 ```
 
 ## Tags

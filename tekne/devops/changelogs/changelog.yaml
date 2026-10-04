@@ -1,0 +1,15 @@
+---
+ancestor: null
+releases:
+  1.3.0:
+    release_date: "2026-10-04"
+    changes:
+      release_summary: Quality-gate metadata for the tekne.devops collection.
+      minor_changes:
+        - Declare community.docker alongside amazon.aws, ansible.posix, and community.general.
+        - Require ansible-core 2.19.0 or newer.
+        - Record the GitHub repository, issue tracker, and collection tags in galaxy.yml.
+        - Add role argument specifications derived from role defaults.
+      bugfixes:
+        - Replace placeholder role metadata with collection-era galaxy_info.
+        - Point role smoke tests at named plays and tekne.devops role names.

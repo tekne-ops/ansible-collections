@@ -1,0 +1,27 @@
+---
+argument_specs:
+  main:
+    short_description: Jenkins CI container on the dockers network
+    description:
+      - Runs the Jenkins CI container on the dockers network.
+    options:
+      jenkins_container_name:
+        description: The container name value for the jenkins role.
+        required: false
+        type: str
+        default: jenkins
+      jenkins_docker_image:
+        description: The docker image value for the jenkins role.
+        required: false
+        type: str
+        default: jenkins/jenkins:2.516.3-lts-jdk21
+      jenkins_docker_network:
+        description: The docker network value for the jenkins role.
+        required: false
+        type: str
+        default: dockers
+      jenkins_docker_ip:
+        description: The docker ip value for the jenkins role.
+        required: false
+        type: str
+        default: 192.168.75.12

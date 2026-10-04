@@ -27,6 +27,7 @@
     owner: root
     group: root
     mode: '0644'
+  notify: Restart haproxy container
   tags:
     - haproxy
     - config
@@ -34,8 +35,14 @@
 - name: Validate SSL PEM source (vault or path)
   ansible.builtin.assert:
     that:
-      - (haproxy_ssl_pem is defined and (haproxy_ssl_pem | default('') | trim | length > 0)) or (haproxy_ssl_pem_path is defined and (haproxy_ssl_pem_path | default('') | trim | length > 0))
-    fail_msg: "Set haproxy_ssl_pem (in vault) or haproxy_ssl_pem_path (-e) to provide the TLS cert+key for HAProxy. Do not commit the PEM file to the role."
+      - >-
+        (haproxy_ssl_pem is defined
+        and (haproxy_ssl_pem | default('') | trim | length > 0))
+        or (haproxy_ssl_pem_path is defined
+        and (haproxy_ssl_pem_path | default('') | trim | length > 0))
+    fail_msg: >-
+      Set haproxy_ssl_pem (in vault) or haproxy_ssl_pem_path (-e) to provide
+      the TLS cert+key for HAProxy. Do not commit the PEM file to the role.
     success_msg: "SSL PEM source configured"
   when: not (haproxy_certbot_enabled | bool)
   tags:
@@ -49,29 +56,26 @@
     owner: root
     group: root
     mode: '0600'
+  no_log: true
+  diff: false
   when: not (haproxy_certbot_enabled | bool)
   tags:
     - haproxy
     - config
 
-- name: Check if haproxy container already exists
-  ansible.builtin.command: docker ps -a -f name=^haproxy$ --format '{{ "{{" }}.Names{{ "}}" }}'
-  register: haproxy_container_check
-  changed_when: false
-  failed_when: false
-  tags:
-    - haproxy
-    - docker
-
-- name: Create and start haproxy Docker container
-  ansible.builtin.shell: |
-    docker run -d --name haproxy --restart=unless-stopped \
-      --net host \
-      -p 0.0.0.0:80:80 -p 0.0.0.0:443:443 \
-      -v /srv/docker/haproxy/haproxy.cfg:/etc/haproxy/haproxy.cfg:ro \
-      -v /srv/docker/haproxy/tekne.sv.pem:/etc/ssl/private/tekne.sv.pem:ro \
-      haproxytech/haproxy-alpine:3.3
-  when: (haproxy_container_check.stdout | trim) != 'haproxy'
+- name: Create and start HAProxy container
+  community.docker.docker_container:
+    name: "{{ haproxy_container_name }}"
+    image: "{{ haproxy_container_image }}"
+    state: started
+    restart_policy: unless-stopped
+    network_mode: host
+    volumes:
+      - /srv/docker/haproxy/haproxy.cfg:/etc/haproxy/haproxy.cfg:ro
+      - /srv/docker/haproxy/tekne.sv.pem:/etc/ssl/private/tekne.sv.pem:ro
+    comparisons:
+      image: strict
+      volumes: strict
   tags:
     - haproxy
     - docker

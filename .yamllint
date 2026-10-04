@@ -1,0 +1,31 @@
+---
+extends: default
+
+ignore: |
+  .git
+  .ansible
+  .build
+  .ci-collections
+  .ci-layout
+  ansible_collections
+  tekne/ansible_collections
+
+rules:
+  braces:
+    max-spaces-inside: 1
+    min-spaces-inside: 0
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false
+  document-start: enable
+  indentation:
+    spaces: 2
+    indent-sequences: true
+  line-length:
+    max: 160
+    level: warning
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+  truthy:
+    check-keys: false

@@ -7,8 +7,8 @@ Playbooks that consume this collection live in the companion [`ansible-playbooks
 ## What This Repo Does
 
 - Packages all Tekne automation logic as an Ansible collection (`tekne.devops`)
-- Provides **19 roles** covering OS setup, desktop, gaming, networking, Docker services, and Kubernetes
-- Vendors third-party collections (`community.general`, `ansible.posix`) under `tekne/ansible_collections/`
+- Provides **22 roles** covering OS setup, desktop, gaming, networking, Docker services, AWS, and Kubernetes
+- Depends on `amazon.aws`, `ansible.posix`, `community.docker`, and `community.general`
 - Publishes collection metadata via `galaxy.yml` for `ansible-galaxy` installation
 
 ## Repository Structure
@@ -34,7 +34,7 @@ Install third-party collections via `ansible-galaxy collection install` (see `an
 | Name | `devops` |
 | Version | 1.3.0 |
 | FQCN prefix | `tekne.devops.*` |
-| Dependencies | `community.general >= 10.0.0`, `ansible.posix >= 1.5.0` |
+| Dependencies | `amazon.aws >= 7.0.0`, `ansible.posix >= 1.5.0`, `community.docker >= 4.0.0`, `community.general >= 10.0.0` |
 
 ## Roles
 
@@ -48,6 +48,7 @@ Install third-party collections via `ansible-galaxy collection install` (see `an
 | **pipewire** | PipeWire audio with EQ, Bluetooth quality, LDAC, volume boost |
 | **gpu** | NVIDIA TKG drivers (YUGEN) or Intel/Mesa (all other hosts) |
 | **xfce4** | XFCE4 desktop, LightDM, picom, themes, bluetooth portals |
+| **kde** | KDE Plasma desktop and plasma login manager |
 | **gaming** | Steam, Lutris, Wine, Proton, gamemode, gaming fonts |
 | **onedrive** | OneDrive client (abraunegg fork) installation and systemd service |
 | **bootstrap** | Post-install packages, OneDrive first sync, symlinks, XFCE desktop config |
@@ -64,6 +65,8 @@ Install third-party collections via `ansible-galaxy collection install` (see `an
 | **gerbera** | UPnP/DLNA media server container (host network, `/srv/media` mount) |
 | **consul** | HashiCorp Consul server/agent in Docker with ACL and service registration |
 | **jenkins** | Jenkins CI container on the `dockers` network |
+| **n8n** | n8n workflow automation container on the `dockers` network |
+| **hermes** | Amazon EC2 instance for Hermes and its SSH bootstrap |
 
 ### Kubernetes
 
@@ -137,12 +140,12 @@ Many roles branch on hostname (read from `/etc/hostname` or Ansible facts):
 ## Requirements
 
 - Target: Arch Linux (most roles) or Debian 13 (k8s role)
-- Ansible Core 2.14+
-- `community.general` and `ansible.posix` collections
+- Ansible Core 2.19+
+- `amazon.aws`, `ansible.posix`, `community.docker`, and `community.general` collections
 
 ```bash
 pacman -S ansible-core ansible
-ansible-galaxy collection install community.general ansible.posix
+ansible-galaxy collection install amazon.aws ansible.posix community.docker community.general
 ```
 
 ## Development
@@ -160,10 +163,13 @@ roles/<role>/
 ├── files/               # Static files deployed to targets
 ├── templates/           # Jinja2 templates
 ├── meta/main.yml        # Role metadata and dependencies
+├── meta/argument_specs.yml
 └── README.md            # Role documentation
 ```
 
 After editing roles, reinstall or ensure `collections_path` points at `tekne/` so playbooks pick up changes without rebuilding.
+
+Collection quality checks live in `.github/workflows/collection.yml` and use the repo-local `.yamllint` and `.ansible-lint` configs. They install the Galaxy dependencies, then run yamllint, ansible-lint, `ansible-galaxy collection build`, role syntax checks, and `ansible-test sanity` for galaxy, runtime, changelog, and ansible-doc metadata.
 
 ## Related Repos
 

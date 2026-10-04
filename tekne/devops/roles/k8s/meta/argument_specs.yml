@@ -1,0 +1,352 @@
+---
+argument_specs:
+  main:
+    short_description: Debian Kubernetes node preparation with kubeadm, containerd, and Calico
+    description:
+      - Prepares Debian nodes with kubeadm, containerd, and Calico.
+    options:
+      k8s_version:
+        description: Kubernetes apt repository (pkgs.k8s.io).
+        required: false
+        type: str
+        default: v1.36
+      k8s_apt_release_key_url:
+        description: The apt release key url value for the k8s role.
+        required: false
+        type: str
+      k8s_apt_keyring_path:
+        description: The apt keyring path value for the k8s role.
+        required: false
+        type: str
+        default: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      k8s_apt_sources_list:
+        description: The apt sources list value for the k8s role.
+        required: false
+        type: str
+        default: /etc/apt/sources.list.d/kubernetes.list
+      k8s_apt_repository_line:
+        description: The apt repository line value for the k8s role.
+        required: false
+        type: str
+      k8s_apt_prerequisites:
+        description: The apt prerequisites value for the k8s role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gpg
+          - open-iscsi
+          - nfs-common
+          - util-linux
+      k8s_packages:
+        description: The packages value for the k8s role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - kubelet
+          - kubeadm
+          - kubectl
+      k8s_hold_packages:
+        description: The hold packages value for the k8s role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - kubelet
+          - kubeadm
+          - kubectl
+      k8s_install_docker_repo:
+        description: The install docker repo value for the k8s role.
+        required: false
+        type: bool
+        default: true
+      k8s_docker_apt_key_url:
+        description: The docker apt key url value for the k8s role.
+        required: false
+        type: str
+        default: https://download.docker.com/linux/debian/gpg
+      k8s_docker_apt_keyring_path:
+        description: The docker apt keyring path value for the k8s role.
+        required: false
+        type: str
+        default: /etc/apt/keyrings/docker.asc
+      k8s_docker_apt_sources_list:
+        description: The docker apt sources list value for the k8s role.
+        required: false
+        type: str
+        default: /etc/apt/sources.list.d/docker.list
+      k8s_docker_apt_suite:
+        description: Override if Docker has no suite for your Debian release (e.g. trixie -> bookworm).
+        required: false
+        type: str
+      k8s_kubelet_service:
+        description: The kubelet service value for the k8s role.
+        required: false
+        type: str
+        default: kubelet
+      k8s_containerd_service:
+        description: The containerd service value for the k8s role.
+        required: false
+        type: str
+        default: containerd
+      k8s_install_containerd_binary:
+        description: Binary containerd / runc / CNI (upstream GitHub releases).
+        required: false
+        type: bool
+        default: true
+      k8s_containerd_version:
+        description: The containerd version value for the k8s role.
+        required: false
+        type: str
+        default: 2.3.1
+      k8s_containerd_arch_map:
+        description: The containerd arch map value for the k8s role.
+        required: false
+        type: dict
+        options:
+          x86_64:
+            description: The x86 64 value for the k8s role.
+            required: false
+            type: str
+          aarch64:
+            description: The aarch64 value for the k8s role.
+            required: false
+            type: str
+        default:
+          x86_64: amd64
+          aarch64: arm64
+      k8s_containerd_arch:
+        description: The containerd arch value for the k8s role.
+        required: false
+        type: str
+      k8s_containerd_install_prefix:
+        description: The containerd install prefix value for the k8s role.
+        required: false
+        type: str
+        default: /usr/local
+      k8s_containerd_tarball_url:
+        description: The containerd tarball url value for the k8s role.
+        required: false
+        type: str
+      k8s_containerd_tarball_dest:
+        description: The containerd tarball dest value for the k8s role.
+        required: false
+        type: str
+      k8s_containerd_checksums:
+        description: The containerd checksums value for the k8s role.
+        required: false
+        type: dict
+        options:
+          amd64:
+            description: The amd64 value for the k8s role.
+            required: false
+            type: str
+          arm64:
+            description: The arm64 value for the k8s role.
+            required: false
+            type: str
+        default:
+          amd64: 628448bd973610c656c1cbea8e88b32fafd85b23cc1aa4a3372eb7198478c054
+          arm64: 46a83603a850f3916ca7c942310daaf82ed17773a85b1d431e92d4a541e46d0d
+      k8s_containerd_service_commit:
+        description: The containerd service commit value for the k8s role.
+        required: false
+        type: str
+        default: 64b425cf570b3b8dd1d4cc46da7c1fce65c6651a
+      k8s_containerd_service_url:
+        description: The containerd service url value for the k8s role.
+        required: false
+        type: str
+      k8s_containerd_unit_path:
+        description: The containerd unit path value for the k8s role.
+        required: false
+        type: str
+        default: /usr/local/lib/systemd/system/containerd.service
+      k8s_runc_version:
+        description: The runc version value for the k8s role.
+        required: false
+        type: str
+        default: 1.4.2
+      k8s_runc_url:
+        description: The runc url value for the k8s role.
+        required: false
+        type: str
+      k8s_runc_download_dest:
+        description: The runc download dest value for the k8s role.
+        required: false
+        type: str
+      k8s_runc_checksums:
+        description: The runc checksums value for the k8s role.
+        required: false
+        type: dict
+        options:
+          amd64:
+            description: The amd64 value for the k8s role.
+            required: false
+            type: str
+          arm64:
+            description: The arm64 value for the k8s role.
+            required: false
+            type: str
+        default:
+          amd64: ac8a90f9e225bb9322189937b230cdc5478d5753f0e31e1bda98a5cf06bd9539
+          arm64: ea54032310588e115633aa2f4bba8bf9500257f657e1deca88df5778775138db
+      k8s_runc_install_path:
+        description: The runc install path value for the k8s role.
+        required: false
+        type: str
+        default: /usr/local/sbin/runc
+      k8s_cni_plugins_version:
+        description: The cni plugins version value for the k8s role.
+        required: false
+        type: str
+        default: 1.9.1
+      k8s_cni_plugins_arch:
+        description: The cni plugins arch value for the k8s role.
+        required: false
+        type: str
+      k8s_cni_plugins_url:
+        description: The cni plugins url value for the k8s role.
+        required: false
+        type: str
+      k8s_cni_plugins_dest:
+        description: The cni plugins dest value for the k8s role.
+        required: false
+        type: str
+      k8s_cni_plugins_checksums:
+        description: The cni plugins checksums value for the k8s role.
+        required: false
+        type: dict
+        options:
+          amd64:
+            description: The amd64 value for the k8s role.
+            required: false
+            type: str
+          arm64:
+            description: The arm64 value for the k8s role.
+            required: false
+            type: str
+        default:
+          amd64: b98f74a0f8522f0a83867178729c1aa70f2158f90c45a2ca8fa791db1c76b303
+          arm64: 56171987d3947707c3563db2f4001bccaf50fd63468611b9f3cbecb1375ee7ec
+      k8s_cni_bin_dir:
+        description: The cni bin dir value for the k8s role.
+        required: false
+        type: str
+        default: /opt/cni/bin
+      k8s_containerd_bin:
+        description: The containerd bin value for the k8s role.
+        required: false
+        type: str
+      k8s_containerd_config_dir:
+        description: The containerd config dir value for the k8s role.
+        required: false
+        type: str
+        default: /etc/containerd
+      k8s_containerd_config_path:
+        description: The containerd config path value for the k8s role.
+        required: false
+        type: str
+        default: /etc/containerd/config.toml
+      k8s_containerd_sandbox_image:
+        description: The containerd sandbox image value for the k8s role.
+        required: false
+        type: str
+        default: registry.k8s.io/pause:3.10
+      k8s_containerd_sandbox_insert_after:
+        description: Insert sandbox_image immediately after this key in config.toml (default containerd spelling).
+        required: false
+        type: str
+        default: enable_tls_streaming
+      k8s_install_kubeadm_init:
+        description: Kubeadm init (control plane only).
+        required: false
+        type: bool
+        default: true
+      k8s_kube_config_user:
+        description: The kube config user value for the k8s role.
+        required: false
+        type: str
+      k8s_kubeadm_join_facts_path:
+        description: The kubeadm join facts path value for the k8s role.
+        required: false
+        type: str
+        default: /root/kubeadm-join.facts.yml
+      k8s_kubeconfig_admin_path:
+        description: The kubeconfig admin path value for the k8s role.
+        required: false
+        type: str
+        default: /etc/kubernetes/admin.conf
+      k8s_control_plane_port:
+        description: The control plane port value for the k8s role.
+        required: false
+        type: int
+        default: 6443
+      k8s_install_kubeadm_join:
+        description: Kubeadm join (workers only).
+        required: false
+        type: bool
+        default: true
+      k8s_run_cluster_verify:
+        description: Cluster verification (control plane only).
+        required: false
+        type: bool
+        default: true
+      k8s_cluster_verify_commands:
+        description: The cluster verify commands value for the k8s role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - kubectl get nodes -o wide
+          - kubectl get pods -A -o wide
+          - kubectl get pods -n calico-system -o wide
+          - kubectl get pods -n kube-system -l k8s-app=kube-dns
+          - kubectl get svc
+          - kubectl cluster-info
+      k8s_install_calico:
+        description: The install calico value for the k8s role.
+        required: false
+        type: bool
+        default: true
+      k8s_master_host:
+        description: The master host value for the k8s role.
+        required: false
+        type: str
+        default: k8s-mstr00
+      k8s_calico_version:
+        description: The calico version value for the k8s role.
+        required: false
+        type: str
+        default: v3.32.0
+      k8s_calico_manifest_base:
+        description: The calico manifest base value for the k8s role.
+        required: false
+        type: str
+      k8s_calico_tigera_operator_url:
+        description: The calico tigera operator url value for the k8s role.
+        required: false
+        type: str
+      k8s_calico_custom_resources_url:
+        description: The calico custom resources url value for the k8s role.
+        required: false
+        type: str
+      k8s_calico_wait_retries:
+        description: The calico wait retries value for the k8s role.
+        required: false
+        type: int
+        default: 30
+      k8s_calico_wait_delay:
+        description: The calico wait delay value for the k8s role.
+        required: false
+        type: int
+        default: 10
+      k8s_calico_pod_wait_timeout:
+        description: The calico pod wait timeout value for the k8s role.
+        required: false
+        type: int
+        default: 300

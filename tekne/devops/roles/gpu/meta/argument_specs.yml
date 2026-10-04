@@ -1,0 +1,67 @@
+---
+argument_specs:
+  main:
+    short_description: NVIDIA or Intel and Mesa GPU drivers selected by hostname
+    description:
+      - Installs NVIDIA or Intel and Mesa GPU drivers based on hostname.
+    options:
+      gpu_install_chroot_phase:
+        description: Skip archlinux.org ping during arch-chroot (live ISO already has network).
+        required: false
+        type: bool
+        default: false
+      gpu_nvidia_hostnames:
+        description: Discrete NVIDIA only (desktop).
+        required: false
+        type: list
+        elements: str
+        default:
+          - YUGEN
+      gpu_hybrid_hostnames:
+        description: The hybrid hostnames value for the gpu role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - ASTER
+      gpu_intel_hostnames:
+        description: The intel hostnames value for the gpu role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - THEMIS
+          - HEPHAESTUS
+          - KVM
+      gpu_nvidia_packages:
+        description: The nvidia packages value for the gpu role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - lib32-opencl-nvidia-tkg
+          - lib32-vulkan-icd-loader
+          - lib32-nvidia-utils-tkg
+          - nvidia-open-dkms-tkg
+          - nvidia-settings-tkg
+          - opencl-nvidia-tkg
+          - vulkan-icd-loader
+          - nvidia-utils-tkg
+      gpu_hybrid_extra_packages:
+        description: The hybrid extra packages value for the gpu role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - nvidia-prime
+      gpu_intel_packages:
+        description: The intel packages value for the gpu role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - mesa
+          - lib32-mesa
+          - vulkan-intel
+          - lib32-vulkan-intel
+          - intel-media-driver

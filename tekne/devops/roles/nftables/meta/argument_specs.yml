@@ -1,0 +1,31 @@
+---
+argument_specs:
+  main:
+    short_description: Host nftables firewall for workstations and servers
+    description:
+      - Installs nftables and deploys the host firewall policy.
+    options:
+      nftables_hostname:
+        description: The hostname value for the nftables role.
+        required: false
+        type: str
+      nftables_server_hosts:
+        description: The server hosts value for the nftables role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - THEMIS
+      nftables_docker_hosts:
+        description: The docker hosts value for the nftables role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - THEMIS
+          - YUGEN
+      nftables_install_chroot_phase:
+        description: The install chroot phase value for the nftables role.
+        required: false
+        type: bool
+        default: false

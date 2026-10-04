@@ -45,7 +45,7 @@
   ansible.builtin.systemd:
     name: cpupower
     enabled: true
-    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
+    state: "{{ 'stopped' if os_install_chroot_phase | bool else 'started' }}"
   when: os_hostname in os_cpupower_start_hosts
   tags:
     - os
@@ -55,7 +55,7 @@
   ansible.builtin.systemd:
     name: irqbalance
     enabled: true
-    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
+    state: "{{ 'stopped' if os_install_chroot_phase | bool else 'started' }}"
   when: os_hostname in os_irqbalance_start_hosts
   tags:
     - os
@@ -65,7 +65,7 @@
   ansible.builtin.systemd:
     name: fstrim.service
     enabled: true
-    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
+    state: "{{ 'stopped' if os_install_chroot_phase | bool else 'started' }}"
   tags:
     - os
     - fstrim
@@ -107,7 +107,7 @@
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: true
-    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
+    state: "{{ 'stopped' if os_install_chroot_phase | bool else 'started' }}"
   loop:
     - cronie.service
     - irqbalance.service
@@ -148,10 +148,15 @@
 
 - name: Clone tekne bash repository into /srv/code/tekne/bash
   ansible.builtin.git:
-    repo: https://"{{ git_token }}"@github.com/tekne-ops/bash
+    repo: https://github.com/tekne-ops/bash
     dest: /srv/code/tekne/bash
     version: main
     force: false
+  environment:
+    GIT_CONFIG_COUNT: "1"
+    GIT_CONFIG_KEY_0: http.https://github.com/.extraheader
+    GIT_CONFIG_VALUE_0: "Authorization: Basic {{ ('x-access-token:' ~ git_token) | b64encode }}"
+  no_log: true
   when: os_clone_tekne_repos | bool
   tags:
     - os
@@ -159,10 +164,15 @@
 
 - name: Clone tekne python repository into /srv/code/tekne/python
   ansible.builtin.git:
-    repo: https://"{{ git_token }}"@github.com/tekne-ops/python
+    repo: https://github.com/tekne-ops/python
     dest: /srv/code/tekne/python
     version: main
     force: false
+  environment:
+    GIT_CONFIG_COUNT: "1"
+    GIT_CONFIG_KEY_0: http.https://github.com/.extraheader
+    GIT_CONFIG_VALUE_0: "Authorization: Basic {{ ('x-access-token:' ~ git_token) | b64encode }}"
+  no_log: true
   when: os_clone_tekne_repos | bool
   tags:
     - os
@@ -182,10 +192,15 @@
 
 - name: Clone ansible role repositories into /srv/code/tekne/ansible
   ansible.builtin.git:
-    repo: https://"{{ git_token }}"@github.com/tekne-ops/ansible-collections
+    repo: https://github.com/tekne-ops/ansible-collections
     dest: "/srv/code/tekne/ansible-collections"
     version: main
     force: false
+  environment:
+    GIT_CONFIG_COUNT: "1"
+    GIT_CONFIG_KEY_0: http.https://github.com/.extraheader
+    GIT_CONFIG_VALUE_0: "Authorization: Basic {{ ('x-access-token:' ~ git_token) | b64encode }}"
+  no_log: true
   when: os_clone_tekne_repos | bool
   tags:
     - os
@@ -193,10 +208,15 @@
 
 - name: Clone ansible-playbook repository into /srv/code/tekne/ansible/ansible-playbook
   ansible.builtin.git:
-    repo: https://"{{ git_token }}"@github.com/tekne-ops/ansible-playbooks
+    repo: https://github.com/tekne-ops/ansible-playbooks
     dest: /srv/code/tekne/ansible/ansible-playbooks
     version: main
     force: false
+  environment:
+    GIT_CONFIG_COUNT: "1"
+    GIT_CONFIG_KEY_0: http.https://github.com/.extraheader
+    GIT_CONFIG_VALUE_0: "Authorization: Basic {{ ('x-access-token:' ~ git_token) | b64encode }}"
+  no_log: true
   when: os_clone_tekne_repos | bool
   tags:
     - os
@@ -240,7 +260,7 @@
 # Mirror Configuration (requires network to be up)
 # =============================================================================
 
-- name: Update pacman mirrorlist
+- name: Generate pacman mirrorlist candidate
   ansible.builtin.command:
     cmd: >-
       /usr/bin/reflector
@@ -249,8 +269,20 @@
       --sort rate
       --protocol {{ os_mirror_protocols }}
       --age {{ os_mirror_age }}
-      --save /etc/pacman.d/mirrorlist
+      --save /tmp/ansible-pacman-mirrorlist
   changed_when: false
+  tags:
+    - os
+    - mirrors
+
+- name: Install pacman mirrorlist when changed
+  ansible.builtin.copy:
+    src: /tmp/ansible-pacman-mirrorlist
+    dest: /etc/pacman.d/mirrorlist
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
   tags:
     - os
     - mirrors
@@ -263,34 +295,32 @@
   ansible.builtin.find:
     paths: /srv/code
     file_type: directory
-  register: dirs
+  register: os_directories
   when: os_clone_tekne_repos | bool
 
 - name: Apply directory mode
   ansible.builtin.file:
     path: "{{ item.path }}"
     mode: '0775'
-    recurse: yes
     owner: root
     group: devs
-  loop: "{{ dirs.files }}"
+  loop: "{{ os_directories.files }}"
   when: os_clone_tekne_repos | bool
 
 - name: Set file permissions
   ansible.builtin.find:
     paths: /srv/code
     file_type: file
-  register: files
+  register: os_files
   when: os_clone_tekne_repos | bool
 
 - name: Apply file mode
   ansible.builtin.file:
     path: "{{ item.path }}"
     mode: '0664'
-    recurse: yes
     owner: root
     group: devs
-  loop: "{{ files.files }}"
+  loop: "{{ os_files.files }}"
   when: os_clone_tekne_repos | bool
 
 - name: Find all files in bash scripts and bin directories
@@ -298,7 +328,7 @@
     paths: "{{ item }}"
     recurse: true
     file_type: file
-  register: bash_find_result
+  register: os_bash_find_result
   loop:
     - /srv/code/tekne/bash/scripts
     - /srv/code/tekne/bash/bin
@@ -311,10 +341,14 @@
   ansible.builtin.file:
     path: "{{ item }}"
     mode: '0775'
-  loop: "{{ bash_find_result.results | selectattr('files') | map(attribute='files') | flatten | map(attribute='path') | list }}"
+  loop: >-
+    {{
+      os_bash_find_result.results | selectattr('files')
+      | map(attribute='files') | flatten | map(attribute='path') | list
+    }}
   when:
     - os_clone_tekne_repos | bool
-    - bash_find_result.results is defined
+    - os_bash_find_result.results is defined
   loop_control:
     label: "{{ item }}"
   tags:

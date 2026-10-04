@@ -7,7 +7,7 @@
   become: true
   ansible.builtin.stat:
     path: /etc/bluetooth/main.conf
-  register: bluetooth_config_check
+  register: bootstrap_bluetooth_config_check
   tags: [bootstrap, bluetooth]
 
 - name: Configure bluetooth settings
@@ -19,8 +19,8 @@
     state: present
     backup: true
   loop: "{{ bootstrap_bluetooth_config }}"
-  when: bluetooth_config_check.stat.exists
-  notify: restart bluetooth
+  when: bootstrap_bluetooth_config_check.stat.exists
+  notify: Restart bluetooth
   tags: [bootstrap, bluetooth]
 
 - name: Display bluetooth configuration message
@@ -33,11 +33,11 @@
       - "  StreamMode: streaming"
       - "  MultiProfile: multiple"
       - "  FastConnectable: true"
-  when: bluetooth_config_check.stat.exists
+  when: bootstrap_bluetooth_config_check.stat.exists
   tags: [bootstrap, bluetooth]
 
 - name: Display bluetooth not found message
   ansible.builtin.debug:
     msg: "Bluetooth config not found at /etc/bluetooth/main.conf - skipping"
-  when: not bluetooth_config_check.stat.exists
+  when: not bootstrap_bluetooth_config_check.stat.exists
   tags: [bootstrap, bluetooth]

@@ -1,0 +1,36 @@
+---
+argument_specs:
+  main:
+    short_description: abraunegg OneDrive client, config, and sync directory
+    description:
+      - Installs the abraunegg OneDrive client and its configuration.
+    options:
+      onedrive_package:
+        description: The package value for the onedrive role.
+        required: false
+        type: str
+        default: onedrive-abraunegg
+      onedrive_owner:
+        description: The owner value for the onedrive role.
+        required: false
+        type: str
+        default: dvaliente
+      onedrive_group:
+        description: The group value for the onedrive role.
+        required: false
+        type: str
+        default: users
+      onedrive_sync_dir:
+        description: The sync dir value for the onedrive role.
+        required: false
+        type: str
+        default: /srv/OneDrive
+      onedrive_config_dir:
+        description: The config dir value for the onedrive role.
+        required: false
+        type: str
+        default: .config/onedrive
+      onedrive_home:
+        description: The home value for the onedrive role.
+        required: false
+        type: str

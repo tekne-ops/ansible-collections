@@ -1,18 +1,20 @@
 ---
 galaxy_info:
   author: dvaliente
-  description: Installs KDE Plasma desktop environment for Arch Linux
-  license: MIT-0
-  min_ansible_version: "2.10"
-
+  description: KDE Plasma desktop and plasma login manager
+  namespace: tekne
+  role_name: kde
+  license: MIT
+  min_ansible_version: 2.19.0
+  standalone: false
   platforms:
-    - name: Archlinux
+    - name: ArchLinux
       versions:
         - all
   galaxy_tags:
-    - kde
-    - plasma
-    - desktop
     - archlinux
-
+    - desktop
+    - kde
+collections:
+  - community.general
 dependencies: []

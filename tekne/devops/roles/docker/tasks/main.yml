@@ -57,16 +57,10 @@
     - docker-host
     - config
 
-- name: Enable docker.service (do not start)
+- name: Enable and start docker.service
   ansible.builtin.systemd:
     name: docker
     enabled: true
-    state: stopped
-  when: docker_packages_check.rc == 0
-
-- name: Start docker.service
-  ansible.builtin.systemd:
-    name: docker
     state: started
   when: docker_packages_check.rc == 0
 
@@ -79,28 +73,26 @@
     - docker-host
     - config
 
-- name: Check if dockers network exists
-  ansible.builtin.command: docker network inspect dockers
-  register: dockers_network_check
-  changed_when: false
-  failed_when: false
+- name: Create Docker application network
+  community.docker.docker_network:
+    name: "{{ docker_network_name }}"
+    state: present
+    ipam_config:
+      - subnet: "{{ docker_network_subnet }}"
   when: docker_packages_check.rc == 0
 
-- name: Create dockers network
-  ansible.builtin.command: docker network create --subnet=192.168.75.0/24 dockers
-  when:
-    - docker_packages_check.rc == 0
-    - dockers_network_check.rc != 0
-
-- name: Get list of local users (UID >= 1000)
-  ansible.builtin.shell: "getent passwd | awk -F: '$3 >= 1000 {print $1}'"
-  register: local_users_cmd
-  changed_when: false
+- name: Gather local user accounts
+  ansible.builtin.getent:
+    database: passwd
 
 - name: Add all local users to docker groups
   ansible.builtin.user:
-    name: "{{ item }}"
+    name: "{{ item.key }}"
     groups: docker
     append: true
-  loop: "{{ local_users_cmd.stdout_lines }}"
-  when: local_users_cmd.stdout_lines | length > 0
+  loop: "{{ ansible_facts.getent_passwd | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when:
+    - item.value[1] | int >= 1000
+    - item.value[1] | int < 65534

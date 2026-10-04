@@ -1,6 +1,7 @@
 ---
 # Hostname (from playbook pre_tasks / hostname role)
-network_hostname: "{{ hostname | default(ansible_hostname) | upper }}"
+network_hostname: "{{ hostname | default(ansible_facts['hostname']) | upper }}"
+network_hostname_raw: "{{ cached_hostname_raw | default(ansible_facts['hostname']) }}"
 
 # WiFi .network unit: ASTER only (iwd). Ethernet: workstations/VMs, not THEMIS (br0).
 network_wifi_hosts:
@@ -23,7 +24,7 @@ network_wifi_detect_delay: 2
 network_connect_wifi: true
 
 # Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network)
-install_chroot_phase: false
+network_install_chroot_phase: "{{ install_chroot_phase | default(false) }}"
 
 # DNS (single drop-in: /etc/systemd/resolved.conf.d/95-dns.conf)
 network_resolved_manage: true

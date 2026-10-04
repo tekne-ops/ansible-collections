@@ -8,11 +8,21 @@ authors:
 license:
   - MIT
 description: Tekne Arch Linux workstation and server roles
+repository: https://github.com/tekne-ops/ansible-collections
+issues: https://github.com/tekne-ops/ansible-collections/issues
+homepage: https://github.com/tekne-ops/ansible-collections
+documentation: https://github.com/tekne-ops/ansible-collections/tree/main/tekne/devops
 tags:
+  - archlinux
+  - desktop
+  - docker
+  - kubernetes
   - laptop
-  - workstation
+  - networking
   - server
+  - workstation
 dependencies:
   amazon.aws: '>=7.0.0'
-  community.general: '>=10.0.0'
   ansible.posix: '>=1.5.0'
+  community.docker: '>=4.0.0'
+  community.general: '>=10.0.0'

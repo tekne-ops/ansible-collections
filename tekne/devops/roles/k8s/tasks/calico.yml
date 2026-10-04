@@ -74,7 +74,6 @@
     KUBECONFIG: "{{ k8s_kubeconfig_admin_path }}"
   register: k8s_calico_tigera_operator_pods
   changed_when: false
-  failed_when: false
   when: inventory_hostname in groups.get('k8s_control_plane', [k8s_master_host])
   tags:
     - k8s

@@ -13,36 +13,47 @@
     - consul
     - config
 
-- name: Check if consul container already exists
-  ansible.builtin.command: docker ps -a -f name=^consul$ --format '{{ "{{" }}.Names{{ "}}" }}'
-  register: consul_container_check
-  changed_when: false
-  failed_when: false
+- name: Create Consul data directory
+  ansible.builtin.file:
+    path: "{{ consul_data_directory }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
   tags:
     - consul
-    - docker
+    - config
 
-- name: Create and start consul Docker container
-  ansible.builtin.shell: |
-    docker run -d --name consul --restart=unless-stopped \
-      --net {{ consul_docker_network }} --ip {{ consul_docker_ip }} \
-      -v /srv/docker/consul/data:/consul/data \
-      -v /srv/docker/consul/config:/consul/config \
-      {{ consul_docker_image }}
-  when: (consul_container_check.stdout | trim) != 'consul'
-  register: consul_container_created
+- name: Create and start Consul container
+  community.docker.docker_container:
+    name: "{{ consul_container_name }}"
+    image: "{{ consul_docker_image }}"
+    state: started
+    restart_policy: unless-stopped
+    networks:
+      - name: "{{ consul_docker_network }}"
+        ipv4_address: "{{ consul_docker_ip }}"
+    volumes:
+      - "{{ consul_data_directory }}:/consul/data"
+      - "{{ consul_directory }}:/consul/config"
+    comparisons:
+      image: strict
+      networks: strict
+      volumes: strict
+  register: consul_container
   tags:
     - consul
     - docker
 
 - name: Wait for consul container to be available
-  ansible.builtin.command: docker exec consul true
+  community.docker.docker_container_exec:
+    container: "{{ consul_container_name }}"
+    command: /usr/bin/true
   register: consul_wait
   until: consul_wait.rc == 0
   retries: 12
   delay: 5
   changed_when: false
-  when: (consul_container_check.stdout | trim) == 'consul' or consul_container_created is changed
   tags:
     - consul
     - docker
@@ -55,7 +66,8 @@
     owner: root
     group: root
     mode: '0644'
-  register: copy_base_hcl
+  register: consul_copy_base_hcl
+  notify: Restart Consul container
   tags:
     - consul
     - config
@@ -85,33 +97,49 @@
     - tls
 
 - name: Run consul tls ca create in certs directory
-  ansible.builtin.shell: |
-    docker exec consul sh -c 'mkdir -p /consul/config/certs && cd /consul/config/certs && consul tls ca create'
+  community.docker.docker_container_exec:
+    container: "{{ consul_container_name }}"
+    command: >-
+      sh -c 'mkdir -p /consul/config/certs &&
+      cd /consul/config/certs && consul tls ca create'
   when: not consul_tls_ca_file.stat.exists
   tags:
     - consul
     - tls
 
 - name: Rename CA files to domain-named files
-  ansible.builtin.shell: |
-    docker exec consul sh -c 'cd /consul/config/certs && mv consul-agent-ca.pem {{ consul_tls_domain }}-agent-ca.pem && mv consul-agent-ca-key.pem {{ consul_tls_domain }}-agent-ca-key.pem'
+  community.docker.docker_container_exec:
+    container: "{{ consul_container_name }}"
+    command: >-
+      sh -c 'cd /consul/config/certs &&
+      mv consul-agent-ca.pem {{ consul_tls_domain }}-agent-ca.pem &&
+      mv consul-agent-ca-key.pem {{ consul_tls_domain }}-agent-ca-key.pem'
   when: not consul_tls_ca_file.stat.exists
   tags:
     - consul
     - tls
 
 - name: Run consul tls cert create (server) in certs directory
-  ansible.builtin.shell: |
-    docker exec consul sh -c 'cd /consul/config/certs && consul tls cert create -server -dc {{ consul_tls_dc }} -domain {{ consul_tls_domain }}'
+  community.docker.docker_container_exec:
+    container: "{{ consul_container_name }}"
+    command: >-
+      sh -c 'cd /consul/config/certs &&
+      consul tls cert create -server -dc {{ consul_tls_dc }}
+      -domain {{ consul_tls_domain }}'
   when: not consul_tls_ca_file.stat.exists
   register: consul_tls_cert_created
+  notify: Restart Consul container
   tags:
     - consul
     - tls
 
 - name: Set cert ownership for Consul process in container
-  ansible.builtin.shell: |
-    docker exec consul sh -c 'chown -R {{ consul_container_user }}:{{ consul_container_group }} /consul/config/certs'
+  community.docker.docker_container_exec:
+    container: "{{ consul_container_name }}"
+    command: >-
+      chown -R {{ consul_container_user }}:{{ consul_container_group }}
+      /consul/config/certs
+  changed_when: false
   when: consul_tls_ca_file.stat.exists or (consul_tls_cert_created is defined and consul_tls_cert_created is changed)
   tags:
     - consul
@@ -124,17 +152,15 @@
     owner: root
     group: root
     mode: '0644'
-  register: copy_tls_hcl
+  register: consul_copy_tls_hcl
+  notify: Restart Consul container
   tags:
     - consul
     - config
     - tls
 
-- name: Restart consul container
-  ansible.builtin.command: docker restart consul
-  when: >
-    (copy_base_hcl is changed or copy_tls_hcl is changed or (consul_tls_cert_created is defined and consul_tls_cert_created is changed))
-    and ((consul_container_check.stdout | trim) == 'consul' or consul_container_created is changed)
+- name: Flush Consul handlers before ACL bootstrap
+  ansible.builtin.meta: flush_handlers
   tags:
     - consul
     - config
@@ -142,17 +168,17 @@
 # ---------------------------------------------------------------------------
 # ACL bootstrap: run once, save token to config directory
 # ---------------------------------------------------------------------------
-# Output is written inside the container to /consul/config/bootstrap_token.txt
-# (mounted from host) so we don't rely on Ansible capturing docker exec stdout.
+# Secrets are persisted on the host with mode 0600 and never printed.
 
 - name: Wait for consul container to be available before bootstrap
-  ansible.builtin.command: docker exec consul true
+  community.docker.docker_container_exec:
+    container: "{{ consul_container_name }}"
+    command: /usr/bin/true
   register: consul_wait_bootstrap
   until: consul_wait_bootstrap.rc == 0
   retries: 12
   delay: 5
   changed_when: false
-  when: (consul_container_check.stdout | trim) == 'consul' or consul_container_created is changed
   tags:
     - consul
     - docker
@@ -160,7 +186,7 @@
 
 - name: Check if consul ACL bootstrap result already exists
   ansible.builtin.stat:
-    path: "{{ consul_directory }}/bootstrap_token.txt"
+    path: "{{ consul_bootstrap_token_path }}"
   register: consul_bootstrap_file
   tags:
     - consul
@@ -168,7 +194,11 @@
     - consul_acl
 
 - name: Wait for Consul HTTP API before bootstrap
-  ansible.builtin.command: docker exec consul sh -c 'wget -q -O- http://127.0.0.1:8500/v1/status/leader || exit 1'
+  community.docker.docker_container_exec:
+    container: "{{ consul_container_name }}"
+    command: >-
+      sh -c 'wget -q -O- http://127.0.0.1:8500/v1/status/leader ||
+      exit 1'
   register: consul_api_wait
   until: consul_api_wait.rc == 0
   retries: 30
@@ -180,38 +210,40 @@
     - config
     - consul_acl
 
-- name: Run consul acl bootstrap and token create, write all output to config directory
-  ansible.builtin.shell: |
-    docker exec consul sh -c 'consul acl bootstrap > /consul/config/bootstrap_token.txt 2>&1 && echo "---" >> /consul/config/bootstrap_token.txt && TOKEN=$(grep -E "^SecretID:" /consul/config/bootstrap_token.txt | awk '"'"'{print $2}'"'"') && CONSUL_HTTP_TOKEN="$TOKEN" consul acl token create -policy-name global-management >> /consul/config/bootstrap_token.txt 2>&1'
-  args:
-    executable: /bin/bash
-  changed_when: true
-  failed_when: false
+- name: Generate Consul bootstrap secret
+  ansible.builtin.command:
+    cmd: cat /proc/sys/kernel/random/uuid
+  register: consul_bootstrap_secret_generated
+  changed_when: false
+  no_log: true
   when: not consul_bootstrap_file.stat.exists or (consul_bootstrap_file.stat.size | default(0)) == 0
-  register: consul_bootstrap_run
   tags:
     - consul
     - config
     - consul_acl
 
-- name: Check if bootstrap token file was created
-  ansible.builtin.stat:
-    path: "{{ consul_directory }}/bootstrap_token.txt"
-  register: consul_bootstrap_file_after
-  when: consul_bootstrap_run is not skipped
+- name: Bootstrap Consul ACL system
+  community.general.consul_acl_bootstrap:
+    url: "{{ consul_api_url }}"
+    bootstrap_secret: "{{ consul_bootstrap_secret_generated.stdout }}"
+    state: present
+  no_log: true
+  when: not consul_bootstrap_file.stat.exists or (consul_bootstrap_file.stat.size | default(0)) == 0
   tags:
     - consul
     - config
     - consul_acl
 
-- name: Set ownership on bootstrap token file
-  ansible.builtin.file:
-    path: "{{ consul_directory }}/bootstrap_token.txt"
-    state: file
+- name: Persist Consul bootstrap secret
+  ansible.builtin.copy:
+    content: "SecretID: {{ consul_bootstrap_secret_generated.stdout }}\n"
+    dest: "{{ consul_bootstrap_token_path }}"
     owner: root
     group: root
-    mode: '0600'
-  when: consul_bootstrap_file_after.stat.exists | default(false)
+    mode: "0600"
+  no_log: true
+  diff: false
+  when: not consul_bootstrap_file.stat.exists or (consul_bootstrap_file.stat.size | default(0)) == 0
   tags:
     - consul
     - config
@@ -224,8 +256,37 @@
 
 - name: Check bootstrap token file for ACL section
   ansible.builtin.stat:
-    path: "{{ consul_directory }}/bootstrap_token.txt"
-  register: acl_bootstrap_file
+    path: "{{ consul_bootstrap_token_path }}"
+  register: consul_acl_bootstrap_file
+  tags:
+    - consul
+    - config
+    - acl
+
+- name: Read Consul bootstrap token
+  ansible.builtin.slurp:
+    src: "{{ consul_bootstrap_token_path }}"
+  register: consul_bootstrap_token_file
+  no_log: true
+  when: consul_acl_bootstrap_file.stat.exists
+  tags:
+    - consul
+    - config
+    - acl
+
+- name: Parse Consul bootstrap token
+  ansible.builtin.set_fact:
+    consul_management_token: >-
+      {{
+        (
+          consul_bootstrap_token_file.content
+          | b64decode
+          | regex_search('(?m)^SecretID:\\s*(\\S+)', '\\1')
+          | first
+        )
+      }}
+  no_log: true
+  when: consul_acl_bootstrap_file.stat.exists
   tags:
     - consul
     - config
@@ -244,53 +305,103 @@
     - acl
 
 - name: Create Consul ACL policy tekne from acl_tekne.hcl
-  ansible.builtin.shell: |
-    docker exec consul sh -c 'TOKEN=$(grep -i SecretID /consul/config/bootstrap_token.txt | head -1 | awk -F: '"'"'{print $2}'"'"' | tr -d " \r") && cd /consul/config && CONSUL_HTTP_TOKEN="$TOKEN" consul acl policy create -name tekne -rules @acl_tekne.hcl'
-  args:
-    executable: /bin/bash
-  failed_when: false
-  when: acl_bootstrap_file.stat.exists and (acl_bootstrap_file.stat.size | default(0)) > 0
+  community.general.consul_policy:
+    url: "{{ consul_api_url }}"
+    token: "{{ consul_management_token }}"
+    name: tekne
+    rules: "{{ lookup('ansible.builtin.file', role_path + '/files/acl_tekne.hcl') }}"
+    state: present
+  no_log: true
+  when: consul_acl_bootstrap_file.stat.exists and (consul_acl_bootstrap_file.stat.size | default(0)) > 0
   tags:
     - consul
     - config
     - acl
 
 - name: Create Consul ACL role tekne-admin with policy tekne
-  ansible.builtin.shell: |
-    docker exec consul sh -c 'TOKEN=$(grep -i SecretID /consul/config/bootstrap_token.txt | head -1 | awk -F: '"'"'{print $2}'"'"' | tr -d " \r") && CONSUL_HTTP_TOKEN="$TOKEN" consul acl role create -name tekne-admin -policy-name tekne'
-  args:
-    executable: /bin/bash
-  failed_when: false
-  when: acl_bootstrap_file.stat.exists and (acl_bootstrap_file.stat.size | default(0)) > 0
+  community.general.consul_role:
+    url: "{{ consul_api_url }}"
+    token: "{{ consul_management_token }}"
+    name: tekne-admin
+    policies:
+      - name: tekne
+    state: present
+  no_log: true
+  when: consul_acl_bootstrap_file.stat.exists and (consul_acl_bootstrap_file.stat.size | default(0)) > 0
   tags:
     - consul
     - config
     - acl
 
-- name: Create tekne-admin token and append to bootstrap_token.txt (single shell on host)
-  ansible.builtin.shell: |
-    F="{{ consul_directory }}/bootstrap_token.txt"
-    TOKEN=$(grep -i SecretID "$F" 2>/dev/null | head -1 | awk -F: '{print $2}' | tr -d ' \r') || true
-    OUT=$(docker exec -e CONSUL_HTTP_TOKEN="$TOKEN" consul consul acl token create -role-name tekne-admin 2>&1) || true
-    { echo ""; echo "---"; echo "$OUT"; } >> "$F"
-  args:
-    executable: /bin/bash
-  register: append_tekne_result
-  failed_when: false
+- name: Check for persisted tekne-admin token
+  ansible.builtin.stat:
+    path: "{{ consul_admin_token_path }}"
+  register: consul_admin_token_file
+  tags:
+    - consul
+    - config
+    - acl
+
+- name: Generate Consul admin token IDs
+  ansible.builtin.command:
+    cmd: cat /proc/sys/kernel/random/uuid
+  loop:
+    - accessor
+    - secret
+  register: consul_admin_token_ids
+  changed_when: false
+  no_log: true
+  when: not consul_admin_token_file.stat.exists
+  tags:
+    - consul
+    - config
+    - acl
+
+- name: Create tekne-admin Consul token
+  community.general.consul_token:
+    url: "{{ consul_api_url }}"
+    token: "{{ consul_management_token }}"
+    accessor_id: "{{ consul_admin_token_ids.results[0].stdout }}"
+    secret_id: "{{ consul_admin_token_ids.results[1].stdout }}"
+    description: Tekne administrator
+    roles:
+      - name: tekne-admin
+    state: present
+  no_log: true
+  when: not consul_admin_token_file.stat.exists
+  tags:
+    - consul
+    - config
+    - acl
+
+- name: Persist tekne-admin Consul token
+  ansible.builtin.copy:
+    dest: "{{ consul_admin_token_path }}"
+    content: |
+      accessor_id: {{ consul_admin_token_ids.results[0].stdout }}
+      secret_id: {{ consul_admin_token_ids.results[1].stdout }}
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  diff: false
+  when: not consul_admin_token_file.stat.exists
   tags:
     - consul
     - config
     - acl
 
 - name: Create Consul KV key tekne/
-  ansible.builtin.shell: |
-    TOKEN=$(grep -i SecretID "{{ consul_directory }}/bootstrap_token.txt" 2>/dev/null | head -1 | awk -F: '{print $2}' | tr -d ' \r') || true
-    docker exec -e CONSUL_HTTP_TOKEN="$TOKEN" consul consul kv put tekne/aws/us-west-2/network ""
-  args:
-    executable: /bin/bash
-  register: consul_kv_put_tekne
-  failed_when: false
-  when: acl_bootstrap_file.stat.exists | default(false) and (acl_bootstrap_file.stat.size | default(0)) > 0
+  community.general.consul_kv:
+    host: "{{ consul_docker_ip }}"
+    token: "{{ consul_management_token }}"
+    key: tekne/aws/us-west-2/network
+    value: ""
+    state: present
+  no_log: true
+  when: >-
+    consul_acl_bootstrap_file.stat.exists | default(false)
+    and (consul_acl_bootstrap_file.stat.size | default(0)) > 0
   tags:
     - consul
     - config

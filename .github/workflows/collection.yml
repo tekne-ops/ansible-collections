@@ -1,0 +1,95 @@
+---
+name: tekne.devops quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ansible tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "ansible-core>=2.19.0,<2.22" ansible-lint yamllint
+
+      - name: Install collection dependencies
+        working-directory: tekne/devops
+        run: |
+          ansible-galaxy collection install \
+            --collections-path "${GITHUB_WORKSPACE}/.ci-collections" \
+            "amazon.aws:>=7.0.0" \
+            "ansible.posix:>=1.5.0" \
+            "community.docker:>=4.0.0" \
+            "community.general:>=10.0.0"
+
+      - name: Expose the collection on the Ansible path
+        run: |
+          rm -rf "${GITHUB_WORKSPACE}/.ci-layout/ansible_collections/tekne/devops"
+          mkdir -p "${GITHUB_WORKSPACE}/.ci-layout/ansible_collections/tekne"
+          cp -a "${GITHUB_WORKSPACE}/tekne/devops" \
+            "${GITHUB_WORKSPACE}/.ci-layout/ansible_collections/tekne/devops"
+
+      - name: Yamllint
+        run: yamllint -c .yamllint tekne/devops .github
+
+      - name: Hardening regression tests
+        run: python tekne/devops/tests/test_hardening.py
+
+      - name: Ansible lint
+        working-directory: tekne/devops
+        env:
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.ci-layout:${{ github.workspace }}/.ci-collections
+        run: ansible-lint -c "${GITHUB_WORKSPACE}/.ansible-lint"
+
+      - name: Build the collection
+        working-directory: tekne/devops
+        run: ansible-galaxy collection build --force --output-path "${GITHUB_WORKSPACE}/.build"
+
+      - name: Syntax-check role tests
+        working-directory: tekne/devops
+        env:
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.ci-layout:${{ github.workspace }}/.ci-collections
+        run: |
+          set -euo pipefail
+          status=0
+          for play in roles/*/tests/test.yml; do
+            echo "syntax-check ${play}"
+            ansible-playbook "${play}" --syntax-check || status=1
+          done
+          exit "${status}"
+
+      - name: Targeted idempotence check
+        working-directory: tekne/devops
+        env:
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.ci-layout:${{ github.workspace }}/.ci-collections
+        run: |
+          set -euo pipefail
+          ansible-playbook tests/hostname_idempotence.yml -i localhost,
+          ansible-playbook tests/hostname_idempotence.yml -i localhost, | tee /tmp/idempotence-second.log
+          grep -Eq 'changed=0 .*failed=0' /tmp/idempotence-second.log
+
+      - name: Sanity checks
+        env:
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.ci-layout:${{ github.workspace }}/.ci-collections
+        run: |
+          set -euo pipefail
+          cd "${GITHUB_WORKSPACE}/.ci-layout/ansible_collections/tekne/devops"
+          ansible-test sanity --local --python 3.12 \
+            --test runtime-metadata \
+            --test changelog \
+            --test ansible-doc \
+            --test compile \
+            --test empty-init \
+            --test line-endings \
+            --test symlinks \
+            --test no-illegal-filenames

@@ -1,0 +1,7 @@
+---
+argument_specs:
+  main:
+    short_description: Cache the remote hostname as an Ansible fact
+    description:
+      - Reads /etc/hostname and caches it as an Ansible fact.
+    options: {}

@@ -1,0 +1,26 @@
+---
+argument_specs:
+  main:
+    short_description: KDE Plasma desktop and plasma login manager
+    description:
+      - Installs KDE Plasma and the plasma login manager.
+    options:
+      kde_install_chroot_phase:
+        description: Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network).
+        required: false
+        type: bool
+        default: false
+      kde_packages:
+        description: KDE Plasma meta packages (pacman -Qg plasma / kde-applications).
+        required: false
+        type: list
+        elements: str
+        default:
+          - plasma-meta
+          - kde-applications-meta
+          - plasma-login-manager
+      kde_login_service:
+        description: The login service value for the kde role.
+        required: false
+        type: str
+        default: plasmalogin.service

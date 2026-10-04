@@ -117,7 +117,8 @@ Playbook typically sets host-specific `bootstrap_xfce_monitors` (e.g. ASTER: eDP
 
 - **OneDrive first sync** pauses for user authentication; follow on-screen URL/code steps.
 - Symlinks are created only when the **source** exists; missing sources are reported and skipped.
-- XFCE tasks use `sudo -u dvaliente` and fixed `/run/user/1000` in places; for multiple users or UIDs, adjust templates or variables.
+- XFCE tasks resolve `bootstrap_user` through `getent` and use that account's
+  runtime directory; no fixed UID is assumed.
 - Ensure a `restart bluetooth` handler exists in the playbook (e.g. from `ansible-role-os`).
 
 ## License

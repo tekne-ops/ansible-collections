@@ -1,0 +1,42 @@
+---
+argument_specs:
+  main:
+    short_description: Docker engine, daemon tuning, and the dockers bridge network
+    description:
+      - Installs Docker Engine and creates the dockers bridge network.
+    options:
+      docker_hostname:
+        description: The hostname value for the docker role.
+        required: false
+        type: str
+      docker_daemon_json_hosts:
+        description: Hosts that receive daemon.json performance tuning.
+        required: false
+        type: list
+        elements: str
+        default:
+          - YUGEN
+          - THEMIS
+      docker_daemon_json_dest:
+        description: The daemon json dest value for the docker role.
+        required: false
+        type: str
+        default: /etc/docker/daemon.json
+      docker_network_name:
+        description: The network name value for the docker role.
+        required: false
+        type: str
+        default: dockers
+      docker_network_subnet:
+        description: The network subnet value for the docker role.
+        required: false
+        type: str
+        default: 192.168.75.0/24
+      docker_dns_servers:
+        description: Containers cannot use the host stub 127.0.0.53. LAN gateway first, Quad9 backup.
+        required: false
+        type: list
+        elements: str
+        default:
+          - 192.168.135.1
+          - 9.9.9.9

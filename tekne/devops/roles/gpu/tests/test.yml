@@ -1,6 +1,6 @@
-# SPDX-License-Identifier: MIT-0
 ---
-- hosts: localhost
+- name: Test tekne.devops.gpu
+  hosts: localhost
   remote_user: root
   roles:
-    - ./ansible-role-gpu-new
+    - role: tekne.devops.gpu

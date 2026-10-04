@@ -2,7 +2,7 @@
 ---
 # defaults file for ansible-role-docker
 
-docker_hostname: "{{ hostname | default(ansible_hostname) | upper }}"
+docker_hostname: "{{ hostname | default(ansible_facts['hostname']) | upper }}"
 
 # Hosts that receive daemon.json performance tuning
 docker_daemon_json_hosts:
@@ -10,6 +10,9 @@ docker_daemon_json_hosts:
   - THEMIS
 
 docker_daemon_json_dest: /etc/docker/daemon.json
+
+docker_network_name: dockers
+docker_network_subnet: 192.168.75.0/24
 
 # Containers cannot use the host stub 127.0.0.53. LAN gateway first, Quad9 backup.
 docker_dns_servers:

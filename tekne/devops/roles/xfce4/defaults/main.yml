@@ -2,8 +2,18 @@
 ---
 # defaults file for ./ansible-role-xfce4/
 
+# Hostname resolved by playbook pre-tasks or gathered facts.
+xfce4_hostname: >-
+  {{ hostname | default(cached_hostname | default(ansible_facts['hostname'])) | upper }}
+xfce4_default_group: users
+xfce4_users:
+  - name: dvaliente
+    group: users
+  - name: devops
+    group: users
+
 # Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network)
-install_chroot_phase: false
+xfce4_install_chroot_phase: "{{ install_chroot_phase | default(false) }}"
 
 # XFCE4 package groups (verified with pacman -Qg)
 xfce4_groups:
@@ -85,5 +95,6 @@ xfce4_lightdm_service: lightdm
 
 # XFCE backgrounds (xfce4_lightdm_hosts only)
 xfce4_backgrounds_repo: "https://github.com/tekne-ops/backgrounds"
+xfce4_backgrounds_version: deac23607153324f3fe888f8eeb9fb37dcfc8c69
 xfce4_backgrounds_dir: "/usr/share/backgrounds/xfce"
 xfce4_slick_greeter_background: "/usr/share/backgrounds/xfce/dog-animal-picture-uhdpaper.com-4K-4.3358.jpg"

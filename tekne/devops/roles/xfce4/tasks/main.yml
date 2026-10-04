@@ -3,38 +3,18 @@
 # tasks file for ./ansible-role-xfce4/
 
 # =============================================================================
-# Hostname from /etc/hostname
-# =============================================================================
-
-- name: Read hostname from /etc/hostname
-  ansible.builtin.slurp:
-    src: /etc/hostname
-  register: hostname_file
-  ignore_errors: true
-  tags:
-    - xfce4
-    - lightdm
-
-- name: Set hostname fact from /etc/hostname
-  ansible.builtin.set_fact:
-    hostname_from_etc: "{{ (hostname_file.content | b64decode | trim) if hostname_file is succeeded else '' }}"
-  tags:
-    - xfce4
-    - lightdm
-
-# =============================================================================
 # Network Connectivity Check
 # =============================================================================
 
 - name: Wait for network connectivity before package installation
   ansible.builtin.command:
     cmd: ping -c 1 -W 2 archlinux.org
-  register: network_check
-  until: network_check.rc == 0
+  register: xfce4_network_check
+  until: xfce4_network_check.rc == 0
   retries: 30
   delay: 2
   changed_when: false
-  when: not install_chroot_phase | bool
+  when: not xfce4_install_chroot_phase | bool
   tags:
     - xfce4
     - network
@@ -73,8 +53,8 @@
     name: "{{ xfce4_lightdm_packages }}"
     state: present
     extra_args: '--noconfirm --needed'
-  register: lightdm_install_result
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+  register: xfce4_lightdm_install_result
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -85,7 +65,7 @@
     name: light-locker
     state: absent
     extra_args: '--noconfirm'
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -96,18 +76,17 @@
     path: /etc/lightdm/lightdm.conf
     regexp: '^#greeter-session=example-gtk-gnome'
     replace: 'greeter-session=lightdm-slick-greeter'
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
     - config
 
-- name: Enable LightDM service without starting (ASTER only)
+- name: Enable LightDM service without changing its runtime state (ASTER only)
   ansible.builtin.systemd:
     name: "{{ xfce4_lightdm_service }}"
     enabled: true
-    state: stopped
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -122,25 +101,17 @@
     path: "{{ xfce4_backgrounds_dir }}"
     state: directory
     mode: '0775'
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
     - backgrounds
 
-- name: Find all files in backgrounds dir
-  ansible.builtin.find:
-    paths: "{{ xfce4_backgrounds_dir }}"
-    recurse: yes
-    file_type: any
-  register: found_items
-
 - name: Remove existing contents of XFCE backgrounds directory
   ansible.builtin.file:
     path: "{{ xfce4_backgrounds_dir }}"
     state: absent
-  loop: "{{ found_items.files }}"
-  when: found_items.files | length >0
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -150,9 +121,10 @@
   ansible.builtin.git:
     repo: "{{ xfce4_backgrounds_repo }}"
     dest: /tmp/ansible_xfce4_backgrounds_clone
+    version: "{{ xfce4_backgrounds_version }}"
     depth: 1
     force: true
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -164,11 +136,37 @@
     state: directory
     owner: root
     group: root
-    mode: 775
+    mode: "0775"
+  when: xfce4_hostname in xfce4_lightdm_hosts
+  tags:
+    - xfce4
+    - lightdm
+    - backgrounds
 
-- name: Copy backgrounds repo content to XFCE backgrounds directory
-  ansible.builtin.shell: "cp -r /tmp/ansible_xfce4_backgrounds_clone/* {{ xfce4_backgrounds_dir }}/"
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+- name: Find background repository files
+  ansible.builtin.find:
+    paths: /tmp/ansible_xfce4_backgrounds_clone
+    file_type: file
+    recurse: false
+  register: xfce4_background_files
+  when: xfce4_hostname in xfce4_lightdm_hosts
+  tags:
+    - xfce4
+    - lightdm
+    - backgrounds
+
+- name: Copy background repository files to XFCE backgrounds directory
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: "{{ xfce4_backgrounds_dir }}/{{ item.path | basename }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ xfce4_background_files.files | default([]) }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -178,7 +176,7 @@
   ansible.builtin.file:
     path: /tmp/ansible_xfce4_backgrounds_clone
     state: absent
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -192,7 +190,7 @@
     owner: root
     group: root
     mode: '0644'
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -203,7 +201,7 @@
     path: /etc/lightdm/slick-greeter.conf
     regexp: '^background=.*'
     replace: "background={{ xfce4_slick_greeter_background }}"
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -217,10 +215,10 @@
   ansible.builtin.getent:
     database: passwd
     key: "{{ item.name }}"
-  loop: "{{ users }}"
+  loop: "{{ xfce4_users }}"
   loop_control:
     label: "{{ item.name }}"
-  register: user_info
+  register: xfce4_user_info
   tags:
     - xfce4
     - config
@@ -230,9 +228,9 @@
     path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/xdg-desktop-portal"
     state: directory
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(xfce4_default_group) }}"
     mode: '0755'
-  loop: "{{ user_info.results }}"
+  loop: "{{ xfce4_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -244,9 +242,9 @@
     path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.themes"
     state: directory
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(xfce4_default_group) }}"
     mode: '0755'
-  loop: "{{ user_info.results }}"
+  loop: "{{ xfce4_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -259,9 +257,9 @@
     src: 98942-minimal-grey2.tar
     dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.themes"
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(xfce4_default_group) }}"
     creates: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.themes/Minimal-Grey2"
-  loop: "{{ user_info.results }}"
+  loop: "{{ xfce4_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -274,9 +272,9 @@
     src: xfce-portals.conf
     dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/xdg-desktop-portal/xfce-portals.conf"
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(xfce4_default_group) }}"
     mode: '0644'
-  loop: "{{ user_info.results }}"
+  loop: "{{ xfce4_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
@@ -289,9 +287,9 @@
     path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/picom"
     state: directory
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(xfce4_default_group) }}"
     mode: '0755'
-  loop: "{{ user_info.results }}"
+  loop: "{{ xfce4_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   when: item.item.name == xfce4_picom_user
@@ -305,9 +303,9 @@
     src: picom.conf
     dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/picom/picom.conf"
     owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(default_group) }}"
+    group: "{{ item.item.group | default(xfce4_default_group) }}"
     mode: '0644'
-  loop: "{{ user_info.results }}"
+  loop: "{{ xfce4_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   when: item.item.name == xfce4_picom_user
@@ -387,34 +385,31 @@
   ansible.builtin.command:
     cmd: "pacman -Q {{ item }}"
   loop: "{{ xfce4_lightdm_packages }}"
-  register: lightdm_package_verify
+  register: xfce4_lightdm_package_verify
   changed_when: false
-  failed_when: lightdm_package_verify.rc != 0
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+  failed_when: xfce4_lightdm_package_verify.rc != 0
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
     - verify
 
-- name: Check LightDM service is enabled (ASTER only)
-  ansible.builtin.command:
-    cmd: "systemctl is-enabled {{ xfce4_lightdm_service }}"
-  register: lightdm_enabled_check
-  changed_when: false
-  failed_when: lightdm_enabled_check.rc != 0
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+- name: Inspect LightDM service state (ASTER only)
+  ansible.builtin.systemd:
+    name: "{{ xfce4_lightdm_service }}"
+  register: xfce4_lightdm_service_status
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
     - verify
 
-- name: Check LightDM service is not running (ASTER only)
-  ansible.builtin.command:
-    cmd: "systemctl is-active {{ xfce4_lightdm_service }}"
-  register: lightdm_active_check
-  changed_when: false
-  failed_when: false
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+- name: Verify LightDM is enabled (ASTER only)
+  ansible.builtin.assert:
+    that:
+      - xfce4_lightdm_service_status.status.UnitFileState == 'enabled'
+    fail_msg: "{{ xfce4_lightdm_service }} is not enabled"
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
@@ -423,12 +418,12 @@
 - name: Display LightDM verification results (ASTER only)
   ansible.builtin.debug:
     msg: |
-      LightDM Status on {{ hostname_from_etc }}:
+      LightDM Status on {{ xfce4_hostname }}:
       ==================================
-      Packages installed: {{ lightdm_install_result is success }}
-      Service enabled: {{ lightdm_enabled_check.stdout | default('N/A') }}
-      Service running: {{ lightdm_active_check.stdout | default('N/A') }} (should be 'inactive')
-  when: (hostname_from_etc | default('') | upper) in xfce4_lightdm_hosts
+      Packages installed: {{ xfce4_lightdm_install_result is success }}
+      Service enabled: {{ xfce4_lightdm_service_status.status.UnitFileState }}
+      Service state: {{ xfce4_lightdm_service_status.status.ActiveState }}
+  when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm

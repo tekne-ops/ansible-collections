@@ -25,7 +25,7 @@ hermes_ssh_port_initial: 22
 hermes_ssh_port: 45100
 hermes_ssh_wait_timeout: 300
 hermes_ssh_private_key_file: ""
-hermes_remote_become: false
+hermes_management_user: devops
 hermes_ec2_user_data: |
   #cloud-config
   runcmd:

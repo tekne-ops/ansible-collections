@@ -1,0 +1,31 @@
+---
+argument_specs:
+  main:
+    short_description: PipeWire and WirePlumber user configuration
+    description:
+      - Deploys PipeWire and WirePlumber configuration for each user.
+    options:
+      pipewire_default_group:
+        description: Fallback when pipewire runs without the user role in the same play.
+        required: false
+        type: str
+        default: users
+      pipewire_users:
+        description: The users value for the pipewire role.
+        required: false
+        type: list
+        elements: dict
+        options:
+          name:
+            description: The name field on each list entry.
+            required: false
+            type: str
+          group:
+            description: The group field on each list entry.
+            required: false
+            type: str
+        default:
+          - name: dvaliente
+            group: users
+          - name: devops
+            group: users

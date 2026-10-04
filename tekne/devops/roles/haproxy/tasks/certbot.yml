@@ -33,15 +33,6 @@
     - haproxy
     - certbot
 
-- name: Upgrade pip in certbot virtualenv
-  ansible.builtin.pip:
-    name: pip
-    state: latest
-    virtualenv: "{{ haproxy_certbot_venv }}"
-  tags:
-    - haproxy
-    - certbot
-
 - name: Install certbot and Cloudflare DNS plugin in virtualenv
   ansible.builtin.pip:
     name:
@@ -70,6 +61,8 @@
     owner: root
     group: root
     mode: '0600'
+  no_log: true
+  diff: false
   tags:
     - haproxy
     - certbot
@@ -125,6 +118,7 @@
     - "{{ haproxy_le_live_dir }}/fullchain.pem"
     - "{{ haproxy_le_live_dir }}/privkey.pem"
   register: haproxy_le_cert_parts
+  no_log: true
   tags:
     - haproxy
     - certbot
@@ -138,6 +132,8 @@
     owner: root
     group: root
     mode: '0600'
+  no_log: true
+  diff: false
   notify: Restart haproxy container
   tags:
     - haproxy
@@ -151,6 +147,8 @@
     owner: root
     group: root
     mode: '0600'
+  no_log: true
+  diff: false
   notify: Restart haproxy container
   tags:
     - haproxy

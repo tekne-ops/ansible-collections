@@ -2,11 +2,12 @@
 - name: Generate locales
   ansible.builtin.command:
     cmd: /usr/bin/locale-gen
+  changed_when: true
   listen: Generate locales
 
-- name: restart bluetooth
+- name: Restart bluetooth
   ansible.builtin.systemd:
     name: bluetooth.service
     state: restarted
   listen: restart bluetooth
-  when: ansible_service_mgr == 'systemd'
+  when: ansible_facts['service_mgr'] == 'systemd'

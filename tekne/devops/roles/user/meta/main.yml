@@ -1,15 +1,20 @@
 ---
 galaxy_info:
   author: dvaliente
-  description: Manages system users, passwords, and SSH authorized keys
+  description: System users, SSH authorized keys, sudoers, and dotfiles
+  namespace: tekne
+  role_name: user
   license: MIT
-  min_ansible_version: "2.10"
+  min_ansible_version: 2.19.0
+  standalone: false
   platforms:
-    - name: Archlinux
+    - name: ArchLinux
       versions:
         - all
   galaxy_tags:
-    - system
-    - users
-    - security
+    - archlinux
     - ssh
+    - users
+collections:
+  - ansible.posix
+dependencies: []

@@ -1,3 +1,7 @@
 # SPDX-License-Identifier: MIT-0
 ---
 # defaults file for ansible-role-gerbera
+gerbera_container_name: gerbera
+gerbera_container_image: gerbera/gerbera@sha256:a56ea89e3f9fce06a6ca6dd9cc2f2d27ce24a83398806eef6680514ba31dbaf0
+gerbera_config_dir: /srv/docker/gerbera
+gerbera_media_dir: /srv/media

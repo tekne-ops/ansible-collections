@@ -1,0 +1,72 @@
+---
+argument_specs:
+  main:
+    short_description: Steam, Lutris, Wine, gamemode, and gaming host limits
+    description:
+      - Installs Steam, Lutris, Wine, and gamemode on gaming hosts.
+    options:
+      gaming_packages:
+        description: Gaming packages to install.
+        required: false
+        type: list
+        elements: str
+        default:
+          - lutris
+          - steam
+          - lib32-systemd
+          - wine-tkg-valve-exp-bleeding
+          - winetricks
+          - wine-gecko
+          - wine-mono
+          - openbox
+          - gamemode
+          - proton-ge-custom-bin
+          - noto-fonts-cjk
+      gaming_hosts:
+        description: The hosts value for the gaming role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - YUGEN
+          - ASTER
+      gaming_xorg_hosts:
+        description: The xorg hosts value for the gaming role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - YUGEN
+      gaming_xorg_conf_dest:
+        description: The xorg conf dest value for the gaming role.
+        required: false
+        type: str
+        default: /etc/X11/xorg.conf.d/20-yugen-nvidia.conf
+      gaming_limits_conf_dest:
+        description: The limits conf dest value for the gaming role.
+        required: false
+        type: str
+        default: /etc/security/limits.d/gaming.conf
+      gaming_script_dest:
+        description: The script dest value for the gaming role.
+        required: false
+        type: str
+        default: /usr/local/bin/game
+      gaming_schedtoold_conf_dest:
+        description: The schedtoold conf dest value for the gaming role.
+        required: false
+        type: str
+        default: /etc/schedtoold.conf
+      gaming_gamemode_ini_dest:
+        description: The gamemode ini dest value for the gaming role.
+        required: false
+        type: str
+        default: /etc/gamemode.ini
+      gaming_gamemode_users:
+        description: The gamemode users value for the gaming role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - dvaliente
+          - devops

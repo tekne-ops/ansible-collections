@@ -1,21 +1,20 @@
-# SPDX-License-Identifier: MIT-0
 ---
 galaxy_info:
   author: dvaliente
-  description: Installs gaming packages, Wine, Steam, Lutris, and game launcher script
-  license: MIT-0
-  min_ansible_version: "2.10"
-
+  description: Steam, Lutris, Wine, gamemode, and gaming host limits
+  namespace: tekne
+  role_name: gaming
+  license: MIT
+  min_ansible_version: 2.19.0
+  standalone: false
   platforms:
-    - name: Archlinux
+    - name: ArchLinux
       versions:
         - all
-
   galaxy_tags:
+    - archlinux
     - gaming
     - steam
-    - wine
-    - lutris
-    - archlinux
-
+collections:
+  - community.general
 dependencies: []

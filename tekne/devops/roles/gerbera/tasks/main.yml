@@ -4,32 +4,32 @@
 
 - name: Create /srv/media directory
   ansible.builtin.file:
-    path: /srv/docker/gerbera
+    path: "{{ item }}"
     state: directory
     owner: root
     group: root
     mode: '0755'
+  loop:
+    - "{{ gerbera_config_dir }}"
+    - "{{ gerbera_media_dir }}"
   tags:
     - gerbera
     - config
 
-- name: Check if gerbera container already exists
-  ansible.builtin.command: docker ps -a -f name=^gerbera$ --format '{{ "{{" }}.Names{{ "}}" }}'
-  register: gerbera_container_check
-  changed_when: false
-  failed_when: false
-  tags:
-    - gerbera
-    - docker
-
-- name: Create and start gerbera Docker container
-  ansible.builtin.shell: |
-    docker run -d --name gerbera --restart=unless-stopped \
-      --network=host \
-      -e G_LOG=info \
-      -v /srv/media:/mnt/content:ro \
-      gerbera/gerbera:latest
-  when: (gerbera_container_check.stdout | trim) != 'gerbera'
+- name: Create and start Gerbera container
+  community.docker.docker_container:
+    name: "{{ gerbera_container_name }}"
+    image: "{{ gerbera_container_image }}"
+    state: started
+    restart_policy: unless-stopped
+    network_mode: host
+    env:
+      G_LOG: info
+    volumes:
+      - "{{ gerbera_media_dir }}:/mnt/content:ro"
+    comparisons:
+      image: strict
+      volumes: strict
   tags:
     - gerbera
     - docker

@@ -1,3 +1,10 @@
 # SPDX-License-Identifier: MIT-0
 ---
 # defaults file for ansible-role-repotekne
+repotekne_container_name: repotekne
+repotekne_container_image: fiercebrake/arch:1.1.0
+repotekne_docker_network: dockers
+repotekne_docker_ip: 192.168.75.13
+repotekne_data_dir: /srv/docker/repotekne
+repotekne_cache_dir: /mnt/cache/aur-build-tekne
+repotekne_setup_version: "1"

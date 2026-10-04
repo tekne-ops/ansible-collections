@@ -1,0 +1,83 @@
+---
+argument_specs:
+  main:
+    short_description: HAProxy TLS reverse proxy container for tekne.sv
+    description:
+      - Runs HAProxy in Docker and can obtain a tekne.sv certificate with certbot.
+    options:
+      haproxy_ssl_pem:
+        description:
+          - 'SSL certificate for HAProxy (tekne.sv). Either enable certbot (recommended on THEMIS) or provide exactly one of: - haproxy_ssl_pem: full PEM'
+          - 'content (cert + key) — set in vault - haproxy_ssl_pem_path: path on the controller to the PEM file See vars/main.yml and README for secure'
+          - setup.
+        required: false
+        type: str
+        no_log: true
+      haproxy_ssl_pem_path:
+        description: The ssl pem path value for the haproxy role.
+        required: false
+        type: str
+        no_log: true
+      haproxy_container_name:
+        description: The container name value for the haproxy role.
+        required: false
+        type: str
+        default: haproxy
+      haproxy_container_image:
+        description: The container image value for the haproxy role.
+        required: false
+        type: str
+        default: haproxytech/haproxy-alpine:3.3
+      haproxy_certbot_enabled:
+        description: Certbot + Cloudflare DNS (host-side venv; PEM copied into /srv/docker/haproxy/).
+        required: false
+        type: bool
+        default: false
+      haproxy_certbot_packages:
+        description: The certbot packages value for the haproxy role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - python
+          - gcc
+      haproxy_certbot_venv:
+        description: The certbot venv value for the haproxy role.
+        required: false
+        type: str
+        default: /opt/certbot
+      haproxy_certbot_cloudflare_ini:
+        description: The certbot cloudflare ini value for the haproxy role.
+        required: false
+        type: str
+        default: /root/cloudflare.ini
+      haproxy_certbot_domain:
+        description: The certbot domain value for the haproxy role.
+        required: false
+        type: str
+        default: tekne.sv
+      haproxy_certbot_wildcard:
+        description: The certbot wildcard value for the haproxy role.
+        required: false
+        type: str
+        default: '*.tekne.sv'
+      haproxy_certbot_email:
+        description: The certbot email value for the haproxy role.
+        required: false
+        type: str
+      haproxy_cloudflare_api_token:
+        description: The cloudflare api token value for the haproxy role.
+        required: false
+        type: str
+        no_log: true
+      haproxy_le_live_dir:
+        description: The le live dir value for the haproxy role.
+        required: false
+        type: str
+        default: /etc/letsencrypt/live/tekne.sv
+      haproxy_le_combined_pem:
+        description: The le combined pem value for the haproxy role.
+        required: false
+        type: str
+        no_log: true
+        default: /etc/letsencrypt/live/tekne.sv/haproxy.pem

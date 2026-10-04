@@ -104,7 +104,7 @@
   ansible.builtin.systemd:
     name: nftables
     enabled: true
-    state: "{{ 'stopped' if install_chroot_phase | bool else 'started' }}"
+    state: "{{ 'stopped' if nftables_install_chroot_phase | bool else 'started' }}"
     daemon_reload: true
   when: (nftables_packages_check.rc | default(0)) == 0
   tags:

@@ -32,7 +32,7 @@ k8s_docker_apt_key_url: https://download.docker.com/linux/debian/gpg
 k8s_docker_apt_keyring_path: /etc/apt/keyrings/docker.asc
 k8s_docker_apt_sources_list: /etc/apt/sources.list.d/docker.list
 # Override if Docker has no suite for your Debian release (e.g. trixie -> bookworm)
-k8s_docker_apt_suite: "{{ ansible_distribution_release }}"
+k8s_docker_apt_suite: "{{ ansible_facts['distribution_release'] }}"
 
 k8s_kubelet_service: kubelet
 k8s_containerd_service: containerd
@@ -43,24 +43,46 @@ k8s_containerd_version: "2.3.1"
 k8s_containerd_arch_map:
   x86_64: amd64
   aarch64: arm64
-k8s_containerd_arch: "{{ k8s_containerd_arch_map[ansible_architecture] | default(ansible_architecture) }}"
+k8s_containerd_arch: >-
+  {{
+    k8s_containerd_arch_map[ansible_facts['architecture']]
+    | default(ansible_facts['architecture'])
+  }}
 k8s_containerd_install_prefix: /usr/local
 k8s_containerd_tarball_url: >-
-  https://github.com/containerd/containerd/releases/download/v{{ k8s_containerd_version }}/containerd-{{ k8s_containerd_version }}-linux-{{ k8s_containerd_arch }}.tar.gz
+  {{
+    'https://github.com/containerd/containerd/releases/download/v'
+    ~ k8s_containerd_version ~ '/containerd-' ~ k8s_containerd_version
+    ~ '-linux-' ~ k8s_containerd_arch ~ '.tar.gz'
+  }}
 k8s_containerd_tarball_dest: /tmp/containerd-{{ k8s_containerd_version }}-linux-{{ k8s_containerd_arch }}.tar.gz
-k8s_containerd_service_url: https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
+k8s_containerd_checksums:
+  amd64: 628448bd973610c656c1cbea8e88b32fafd85b23cc1aa4a3372eb7198478c054
+  arm64: 46a83603a850f3916ca7c942310daaf82ed17773a85b1d431e92d4a541e46d0d
+k8s_containerd_service_commit: 64b425cf570b3b8dd1d4cc46da7c1fce65c6651a
+k8s_containerd_service_url: "https://raw.githubusercontent.com/containerd/containerd/{{ k8s_containerd_service_commit }}/containerd.service"
 k8s_containerd_unit_path: /usr/local/lib/systemd/system/containerd.service
 
 k8s_runc_version: "1.4.2"
 k8s_runc_url: https://github.com/opencontainers/runc/releases/download/v{{ k8s_runc_version }}/runc.{{ k8s_containerd_arch }}
-k8s_runc_download_dest: /tmp/runc.amd64
+k8s_runc_download_dest: "/tmp/runc.{{ k8s_containerd_arch }}"
+k8s_runc_checksums:
+  amd64: ac8a90f9e225bb9322189937b230cdc5478d5753f0e31e1bda98a5cf06bd9539
+  arm64: ea54032310588e115633aa2f4bba8bf9500257f657e1deca88df5778775138db
 k8s_runc_install_path: /usr/local/sbin/runc
 
 k8s_cni_plugins_version: "1.9.1"
 k8s_cni_plugins_arch: "{{ k8s_containerd_arch }}"
 k8s_cni_plugins_url: >-
-  https://github.com/containernetworking/plugins/releases/download/v{{ k8s_cni_plugins_version }}/cni-plugins-linux-{{ k8s_cni_plugins_arch }}-v{{ k8s_cni_plugins_version }}.tgz
+  {{
+    'https://github.com/containernetworking/plugins/releases/download/v'
+    ~ k8s_cni_plugins_version ~ '/cni-plugins-linux-'
+    ~ k8s_cni_plugins_arch ~ '-v' ~ k8s_cni_plugins_version ~ '.tgz'
+  }}
 k8s_cni_plugins_dest: /tmp/cni-plugins-linux-{{ k8s_cni_plugins_arch }}-v{{ k8s_cni_plugins_version }}.tgz
+k8s_cni_plugins_checksums:
+  amd64: b98f74a0f8522f0a83867178729c1aa70f2158f90c45a2ca8fa791db1c76b303
+  arm64: 56171987d3947707c3563db2f4001bccaf50fd63468611b9f3cbecb1375ee7ec
 k8s_cni_bin_dir: /opt/cni/bin
 
 k8s_containerd_bin: "{{ k8s_containerd_install_prefix }}/bin/containerd"

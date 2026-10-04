@@ -5,8 +5,8 @@ Manages system users, passwords, SSH authorized keys, sudoers, and home-director
 ## What It Does
 
 1. **Validates** that `user_password` is defined (e.g. from vault).
-2. **Creates users** from the `users` list (shell, group, groups, password).
-3. **Sets root password** when `manage_root_password` is true.
+2. **Creates users** from the `user_accounts` list (shell, group, groups, password).
+3. **Sets root password** when `user_manage_root_password` is true.
 4. **Configures SSH authorized keys** from role `files/` for each user with `ssh_key_file`.
 5. **Deploys sudoers files** to `/etc/sudoers.d/` (e.g. `sudo_dvaliente`, `sudo_devops`).
 6. **Creates home directories** (e.g. `.config/systemd/user`, `.gnupg`, `.ssh`, `bin`) and copies dotfiles (`.bashrc`, `.vimrc`, `pikaur.conf`).
@@ -23,25 +23,25 @@ ansible-galaxy collection install ansible.posix
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `users` | See defaults | List of users to create |
-| `default_shell` | `/bin/bash` | Default shell for users |
-| `default_group` | `users` | Default primary group |
-| `manage_root_password` | `true` | Whether to set root password |
+| `user_accounts` | See defaults | List of users to create |
+| `user_default_shell` | `/bin/bash` | Default shell for users |
+| `user_default_group` | `users` | Default primary group |
+| `user_manage_root_password` | `true` | Whether to set root password |
 | `user_directories` | See defaults | Directories to create in each user's home |
 | `user_password` | **(vault)** | Default password hash for users (required) |
 | `root_password` | **(vault)** | Root password hash (falls back to user_password) |
 
 ### User Object Properties
 
-Each user in the `users` list supports:
+Each user in the `user_accounts` list supports:
 
 | Property | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `name` | Yes | - | Username |
 | `groups` | Yes | - | Comma-separated secondary groups |
 | `ssh_key_file` | No | - | Filename in role `files/` for authorized_keys |
-| `shell` | No | `default_shell` | User's login shell |
-| `group` | No | `default_group` | Primary group |
+| `shell` | No | `user_default_shell` | User's login shell |
+| `group` | No | `user_default_group` | Primary group |
 | `password` | No | `user_password` | User-specific password hash |
 | `ssh_exclusive` | No | `true` | Replace all existing SSH keys |
 
@@ -71,9 +71,9 @@ Sudoers files are validated with `visudo -cf %s` before deployment.
 ```yaml
 - hosts: localhost
   roles:
-    - role: ansible-role-user
+    - role: tekne.devops.user
       vars:
-        users:
+        user_accounts:
           - name: admin
             groups: 'wheel,docker'
             ssh_key_file: admin

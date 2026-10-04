@@ -1,6 +1,6 @@
-# SPDX-License-Identifier: MIT-0
 ---
-- hosts: localhost
+- name: Test tekne.devops.libvirt
+  hosts: localhost
   remote_user: root
   roles:
-    - ansible-role-libvirt
+    - role: tekne.devops.libvirt

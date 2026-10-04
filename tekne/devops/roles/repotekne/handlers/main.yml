@@ -1,3 +1,7 @@
 # SPDX-License-Identifier: MIT-0
 ---
-# handlers file for ansible-role-repotekne
+- name: Restart repotekne container
+  community.docker.docker_container:
+    name: "{{ repotekne_container_name }}"
+    state: started
+    restart: true

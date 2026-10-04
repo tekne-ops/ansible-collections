@@ -14,7 +14,77 @@
   ansible.builtin.command:
     cmd: kubeadm init --pod-network-cidr=192.168.0.0/16
   register: k8s_kubeadm_init
+  no_log: true
+  changed_when: true
   when: not k8s_admin_conf.stat.exists
+  tags:
+    - k8s
+    - k8s-kubeadm
+
+- name: Check for persisted kubeadm join credentials
+  ansible.builtin.stat:
+    path: "{{ k8s_kubeadm_join_facts_path }}"
+  register: k8s_persisted_join_file
+  when: k8s_admin_conf.stat.exists
+  tags:
+    - k8s
+    - k8s-kubeadm
+
+- name: Read persisted kubeadm join credentials
+  ansible.builtin.slurp:
+    src: "{{ k8s_kubeadm_join_facts_path }}"
+  register: k8s_persisted_join_content
+  no_log: true
+  when:
+    - k8s_admin_conf.stat.exists
+    - k8s_persisted_join_file.stat.exists
+  tags:
+    - k8s
+    - k8s-kubeadm
+
+- name: Parse persisted kubeadm join credentials
+  ansible.builtin.set_fact:
+    k8s_persisted_join_token: >-
+      {{
+        (k8s_persisted_join_content.content | b64decode)
+        .split('k8s_kubeadm_join_token:')[1].split('\n')[0] | trim
+      }}
+    k8s_persisted_join_hash: >-
+      {{
+        (k8s_persisted_join_content.content | b64decode)
+        .split('k8s_kubeadm_discovery_token_ca_cert_hash:')[1].split('\n')[0] | trim
+      }}
+  no_log: true
+  when:
+    - k8s_admin_conf.stat.exists
+    - k8s_persisted_join_file.stat.exists
+  tags:
+    - k8s
+    - k8s-kubeadm
+
+- name: List active kubeadm bootstrap tokens
+  ansible.builtin.command:
+    cmd: kubeadm token list
+  register: k8s_active_join_tokens
+  changed_when: false
+  no_log: true
+  when:
+    - k8s_admin_conf.stat.exists
+    - k8s_persisted_join_token | default('') | length > 0
+  tags:
+    - k8s
+    - k8s-kubeadm
+
+- name: Reuse valid persisted kubeadm join credentials
+  ansible.builtin.set_fact:
+    k8s_kubeadm_join_token: "{{ k8s_persisted_join_token }}"
+    k8s_kubeadm_discovery_token_ca_cert_hash: "{{ k8s_persisted_join_hash }}"
+  no_log: true
+  when:
+    - k8s_admin_conf.stat.exists
+    - k8s_persisted_join_token | default('') | length > 0
+    - k8s_persisted_join_hash | default('') | length > 0
+    - k8s_persisted_join_token in k8s_active_join_tokens.stdout
   tags:
     - k8s
     - k8s-kubeadm
@@ -23,21 +93,17 @@
   ansible.builtin.command:
     cmd: kubeadm token create --print-join-command
   register: k8s_kubeadm_join_cmd
-  changed_when: false
-  when: k8s_admin_conf.stat.exists
-  tags:
-    - k8s
-    - k8s-kubeadm
-
-- name: Get kubeadm join command after fresh init
-  ansible.builtin.command:
-    cmd: kubeadm token create --print-join-command
-  register: k8s_kubeadm_join_cmd_after_init
-  changed_when: false
+  no_log: true
+  changed_when: true
   when:
-    - k8s_kubeadm_init is defined
-    - not (k8s_kubeadm_init.skipped | default(false))
-    - k8s_kubeadm_init.rc == 0
+    - k8s_admin_conf.stat.exists
+    - k8s_kubeadm_join_token | default('') | length == 0
+    - >-
+      groups.get('k8s_workers', [])
+      | map('extract', hostvars, 'k8s_node_needs_join')
+      | select('equalto', true)
+      | list
+      | length > 0
   tags:
     - k8s
     - k8s-kubeadm
@@ -47,11 +113,17 @@
     k8s_kubeadm_join_output: >-
       {{
         [
-          k8s_kubeadm_join_cmd_after_init.stdout | default(''),
           k8s_kubeadm_join_cmd.stdout | default(''),
+          (
+            'kubeadm join --token '
+            ~ (k8s_kubeadm_join_token | default(''))
+            ~ ' --discovery-token-ca-cert-hash '
+            ~ (k8s_kubeadm_discovery_token_ca_cert_hash | default(''))
+          ) if (k8s_kubeadm_join_token | default('') | length > 0) else '',
           (k8s_kubeadm_init.stdout | default('')) ~ (k8s_kubeadm_init.stderr | default(''))
         ] | map('trim') | reject('equalto', '') | first | default('')
       }}
+  no_log: true
   when: inventory_hostname in groups.get('k8s_control_plane', [k8s_master_host])
   tags:
     - k8s
@@ -65,7 +137,7 @@
     k8s_kubeadm_discovery_token_ca_cert_hash: >-
       {{ k8s_kubeadm_join_output.split('--discovery-token-ca-cert-hash ')[1].split()[0]
          if '--discovery-token-ca-cert-hash ' in k8s_kubeadm_join_output else '' }}
-    cacheable: true
+  no_log: true
   when:
     - inventory_hostname in groups.get('k8s_control_plane', [k8s_master_host])
     - k8s_kubeadm_join_output | length > 0
@@ -79,8 +151,8 @@
       - k8s_kubeadm_join_token | length > 0
       - k8s_kubeadm_discovery_token_ca_cert_hash | length > 0
     fail_msg: >-
-      Could not parse kubeadm join token/hash from output:
-      {{ k8s_kubeadm_join_output }}
+      Could not parse kubeadm join token/hash from kubeadm output.
+  no_log: true
   when:
     - inventory_hostname in groups.get('k8s_control_plane', [k8s_master_host])
     - k8s_kubeadm_join_output | length > 0
@@ -95,6 +167,8 @@
     content: |
       k8s_kubeadm_join_token: {{ k8s_kubeadm_join_token }}
       k8s_kubeadm_discovery_token_ca_cert_hash: {{ k8s_kubeadm_discovery_token_ca_cert_hash }}
+  no_log: true
+  diff: false
   when:
     - inventory_hostname in groups.get('k8s_control_plane', [k8s_master_host])
     - k8s_kubeadm_join_token | default('') | length > 0

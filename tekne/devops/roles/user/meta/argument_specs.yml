@@ -1,0 +1,62 @@
+---
+argument_specs:
+  main:
+    short_description: System users, SSH authorized keys, sudoers, and dotfiles
+    description:
+      - Creates system users, SSH keys, sudoers, and home dotfiles.
+    options:
+      user_accounts:
+        description: List of users to create.
+        required: false
+        type: list
+        elements: dict
+        options:
+          name:
+            description: The name field on each list entry.
+            required: false
+            type: str
+          groups:
+            description: The groups field on each list entry.
+            required: false
+            type: str
+          ssh_key_file:
+            description: The ssh key file field on each list entry.
+            required: false
+            type: str
+        default:
+          - name: dvaliente
+            groups: wheel,rfkill,network,devs,video,audio,input,games
+            ssh_key_file: dvaliente
+          - name: devops
+            groups: wheel,rfkill,network,devs,video,audio,input,games
+            ssh_key_file: devops
+      user_default_shell:
+        description: The default shell value for the user role.
+        required: false
+        type: str
+        default: /bin/bash
+      user_default_group:
+        description: Default primary group.
+        required: false
+        type: str
+        default: users
+      user_manage_root_password:
+        description: Set to true to manage root password.
+        required: false
+        type: bool
+        default: true
+      user_directories:
+        description: User directories to create in each user's home.
+        required: false
+        type: list
+        elements: str
+        default:
+          - .config/systemd/user
+          - .config/autostart
+          - .config/remmina
+          - .vim/autoload
+          - .vim/bundle
+          - .vim/colors
+          - bin
+          - .gnupg
+          - .ssh

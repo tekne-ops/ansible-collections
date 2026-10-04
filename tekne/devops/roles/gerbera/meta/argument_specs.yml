@@ -1,0 +1,27 @@
+---
+argument_specs:
+  main:
+    short_description: Gerbera UPnP and DLNA media server container
+    description:
+      - Runs the Gerbera UPnP and DLNA media server in Docker.
+    options:
+      gerbera_container_name:
+        description: The container name value for the gerbera role.
+        required: false
+        type: str
+        default: gerbera
+      gerbera_container_image:
+        description: The container image value for the gerbera role.
+        required: false
+        type: str
+        default: gerbera/gerbera@sha256:a56ea89e3f9fce06a6ca6dd9cc2f2d27ce24a83398806eef6680514ba31dbaf0
+      gerbera_config_dir:
+        description: The config dir value for the gerbera role.
+        required: false
+        type: str
+        default: /srv/docker/gerbera
+      gerbera_media_dir:
+        description: The media dir value for the gerbera role.
+        required: false
+        type: str
+        default: /srv/media

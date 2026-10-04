@@ -9,6 +9,8 @@
 # See vars/main.yml and README for secure setup.
 haproxy_ssl_pem: null
 haproxy_ssl_pem_path: null
+haproxy_container_name: haproxy
+haproxy_container_image: haproxytech/haproxy-alpine:3.3
 
 # Certbot + Cloudflare DNS (host-side venv; PEM copied into /srv/docker/haproxy/)
 haproxy_certbot_enabled: false

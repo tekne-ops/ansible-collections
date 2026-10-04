@@ -1,0 +1,7 @@
+---
+argument_specs:
+  main:
+    short_description: QEMU and KVM libvirt packages, groups, and services
+    description:
+      - Installs libvirt, QEMU, and KVM and adds local users to the groups.
+    options: {}

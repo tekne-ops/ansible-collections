@@ -6,7 +6,7 @@
   ansible.builtin.command: python3 -c "import boto3, botocore"
   register: hermes_boto3_check
   changed_when: false
-  failed_when: false
+  failed_when: hermes_boto3_check.rc not in [0, 1]
   become: false
   tags:
     - hermes
@@ -27,6 +27,7 @@
     hermes_aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
     hermes_aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
     hermes_aws_session_token: "{{ lookup('env', 'AWS_SESSION_TOKEN') | default('', true) }}"
+  no_log: true
   become: false
   tags:
     - hermes
@@ -40,6 +41,8 @@
     fail_msg: >-
       Export AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY before running:
       export AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=...
+    quiet: true
+  no_log: true
   become: false
   tags:
     - hermes
@@ -47,6 +50,7 @@
 
 - name: Manage tekne-devops-hermes EC2 instance
   become: false
+  no_log: true
   environment: "{{ hermes_aws_env }}"
   vars:
     hermes_aws_env: >-

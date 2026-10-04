@@ -1,16 +1,20 @@
 ---
 galaxy_info:
   author: dvaliente
-  description: systemd-networkd, WiFi, THEMIS br0 bridge, SSH drop-in, connectivity wait
+  description: systemd-networkd, WiFi, DNS policy, and the THEMIS bridge
+  namespace: tekne
+  role_name: network
   license: MIT
-  min_ansible_version: "2.10"
+  min_ansible_version: 2.19.0
+  standalone: false
   platforms:
-    - name: Archlinux
+    - name: ArchLinux
       versions:
         - all
   galaxy_tags:
-    - system
     - archlinux
-    - network-host
-
+    - network
+    - wifi
+collections:
+  - community.general
 dependencies: []

@@ -6,7 +6,11 @@
   ansible.builtin.set_fact:
     k8s_join_token: "{{ hostvars[k8s_master_host]['k8s_kubeadm_join_token'] | default('') }}"
     k8s_join_discovery_hash: "{{ hostvars[k8s_master_host]['k8s_kubeadm_discovery_token_ca_cert_hash'] | default('') }}"
-    k8s_join_control_plane_host: "{{ hostvars[k8s_master_host]['ansible_host'] | default(hostvars[k8s_master_host]['ansible_default_ipv4']['address'] | default('')) }}"
+    k8s_join_control_plane_host: >-
+      {{
+        hostvars[k8s_master_host]['ansible_host']
+        | default(hostvars[k8s_master_host]['ansible_default_ipv4']['address'] | default(''))
+      }}
   when: inventory_hostname in groups.get('k8s_workers', [])
   tags:
     - k8s
@@ -18,6 +22,7 @@
     src: "{{ k8s_kubeadm_join_facts_path }}"
   delegate_to: "{{ k8s_master_host }}"
   register: k8s_join_facts_slurp
+  no_log: true
   run_once: true
   when:
     - inventory_hostname in groups.get('k8s_workers', [])
@@ -31,6 +36,7 @@
   ansible.builtin.set_fact:
     k8s_join_token: "{{ (k8s_join_facts_slurp.content | b64decode).split('k8s_kubeadm_join_token:')[1].split('\n')[0] | trim }}"
     k8s_join_discovery_hash: "{{ (k8s_join_facts_slurp.content | b64decode).split('k8s_kubeadm_discovery_token_ca_cert_hash:')[1].split('\n')[0] | trim }}"
+  no_log: true
   when:
     - inventory_hostname in groups.get('k8s_workers', [])
     - k8s_join_facts_slurp is defined
@@ -84,6 +90,7 @@
       {{ k8s_join_control_plane_host }}:{{ k8s_control_plane_port }}
       --discovery-token-ca-cert-hash {{ k8s_join_discovery_hash }}
   register: k8s_kubeadm_join_result
+  no_log: true
   changed_when: k8s_kubeadm_join_result.rc == 0
   when:
     - inventory_hostname in groups.get('k8s_workers', [])

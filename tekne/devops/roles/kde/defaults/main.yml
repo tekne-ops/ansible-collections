@@ -3,7 +3,7 @@
 # defaults file for ./kde
 
 # Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network)
-install_chroot_phase: false
+kde_install_chroot_phase: "{{ install_chroot_phase | default(false) }}"
 
 # KDE Plasma meta packages (pacman -Qg plasma / kde-applications)
 kde_packages:

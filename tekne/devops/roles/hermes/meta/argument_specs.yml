@@ -1,0 +1,143 @@
+---
+argument_specs:
+  main:
+    short_description: Amazon EC2 instance for Hermes and its SSH bootstrap
+    description:
+      - Creates the Hermes EC2 instance and bootstraps SSH access.
+    options:
+      hermes_instance_name:
+        description: The instance name value for the hermes role.
+        required: false
+        type: str
+        default: tekne-devops-hermes
+      hermes_ami_id:
+        description: The ami id value for the hermes role.
+        required: false
+        type: str
+        default: ami-0e68dc81dc36750a1
+      hermes_instance_type:
+        description: The instance type value for the hermes role.
+        required: false
+        type: str
+        default: t3a.micro
+      hermes_key_pair:
+        description: The key pair value for the hermes role.
+        required: false
+        type: str
+        default: kp_david_valiente
+      hermes_vpc_id:
+        description: The vpc id value for the hermes role.
+        required: false
+        type: str
+        default: vpc-ae62eac5
+      hermes_subnet_id:
+        description: The subnet id value for the hermes role.
+        required: false
+        type: str
+        default: subnet-05ac3f07bd4bc3b24
+      hermes_security_groups:
+        description: The security groups value for the hermes role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - sg-0186376294e0ed236
+          - sg-065b7505ca34712a5
+      hermes_assign_public_ip:
+        description: The assign public ip value for the hermes role.
+        required: false
+        type: bool
+        default: true
+      hermes_aws_region:
+        description: The aws region value for the hermes role.
+        required: false
+        type: str
+      hermes_aws_packages:
+        description: The aws packages value for the hermes role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - python-boto3
+      hermes_ssh_user:
+        description: The ssh user value for the hermes role.
+        required: false
+        type: str
+        default: admin
+      hermes_ssh_user_candidates:
+        description: The ssh user candidates value for the hermes role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - admin
+          - root
+          - arch
+          - ec2-user
+      hermes_ssh_port_initial:
+        description: The ssh port initial value for the hermes role.
+        required: false
+        type: int
+        default: 22
+      hermes_ssh_port:
+        description: The ssh port value for the hermes role.
+        required: false
+        type: int
+        default: 45100
+      hermes_ssh_wait_timeout:
+        description: The ssh wait timeout value for the hermes role.
+        required: false
+        type: int
+        default: 300
+      hermes_ssh_private_key_file:
+        description: The ssh private key file value for the hermes role.
+        required: false
+        type: str
+        no_log: true
+        default: ''
+      hermes_management_user:
+        description: Managed account used after SSH hardening is applied.
+        required: false
+        type: str
+        default: devops
+      hermes_ec2_user_data:
+        description: The ec2 user data value for the hermes role.
+        required: false
+        type: str
+        default: |
+          #cloud-config
+          runcmd:
+            - |
+              install -d -m 0750 /etc/sudoers.d
+              echo "admin ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/99-ansible-bootstrap-admin
+              chmod 0440 /etc/sudoers.d/99-ansible-bootstrap-admin
+      hermes_users:
+        description: The users value for the hermes role.
+        required: false
+        type: list
+        elements: dict
+        options:
+          name:
+            description: The name field on each list entry.
+            required: false
+            type: str
+          groups:
+            description: The groups field on each list entry.
+            required: false
+            type: str
+          ssh_key_file:
+            description: The ssh key file field on each list entry.
+            required: false
+            type: str
+        default:
+          - name: dvaliente
+            groups: wheel
+            ssh_key_file: dvaliente
+          - name: devops
+            groups: wheel
+            ssh_key_file: devops
+      hermes_supplementary_groups:
+        description: The supplementary groups value for the hermes role.
+        required: false
+        type: list
+        elements: str

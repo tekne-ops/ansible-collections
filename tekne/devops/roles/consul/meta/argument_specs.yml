@@ -1,0 +1,71 @@
+---
+argument_specs:
+  main:
+    short_description: HashiCorp Consul server container, ACL bootstrap, and service registration
+    description:
+      - Runs HashiCorp Consul in Docker and bootstraps ACL tokens.
+    options:
+      consul_container_name:
+        description: The container name value for the consul role.
+        required: false
+        type: str
+        default: consul
+      consul_docker_image:
+        description: The docker image value for the consul role.
+        required: false
+        type: str
+        default: hashicorp/consul:1.21.5
+      consul_docker_network:
+        description: The docker network value for the consul role.
+        required: false
+        type: str
+        default: dockers
+      consul_docker_ip:
+        description: The docker ip value for the consul role.
+        required: false
+        type: str
+        default: 192.168.75.11
+      consul_directory:
+        description: The directory value for the consul role.
+        required: false
+        type: str
+        default: /srv/docker/consul/config
+      consul_data_directory:
+        description: The data directory value for the consul role.
+        required: false
+        type: str
+        default: /srv/docker/consul/data
+      consul_api_url:
+        description: The api url value for the consul role.
+        required: false
+        type: str
+      consul_bootstrap_token_path:
+        description: The bootstrap token path value for the consul role.
+        required: false
+        type: str
+        no_log: true
+      consul_admin_token_path:
+        description: The admin token path value for the consul role.
+        required: false
+        type: str
+        no_log: true
+      consul_tls_dc:
+        description: The tls dc value for the consul role.
+        required: false
+        type: str
+        default: dc1
+      consul_tls_domain:
+        description: The tls domain value for the consul role.
+        required: false
+        type: str
+        default: consul.tekne.sv
+      consul_container_user:
+        description: UID/GID the Consul process runs as in the official image (non-root).
+        required: false
+        type: str
+        default: '100'
+      consul_container_group:
+        description: The container group value for the consul role.
+        required: false
+        type: str
+        default: '1000'

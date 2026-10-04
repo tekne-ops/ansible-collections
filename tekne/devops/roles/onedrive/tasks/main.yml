@@ -39,7 +39,6 @@
     permissions: rwx
     state: present
     recursive: true
-  failed_when: false
   tags:
     - onedrive
     - directories
@@ -91,9 +90,9 @@
 - name: Verify OneDrive package is installed
   ansible.builtin.command:
     cmd: "pacman -Q {{ onedrive_package }}"
-  register: package_verify
+  register: onedrive_package_verify
   changed_when: false
-  failed_when: package_verify.rc != 0
+  failed_when: onedrive_package_verify.rc != 0
   tags:
     - onedrive
     - verify
@@ -120,7 +119,7 @@
 - name: Verify OneDrive config exists
   ansible.builtin.stat:
     path: "{{ onedrive_home }}/{{ onedrive_config_dir }}/config"
-  register: config_verify
+  register: onedrive_config_verify
   tags:
     - onedrive
     - verify
@@ -132,7 +131,7 @@
       ==============================
       Package: {{ onedrive_package }}
       Sync dir: {{ onedrive_sync_dir }} (owner={{ onedrive_owner }})
-      Config: {{ config_verify.stat.exists }}
+      Config: {{ onedrive_config_verify.stat.exists }}
   tags:
     - onedrive
     - verify

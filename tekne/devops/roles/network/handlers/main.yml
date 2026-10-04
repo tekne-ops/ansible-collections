@@ -9,5 +9,5 @@
   ansible.builtin.systemd:
     name: systemd-resolved.service
     state: restarted
-  when: not install_chroot_phase | bool
+  when: not network_install_chroot_phase | bool
   listen: Restart systemd-resolved
