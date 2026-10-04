@@ -77,6 +77,17 @@
     - onedrive
     - config
 
+- name: Deploy OneDrive sync_list
+  ansible.builtin.copy:
+    src: sync_list
+    dest: "{{ onedrive_home }}/{{ onedrive_config_dir }}/sync_list"
+    owner: "{{ onedrive_owner }}"
+    group: "{{ onedrive_group }}"
+    mode: '0600'
+  tags:
+    - onedrive
+    - config
+
 - name: Verify OneDrive package is installed
   ansible.builtin.command:
     cmd: "pacman -Q {{ onedrive_package }}"

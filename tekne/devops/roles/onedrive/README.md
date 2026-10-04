@@ -7,7 +7,7 @@ Installs and configures OneDrive client (abraunegg fork) for all users defined i
 1. **Installs OneDrive package** (onedrive-abraunegg)
 2. **Creates config directory** (`~/.config/onedrive`) for each user
 3. **Creates sync directory** (`/srv/OneDrive`) owned by `dvaliente`
-4. **Copies config file** to dvaliente's config directory
+4. **Copies config file and `sync_list`** to dvaliente's config directory
 5. **Verifies installation** and configuration
 
 ## Requirements
@@ -34,6 +34,7 @@ ansible-galaxy collection install community.general
 | Source | Destination | Mode |
 |--------|-------------|------|
 | `templates/onedrive.j2` | `~/.config/onedrive/config` | 0600 |
+| `files/sync_list` | `~/.config/onedrive/sync_list` | 0600 |
 
 ## Directories Created
 

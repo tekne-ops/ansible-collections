@@ -1,0 +1,15 @@
+# Exclusions first. Leading / is OneDrive-root scoped (cheaper than name-anywhere matches).
+!/Documents/Cursor/
+!/Pictures/Professional/
+!/Pictures/Personal/
+!/Pictures/CK Share/
+!/Attachments/
+!/Apps/
+!/Notebooks/
+!/Scans/
+!/Administrators - Docs/
+!/Microsoft Copilot Chat Files/
+
+# Inclusions
+/Documents/
+/Pictures/
