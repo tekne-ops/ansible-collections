@@ -19,20 +19,15 @@ xfce4_install_chroot_phase: "{{ install_chroot_phase | default(false) }}"
 xfce4_groups:
   - xfce4
   - xfce4-goodies
-  - xorg-apps
 
 # XFCE4 individual packages (verified with pacman -Q)
 xfce4_packages:
-  - xfce4-panel-profiles
   - gnome-keyring
   - seahorse
   - xdg-desktop-portal
   - xdg-desktop-portal-gtk
   - xdg-desktop-portal-xapp
-  - xdg-desktop-portal-cosmic
   - libportal
-  - libportal-gtk4
-  - libportal-qt6
   - bibata-cursor-theme-bin
   - flat-remix
   - kora-icon-theme
@@ -42,7 +37,7 @@ xfce4_packages:
   - gvfs
   - gvfs-afc
   - sound-theme-smooth
-  # - picom
+  - playerctl
   # Bluetooth support (required for bootstrap role bluetooth config)
   - bluez
   - bluez-utils
@@ -77,13 +72,18 @@ xfce4_packages:
 xfce4_lightdm_packages:
   - lightdm
   - lightdm-slick-greeter
+
+# Greeters installed by older revisions of this role.
+xfce4_lightdm_unused_packages:
   - lightdm-gtk-greeter
   - lightdm-gtk-greeter-settings
   - lightdm-webkit-theme-litarvan
   - lightdm-webkit2-greeter
 
-# User that receives ~/.config/picom/picom.conf
-xfce4_picom_user: dvaliente
+# Laptop user that receives ACPI media-key events.
+xfce4_acpi_user: dvaliente
+xfce4_acpi_hosts:
+  - ASTER
 
 # Hosts that receive LightDM packages, greeter config, and backgrounds
 xfce4_lightdm_hosts:

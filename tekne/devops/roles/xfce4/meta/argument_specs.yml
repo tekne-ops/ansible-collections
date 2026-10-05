@@ -46,23 +46,18 @@ argument_specs:
         default:
           - xfce4
           - xfce4-goodies
-          - xorg-apps
       xfce4_packages:
         description: The packages value for the xfce4 role.
         required: false
         type: list
         elements: str
         default:
-          - xfce4-panel-profiles
           - gnome-keyring
           - seahorse
           - xdg-desktop-portal
           - xdg-desktop-portal-gtk
           - xdg-desktop-portal-xapp
-          - xdg-desktop-portal-cosmic
           - libportal
-          - libportal-gtk4
-          - libportal-qt6
           - bibata-cursor-theme-bin
           - flat-remix
           - kora-icon-theme
@@ -72,6 +67,7 @@ argument_specs:
           - gvfs
           - gvfs-afc
           - sound-theme-smooth
+          - playerctl
           - bluez
           - bluez-utils
           - blueman
@@ -105,15 +101,28 @@ argument_specs:
         default:
           - lightdm
           - lightdm-slick-greeter
+      xfce4_lightdm_unused_packages:
+        description: LightDM greeters removed because slick-greeter is the configured session greeter.
+        required: false
+        type: list
+        elements: str
+        default:
           - lightdm-gtk-greeter
           - lightdm-gtk-greeter-settings
           - lightdm-webkit-theme-litarvan
           - lightdm-webkit2-greeter
-      xfce4_picom_user:
-        description: The picom user value for the xfce4 role.
+      xfce4_acpi_user:
+        description: Laptop user that receives ACPI media-key events.
         required: false
         type: str
         default: dvaliente
+      xfce4_acpi_hosts:
+        description: Hosts that receive the ACPI media-key handler.
+        required: false
+        type: list
+        elements: str
+        default:
+          - ASTER
       xfce4_lightdm_hosts:
         description: Hosts that receive LightDM packages, greeter config, and backgrounds.
         required: false

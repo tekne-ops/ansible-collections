@@ -6,8 +6,8 @@ Installs XFCE4 desktop environment and related packages for Arch Linux. Optional
 
 1. **Reads hostname** from `/etc/hostname` and sets facts for the role.
 2. **Installs XFCE4** package groups and packages on all hosts (desktop, themes, portals, Xorg, bluetooth, first-boot apps).
-3. **On hosts in `xfce4_lightdm_hosts` (ASTER, YUGEN, KVM):** installs LightDM packages, enables LightDM service (stopped), and sets `greeter-session=lightdm-slick-greeter` in `/etc/lightdm/lightdm.conf` (replacing the commented example line).
-4. **User configuration** – creates per-user directories and copies portal/theme config (e.g. xdg-desktop-portal, Minimal-Grey2 theme, ACPI handler).
+3. **On hosts in `xfce4_lightdm_hosts` (ASTER, YUGEN):** installs LightDM and slick-greeter, enables LightDM, and sets `greeter-session=lightdm-slick-greeter` and `user-session=xfce` in `/etc/lightdm/lightdm.conf`.
+4. **User configuration** – creates per-user directories and copies portal config and the `minimal-grey2` window theme. ASTER also receives an ACPI media-key handler for `xfce4_acpi_user`.
 5. **Verifies** package and service state.
 
 ## Requirements
@@ -25,22 +25,21 @@ ansible-galaxy collection install community.general
 |----------|---------|-------------|
 | `xfce4_packages` | See defaults | XFCE4 packages to install on all hosts |
 | `xfce4_lightdm_packages` | See defaults | LightDM packages for specific hosts |
-| `xfce4_lightdm_hosts` | ASTER, YUGEN, KVM | Hostnames that receive LightDM |
+| `xfce4_lightdm_hosts` | ASTER, YUGEN | Hostnames that receive LightDM |
 | `xfce4_lightdm_service` | `lightdm` | LightDM service name |
 
 ### XFCE4 Packages (all hosts)
 
-- xfce4, xfce4-goodies, xfce4-panel-profiles
+- xfce4, xfce4-goodies
 - gnome-keyring, seahorse
-- xdg-desktop-portal, xdg-desktop-portal-gtk, xdg-desktop-portal-xapp, xdg-desktop-portal-cosmic
-- libportal, libportal-gtk4, libportal-qt6
+- xdg-desktop-portal, xdg-desktop-portal-gtk, xdg-desktop-portal-xapp, libportal
 - bibata-cursor-theme-bin, flat-remix, kora-icon-theme
-- xorg-server, xorg-apps, xdotool
+- xorg-server, xdotool, playerctl
 
-### LightDM Packages (ASTER, YUGEN, KVM)
+### LightDM Packages (ASTER, YUGEN)
 
-- lightdm, lightdm-slick-greeter, lightdm-gtk-greeter, lightdm-gtk-greeter-settings, lightdm-webkit-theme-litarvan, lightdm-webkit2-greeter
-- light-locker is not installed (it blanks the screen briefly after login)
+- lightdm, lightdm-slick-greeter
+- light-locker and the GTK and WebKit greeters are removed
 
 The role also replaces `#greeter-session=example-gtk-gnome` with `greeter-session=lightdm-slick-greeter` in `/etc/lightdm/lightdm.conf`.
 
@@ -53,7 +52,7 @@ None. The role reads the hostname from `/etc/hostname` and installs LightDM when
 ```yaml
 - hosts: workstations
   roles:
-    - ansible-role-xfce4   # Installs XFCE4; LightDM on ASTER, YUGEN, KVM
+    - ansible-role-xfce4   # Installs XFCE4; LightDM on ASTER and YUGEN
 ```
 
 ## Tags
@@ -71,7 +70,7 @@ None. The role reads the hostname from `/etc/hostname` and installs LightDM when
 
 | Hostname | XFCE4 Packages | LightDM Packages | LightDM Service |
 |----------|----------------|------------------|-----------------|
-| ASTER, YUGEN, KVM | Installed | Installed | Enabled (stopped) |
+| ASTER, YUGEN | Installed | Installed | Enabled (stopped) |
 | Others | Installed | Skipped | Skipped |
 
 ## License

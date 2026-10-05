@@ -47,7 +47,7 @@ Install third-party collections via `ansible-galaxy collection install` (see `an
 | **os** | Locale, NTP, reflector mirrors, THEMIS services, tekne repo clones |
 | **pipewire** | PipeWire audio with EQ, Bluetooth quality, LDAC, volume boost |
 | **gpu** | NVIDIA TKG drivers (YUGEN) or Intel/Mesa (all other hosts) |
-| **xfce4** | XFCE4 desktop, LightDM, picom, themes, bluetooth portals |
+| **xfce4** | XFCE4 desktop, LightDM, themes, bluetooth, portals |
 | **kde** | KDE Plasma desktop and plasma login manager |
 | **gaming** | Steam, Lutris, Wine, Proton, gamemode, gaming fonts |
 | **onedrive** | OneDrive client (abraunegg fork) installation and systemd service |

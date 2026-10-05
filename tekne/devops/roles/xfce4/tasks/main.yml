@@ -71,11 +71,44 @@
     - lightdm
     - packages
 
-- name: Set LightDM greeter to slick greeter (ASTER only)
+- name: Remove unused LightDM greeters
+  community.general.pacman:
+    name: "{{ xfce4_lightdm_unused_packages }}"
+    state: absent
+    extra_args: '--noconfirm'
+  when: xfce4_hostname in xfce4_lightdm_hosts
+  tags:
+    - xfce4
+    - lightdm
+    - packages
+
+- name: Remove the COSMIC desktop portal
+  community.general.pacman:
+    name: xdg-desktop-portal-cosmic
+    state: absent
+    extra_args: '--noconfirm'
+  tags:
+    - xfce4
+    - packages
+    - portals
+
+- name: Set LightDM greeter to slick greeter
   ansible.builtin.replace:
     path: /etc/lightdm/lightdm.conf
     regexp: '^#greeter-session=example-gtk-gnome'
     replace: 'greeter-session=lightdm-slick-greeter'
+  when: xfce4_hostname in xfce4_lightdm_hosts
+  tags:
+    - xfce4
+    - lightdm
+    - config
+
+- name: Set LightDM user session to Xfce
+  ansible.builtin.lineinfile:
+    path: /etc/lightdm/lightdm.conf
+    regexp: '^#?user-session='
+    line: user-session=xfce
+    insertafter: '^greeter-session='
   when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
@@ -108,16 +141,32 @@
     - lightdm
     - backgrounds
 
+- name: Ensure the backgrounds directory exists
+  ansible.builtin.file:
+    path: "{{ xfce4_backgrounds_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: xfce4_hostname in xfce4_lightdm_hosts
+  tags:
+    - xfce4
+    - lightdm
+    - backgrounds
+
 - name: Install background repository contents
-  ansible.builtin.shell: |
-    set -euo pipefail
-    rm -rf "{{ xfce4_backgrounds_dir }}"
-    mkdir -p "{{ xfce4_backgrounds_dir }}"
-    cp -a /tmp/ansible_xfce4_backgrounds_clone/. "{{ xfce4_backgrounds_dir }}/"
-    rm -rf "{{ xfce4_backgrounds_dir }}/.git"
-  args:
-    executable: /bin/bash
-  changed_when: true
+  ansible.builtin.command:
+    argv:
+      - rsync
+      - -a
+      - -i
+      - --delete
+      - --exclude
+      - .git
+      - /tmp/ansible_xfce4_backgrounds_clone/
+      - "{{ xfce4_backgrounds_dir }}/"
+  register: xfce4_backgrounds_sync
+  changed_when: xfce4_backgrounds_sync.stdout | length > 0
   when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
@@ -210,7 +259,7 @@
     dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.themes"
     owner: "{{ item.item.name }}"
     group: "{{ item.item.group | default(xfce4_default_group) }}"
-    creates: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.themes/Minimal-Grey2"
+    creates: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.themes/minimal-grey2"
   loop: "{{ xfce4_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
@@ -218,6 +267,48 @@
     - xfce4
     - config
     - themes
+
+- name: Ensure each user has an xfconf channel directory
+  ansible.builtin.file:
+    path: "{{ item.0.ansible_facts.getent_passwd[item.0.item.name][4] }}/{{ item.1 }}"
+    state: directory
+    owner: "{{ item.0.item.name }}"
+    group: "{{ item.0.item.group | default(xfce4_default_group) }}"
+    mode: '0755'
+  loop: "{{ xfce4_user_info.results | product(['.config/xfce4', '.config/xfce4/xfconf', '.config/xfce4/xfconf/xfce-perchannel-xml']) | list }}"
+  loop_control:
+    label: "{{ item.0.item.name }}/{{ item.1 }}"
+  tags:
+    - xfce4
+    - config
+
+- name: Enable xfwm4 vertical sync for each user
+  ansible.builtin.command:
+    argv:
+      - python3
+      - "{{ role_path }}/files/set_xfwm4_vsync.py"
+      - "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+  loop: "{{ xfce4_user_info.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  register: xfce4_vsync_xml
+  changed_when: "'changed' in stdout"
+  tags:
+    - xfce4
+    - config
+
+- name: Give the xfwm4 channel file to its user
+  ansible.builtin.file:
+    path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+    owner: "{{ item.item.name }}"
+    group: "{{ item.item.group | default(xfce4_default_group) }}"
+    mode: '0644'
+  loop: "{{ xfce4_user_info.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  tags:
+    - xfce4
+    - config
 
 - name: Copy xfce-portals.conf for each user
   ansible.builtin.copy:
@@ -234,37 +325,30 @@
     - config
     - portals
 
-- name: Create picom config directory
+- name: Remove unused picom configuration
   ansible.builtin.file:
     path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/picom"
-    state: directory
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(xfce4_default_group) }}"
-    mode: '0755'
+    state: absent
   loop: "{{ xfce4_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
-  when: item.item.name == xfce4_picom_user
   tags:
     - xfce4
     - config
-    - picom
 
-- name: Copy picom.conf
-  ansible.builtin.copy:
-    src: picom.conf
-    dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/picom/picom.conf"
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(xfce4_default_group) }}"
-    mode: '0644'
+- name: Record the ACPI media-key user runtime directory
+  ansible.builtin.set_fact:
+    xfce4_acpi_runtime_dir: "/run/user/{{ item.ansible_facts.getent_passwd[item.item.name][1] }}"
   loop: "{{ xfce4_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
-  when: item.item.name == xfce4_picom_user
+  when:
+    - xfce4_hostname in xfce4_acpi_hosts
+    - item.item.name == xfce4_acpi_user
   tags:
     - xfce4
     - config
-    - picom
+    - acpi
 
 # =============================================================================
 # System Configuration
@@ -282,13 +366,27 @@
     - config
     - portals
 
-- name: Copy ACPI handler script
-  ansible.builtin.copy:
-    src: handler.sh
+- name: Ensure the ACPI handler directory exists
+  ansible.builtin.file:
+    path: /etc/acpi
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: xfce4_hostname in xfce4_acpi_hosts
+  tags:
+    - xfce4
+    - config
+    - acpi
+
+- name: Install the ACPI media-key handler
+  ansible.builtin.template:
+    src: handler.sh.j2
     dest: /etc/acpi/handler.sh
     owner: root
     group: root
     mode: '0755'
+  when: xfce4_hostname in xfce4_acpi_hosts
   tags:
     - xfce4
     - config
