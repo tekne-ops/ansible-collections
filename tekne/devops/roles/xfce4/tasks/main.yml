@@ -96,33 +96,11 @@
 # XFCE backgrounds and slick-greeter (LightDM host only)
 # =============================================================================
 
-- name: Ensure XFCE backgrounds directory exists
-  ansible.builtin.file:
-    path: "{{ xfce4_backgrounds_dir }}"
-    state: directory
-    mode: '0775'
-  when: xfce4_hostname in xfce4_lightdm_hosts
-  tags:
-    - xfce4
-    - lightdm
-    - backgrounds
-
-- name: Remove existing contents of XFCE backgrounds directory
-  ansible.builtin.file:
-    path: "{{ xfce4_backgrounds_dir }}"
-    state: absent
-  when: xfce4_hostname in xfce4_lightdm_hosts
-  tags:
-    - xfce4
-    - lightdm
-    - backgrounds
-
 - name: Clone tekne-ops/backgrounds repository
   ansible.builtin.git:
     repo: "{{ xfce4_backgrounds_repo }}"
     dest: /tmp/ansible_xfce4_backgrounds_clone
     version: "{{ xfce4_backgrounds_version }}"
-    depth: 1
     force: true
   when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
@@ -130,42 +108,16 @@
     - lightdm
     - backgrounds
 
-- name: Create backgrounds directory
-  ansible.builtin.file:
-    path: "{{ xfce4_backgrounds_dir }}"
-    state: directory
-    owner: root
-    group: root
-    mode: "0775"
-  when: xfce4_hostname in xfce4_lightdm_hosts
-  tags:
-    - xfce4
-    - lightdm
-    - backgrounds
-
-- name: Find background repository files
-  ansible.builtin.find:
-    paths: /tmp/ansible_xfce4_backgrounds_clone
-    file_type: file
-    recurse: false
-  register: xfce4_background_files
-  when: xfce4_hostname in xfce4_lightdm_hosts
-  tags:
-    - xfce4
-    - lightdm
-    - backgrounds
-
-- name: Copy background repository files to XFCE backgrounds directory
-  ansible.builtin.copy:
-    src: "{{ item.path }}"
-    dest: "{{ xfce4_backgrounds_dir }}/{{ item.path | basename }}"
-    remote_src: true
-    owner: root
-    group: root
-    mode: "0644"
-  loop: "{{ xfce4_background_files.files | default([]) }}"
-  loop_control:
-    label: "{{ item.path | basename }}"
+- name: Install background repository contents
+  ansible.builtin.shell: |
+    set -euo pipefail
+    rm -rf "{{ xfce4_backgrounds_dir }}"
+    mkdir -p "{{ xfce4_backgrounds_dir }}"
+    cp -a /tmp/ansible_xfce4_backgrounds_clone/. "{{ xfce4_backgrounds_dir }}/"
+    rm -rf "{{ xfce4_backgrounds_dir }}/.git"
+  args:
+    executable: /bin/bash
+  changed_when: true
   when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
@@ -398,7 +350,22 @@
   ansible.builtin.systemd:
     name: "{{ xfce4_lightdm_service }}"
   register: xfce4_lightdm_service_status
-  when: xfce4_hostname in xfce4_lightdm_hosts
+  when:
+    - xfce4_hostname in xfce4_lightdm_hosts
+    - not xfce4_install_chroot_phase | bool
+  tags:
+    - xfce4
+    - lightdm
+    - verify
+
+- name: Check LightDM enablement without systemd (chroot)
+  ansible.builtin.command:
+    cmd: systemctl is-enabled {{ xfce4_lightdm_service }}
+  register: xfce4_lightdm_enabled
+  changed_when: false
+  when:
+    - xfce4_hostname in xfce4_lightdm_hosts
+    - xfce4_install_chroot_phase | bool
   tags:
     - xfce4
     - lightdm
@@ -409,7 +376,22 @@
     that:
       - xfce4_lightdm_service_status.status.UnitFileState == 'enabled'
     fail_msg: "{{ xfce4_lightdm_service }} is not enabled"
-  when: xfce4_hostname in xfce4_lightdm_hosts
+  when:
+    - xfce4_hostname in xfce4_lightdm_hosts
+    - not xfce4_install_chroot_phase | bool
+  tags:
+    - xfce4
+    - lightdm
+    - verify
+
+- name: Verify LightDM is enabled during chroot (ASTER only)
+  ansible.builtin.assert:
+    that:
+      - xfce4_lightdm_enabled.stdout == 'enabled'
+    fail_msg: "{{ xfce4_lightdm_service }} is not enabled"
+  when:
+    - xfce4_hostname in xfce4_lightdm_hosts
+    - xfce4_install_chroot_phase | bool
   tags:
     - xfce4
     - lightdm
@@ -421,8 +403,8 @@
       LightDM Status on {{ xfce4_hostname }}:
       ==================================
       Packages installed: {{ xfce4_lightdm_install_result is success }}
-      Service enabled: {{ xfce4_lightdm_service_status.status.UnitFileState }}
-      Service state: {{ xfce4_lightdm_service_status.status.ActiveState }}
+      Service enabled: {{ xfce4_lightdm_enabled.stdout if xfce4_lightdm_enabled is defined else xfce4_lightdm_service_status.status.UnitFileState }}
+      Service state: {{ 'not queried during chroot' if xfce4_install_chroot_phase | bool else xfce4_lightdm_service_status.status.ActiveState }}
   when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4

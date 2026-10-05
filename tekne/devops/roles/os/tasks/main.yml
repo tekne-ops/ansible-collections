@@ -61,9 +61,9 @@
     - os
     - cpupower
 
-- name: Enable fstrim.service (start on boot unless install chroot phase)
+- name: Enable weekly fstrim.timer (start on boot unless install chroot phase)
   ansible.builtin.systemd:
-    name: fstrim.service
+    name: fstrim.timer
     enabled: true
     state: "{{ 'stopped' if os_install_chroot_phase | bool else 'started' }}"
   tags:

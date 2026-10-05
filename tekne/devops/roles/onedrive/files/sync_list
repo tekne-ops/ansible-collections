@@ -1,5 +1,4 @@
 # Exclusions first. Leading / is OneDrive-root scoped (cheaper than name-anywhere matches).
-!/Documents/Cursor/
 !/Pictures/Professional/
 !/Pictures/Personal/
 !/Pictures/CK Share/

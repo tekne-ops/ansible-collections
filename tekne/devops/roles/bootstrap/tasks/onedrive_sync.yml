@@ -134,22 +134,25 @@
     key: "{{ bootstrap_user }}"
   tags: [bootstrap, onedrive, service]
 
-- name: Check if XDG_RUNTIME_DIR exists for user
-  become: true
+- name: Check whether linger is already enabled
   ansible.builtin.stat:
-    path: "/run/user/{{ ansible_facts.getent_passwd[bootstrap_user][1] }}"
-  register: bootstrap_xdg_runtime_check
+    path: "/var/lib/systemd/linger/{{ bootstrap_user }}"
+  register: bootstrap_linger_file
   tags: [bootstrap, onedrive, service]
 
-- name: Create XDG_RUNTIME_DIR if it doesn't exist
-  become: true
-  ansible.builtin.file:
-    path: "/run/user/{{ ansible_facts.getent_passwd[bootstrap_user][1] }}"
-    state: directory
-    owner: "{{ bootstrap_user }}"
-    group: "{{ bootstrap_group }}"
-    mode: '0700'
-  when: not bootstrap_xdg_runtime_check.stat.exists
+- name: Enable linger so the OneDrive user manager starts at boot
+  ansible.builtin.command:
+    argv:
+      - loginctl
+      - enable-linger
+      - "{{ bootstrap_user }}"
+  when: not bootstrap_linger_file.stat.exists
+  tags: [bootstrap, onedrive, service]
+
+- name: Start the OneDrive user manager
+  ansible.builtin.systemd:
+    name: "user@{{ ansible_facts.getent_passwd[bootstrap_user][1] }}.service"
+    state: started
   tags: [bootstrap, onedrive, service]
 
 - name: Reload systemd user daemon
@@ -178,7 +181,7 @@
     msg:
       - "=========================================="
       - "OneDrive service enabled: onedrive.service"
-      - "The service will start automatically on login"
+      - "Linger is enabled, so the user manager starts at boot."
       - "To start now: systemctl --user start onedrive.service"
       - "To check status: systemctl --user status onedrive.service"
       - "=========================================="

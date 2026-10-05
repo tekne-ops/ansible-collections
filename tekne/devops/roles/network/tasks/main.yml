@@ -244,7 +244,6 @@
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: true
-    state: "{{ 'stopped' if network_install_chroot_phase | bool else 'started' }}"
   loop:
     - bluetooth.service
     - iwd.service
@@ -256,17 +255,58 @@
     - network-host
     - wifi
 
-- name: Enable and start network services
+- name: Start laptop services (ASTER only)
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+  loop:
+    - bluetooth.service
+    - iwd.service
+    - thermald.service
+    - tlp.service
+    - bolt.service
+  when:
+    - network_hostname == 'ASTER'
+    - not network_install_chroot_phase | bool
+  tags:
+    - network-host
+    - wifi
+
+- name: Enable network services
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: true
-    state: "{{ 'stopped' if network_install_chroot_phase | bool else 'started' }}"
   loop:
     - systemd-networkd.service
     - systemd-resolved.service
     - acpid.service
   tags:
     - network-host
+
+- name: Start network services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+  loop:
+    - systemd-networkd.service
+    - systemd-resolved.service
+    - acpid.service
+  when: not network_install_chroot_phase | bool
+  tags:
+    - network-host
+
+- name: Check whether outbound network is already up (ASTER)
+  ansible.builtin.command:
+    cmd: ping -c 1 -W 2 archlinux.org
+  register: network_outbound_up
+  changed_when: false
+  failed_when: false
+  when:
+    - network_hostname == 'ASTER'
+    - network_connect_wifi | bool
+  tags:
+    - network-host
+    - wifi
 
 - name: Require WiFi passphrase for ASTER
   ansible.builtin.assert:
@@ -277,6 +317,7 @@
   when:
     - network_hostname == 'ASTER'
     - network_connect_wifi | bool
+    - network_outbound_up.rc | default(1) != 0
   tags:
     - network-host
     - wifi
@@ -285,6 +326,7 @@
   when:
     - network_hostname == 'ASTER'
     - network_connect_wifi | bool
+    - network_outbound_up.rc | default(1) != 0
   tags:
     - network-host
     - wifi
@@ -328,6 +370,7 @@
   when:
     - network_hostname == 'ASTER'
     - network_connect_wifi | bool
+    - network_outbound_up.rc | default(1) != 0
     - network_wifi_interface | default('') | length == 0
   tags:
     - network-host
@@ -344,6 +387,7 @@
   when:
     - network_hostname == 'ASTER'
     - network_connect_wifi | bool
+    - network_outbound_up.rc | default(1) != 0
   tags:
     - network-host
     - wifi
@@ -355,6 +399,7 @@
   when:
     - network_hostname == 'ASTER'
     - network_connect_wifi | bool
+    - network_outbound_up.rc | default(1) != 0
   tags:
     - network-host
     - wifi
@@ -376,6 +421,7 @@
   when:
     - network_hostname == 'ASTER'
     - network_connect_wifi | bool
+    - network_outbound_up.rc | default(1) != 0
   changed_when: false
   no_log: true
   tags:
