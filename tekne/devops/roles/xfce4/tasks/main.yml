@@ -292,7 +292,7 @@
   loop_control:
     label: "{{ item.item.name }}"
   register: xfce4_vsync_xml
-  changed_when: "'changed' in stdout"
+  changed_when: "'changed' in xfce4_vsync_xml.stdout"
   tags:
     - xfce4
     - config

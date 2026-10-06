@@ -38,6 +38,7 @@ xfce4_packages:
   - gvfs-afc
   - sound-theme-smooth
   - playerctl
+  - xfce4-panel-profiles
   # Bluetooth support (required for bootstrap role bluetooth config)
   - bluez
   - bluez-utils
@@ -46,25 +47,9 @@ xfce4_packages:
   - virt-manager
   # VLC
   - vlc
-  - vlc-plugin-mpg123
-  - vlc-plugin-mpeg2
-  - vlc-plugin-x264
-  - vlc-plugin-x265
-  - vlc-plugin-matroska
-  - vlc-plugin-ass
-  - vlc-plugins-video-output
-  - vlc-plugins-visualization
-  - vlc-plugins-extra
   - vlc-plugins-base
-  - vlc-plugin-ogg
-  - vlc-plugin-notify
+  - vlc-plugins-all
   - vlc-plugin-upnp
-  - vlc-plugin-mtp
-  - vlc-plugin-mad
-  - vlc-plugin-gstreamer
-  - vlc-plugin-freetype
-  - vlc-plugin-flac
-  - vlc-plugin-ffmpeg
   - pavucontrol
 
 # LightDM packages (installed on xfce4_lightdm_hosts)
