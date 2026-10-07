@@ -10,6 +10,28 @@ argument_specs:
         required: false
         type: str
         default: users
+      pipewire_install_chroot_phase:
+        description: Skip the network wait and user-service restart during arch-install chroot.
+        required: false
+        type: bool
+        default: false
+      pipewire_codec_packages:
+        description: Bluetooth codec libraries installed for the WirePlumber drop-in.
+        required: false
+        type: list
+        elements: str
+        default:
+          - libldac
+          - libfreeaptx
+      pipewire_user_services:
+        description: User services restarted after a configuration change when a session is running.
+        required: false
+        type: list
+        elements: str
+        default:
+          - pipewire.service
+          - pipewire-pulse.service
+          - wireplumber.service
       pipewire_users:
         description: The users value for the pipewire role.
         required: false
@@ -24,8 +46,14 @@ argument_specs:
             description: The group field on each list entry.
             required: false
             type: str
+          hd660s_eq:
+            description: Deploy the Sennheiser HD 660S filter-chain sink for this user.
+            required: false
+            type: bool
+            default: false
         default:
           - name: dvaliente
             group: users
+            hd660s_eq: true
           - name: devops
             group: users

@@ -1,5 +1,28 @@
 # SPDX-License-Identifier: MIT-0
 ---
+- name: Wait for network connectivity before package installation
+  ansible.builtin.command:
+    cmd: ping -c 1 -W 2 archlinux.org
+  register: pipewire_network_check
+  until: pipewire_network_check.rc == 0
+  retries: 30
+  delay: 2
+  changed_when: false
+  when: not pipewire_install_chroot_phase | bool
+  tags:
+    - pipewire
+    - network
+    - packages
+
+- name: Install Bluetooth codec libraries
+  community.general.pacman:
+    name: "{{ pipewire_codec_packages }}"
+    state: present
+    extra_args: "--noconfirm --needed"
+  tags:
+    - pipewire
+    - packages
+
 - name: Get user info for home directories
   ansible.builtin.getent:
     database: passwd
@@ -12,30 +35,68 @@
     - pipewire
     - config
 
-- name: Create ~/.config/pipewire/pipewire.conf.d for each user
-  ansible.builtin.file:
-    path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d"
-    state: directory
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(pipewire_default_group) }}"
-    mode: '0755'
+- name: Reset PipeWire user records
+  ansible.builtin.set_fact:
+    pipewire_user_records: []
+  tags:
+    - pipewire
+    - config
+    - service
+
+- name: Record PipeWire user homes and session ids
+  ansible.builtin.set_fact:
+    pipewire_user_records: "{{ pipewire_user_records | default([]) + [record] }}"
+  vars:
+    record:
+      name: "{{ item.item.name }}"
+      group: "{{ item.item.group | default(pipewire_default_group) }}"
+      home: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}"
+      uid: "{{ item.ansible_facts.getent_passwd[item.item.name][1] }}"
+      hd660s_eq: "{{ item.item.hd660s_eq | default(false) | bool }}"
   loop: "{{ pipewire_user_info.results }}"
   loop_control:
     label: "{{ item.item.name }}"
   tags:
     - pipewire
     - config
+    - service
+
+- name: Check for a running user session
+  ansible.builtin.stat:
+    path: "/run/user/{{ item.uid }}"
+  loop: "{{ pipewire_user_records }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: pipewire_user_runtime
+  tags:
+    - pipewire
+    - config
+    - service
+
+- name: Create ~/.config/pipewire/pipewire.conf.d for each user
+  ansible.builtin.file:
+    path: "{{ item.home }}/.config/pipewire/pipewire.conf.d"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.group }}"
+    mode: "0755"
+  loop: "{{ pipewire_user_records }}"
+  loop_control:
+    label: "{{ item.name }}"
+  tags:
+    - pipewire
+    - config
 
 - name: Create ~/.config/wireplumber/wireplumber.conf.d for each user
   ansible.builtin.file:
-    path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/wireplumber/wireplumber.conf.d"
+    path: "{{ item.home }}/.config/wireplumber/wireplumber.conf.d"
     state: directory
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(pipewire_default_group) }}"
-    mode: '0755'
-  loop: "{{ pipewire_user_info.results }}"
+    owner: "{{ item.name }}"
+    group: "{{ item.group }}"
+    mode: "0755"
+  loop: "{{ pipewire_user_records }}"
   loop_control:
-    label: "{{ item.item.name }}"
+    label: "{{ item.name }}"
   tags:
     - pipewire
     - config
@@ -43,13 +104,14 @@
 - name: Copy pipewire.conf to 99-audio-quality.conf
   ansible.builtin.copy:
     src: pipewire.conf
-    dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d/99-audio-quality.conf"
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(pipewire_default_group) }}"
-    mode: '0644'
-  loop: "{{ pipewire_user_info.results }}"
+    dest: "{{ item.home }}/.config/pipewire/pipewire.conf.d/99-audio-quality.conf"
+    owner: "{{ item.name }}"
+    group: "{{ item.group }}"
+    mode: "0644"
+  loop: "{{ pipewire_user_records }}"
   loop_control:
-    label: "{{ item.item.name }}"
+    label: "{{ item.name }}"
+  notify: Restart PipeWire user services
   tags:
     - pipewire
     - config
@@ -57,77 +119,67 @@
 - name: Copy 50-bluetooth-quality.conf to wireplumber
   ansible.builtin.copy:
     src: 50-bluetooth-quality.conf
-    dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/wireplumber/wireplumber.conf.d/50-bluetooth-quality.conf"
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(pipewire_default_group) }}"
-    mode: '0644'
-  loop: "{{ pipewire_user_info.results }}"
+    dest: "{{ item.home }}/.config/wireplumber/wireplumber.conf.d/50-bluetooth-quality.conf"
+    owner: "{{ item.name }}"
+    group: "{{ item.group }}"
+    mode: "0644"
+  loop: "{{ pipewire_user_records }}"
   loop_control:
-    label: "{{ item.item.name }}"
+    label: "{{ item.name }}"
+  notify: Restart PipeWire user services
   tags:
     - pipewire
     - config
 
-- name: Copy 60-volume-boost.conf to wireplumber
-  ansible.builtin.copy:
-    src: 60-volume-boost.conf
-    dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/wireplumber/wireplumber.conf.d/60-volume-boost.conf"
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(pipewire_default_group) }}"
-    mode: '0644'
-  loop: "{{ pipewire_user_info.results }}"
-  loop_control:
-    label: "{{ item.item.name }}"
-  tags:
-    - pipewire
-    - config
-
-- name: Copy 99-ldac.conf to wireplumber
-  ansible.builtin.copy:
-    src: 99-ldac.conf
-    dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/wireplumber/wireplumber.conf.d/99-ldac.conf"
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(pipewire_default_group) }}"
-    mode: '0644'
-  loop: "{{ pipewire_user_info.results }}"
-  loop_control:
-    label: "{{ item.item.name }}"
-  tags:
-    - pipewire
-    - config
-
-- name: Copy HD 660S EQ sink to pipewire.conf.d
+- name: Copy HD 660S EQ sink for users that opt in
   ansible.builtin.copy:
     src: sink-eq06-sony.conf
-    dest: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d/sink-eq06.conf"
-    owner: "{{ item.item.name }}"
-    group: "{{ item.item.group | default(pipewire_default_group) }}"
-    mode: '0644'
-  loop: "{{ pipewire_user_info.results }}"
+    dest: "{{ item.home }}/.config/pipewire/pipewire.conf.d/sink-eq06.conf"
+    owner: "{{ item.name }}"
+    group: "{{ item.group }}"
+    mode: "0644"
+  loop: "{{ pipewire_user_records }}"
   loop_control:
-    label: "{{ item.item.name }}"
+    label: "{{ item.name }}"
+  when: item.hd660s_eq | bool
+  notify: Restart PipeWire user services
   tags:
     - pipewire
     - config
 
-- name: Remove limiter drop-in from pipewire.conf.d
+- name: Remove HD 660S EQ sink from users that do not opt in
   ansible.builtin.file:
-    path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d/60-soft-limiter.conf"
+    path: "{{ item.home }}/.config/pipewire/pipewire.conf.d/sink-eq06.conf"
     state: absent
-  loop: "{{ pipewire_user_info.results }}"
+  loop: "{{ pipewire_user_records }}"
   loop_control:
-    label: "{{ item.item.name }}"
+    label: "{{ item.name }}"
+  when: not item.hd660s_eq | bool
+  notify: Restart PipeWire user services
   tags:
     - pipewire
     - config
 
-- name: Remove misplaced LDAC drop-in from pipewire.conf.d
+- name: Remove unused WirePlumber drop-ins
   ansible.builtin.file:
-    path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/pipewire/pipewire.conf.d/99-ldac.conf"
+    path: "{{ item.0.home }}/.config/wireplumber/wireplumber.conf.d/{{ item.1 }}"
     state: absent
-  loop: "{{ pipewire_user_info.results }}"
+  loop: "{{ pipewire_user_records | product(['60-volume-boost.conf', '99-ldac.conf']) | list }}"
   loop_control:
-    label: "{{ item.item.name }}"
+    label: "{{ item.0.name }} {{ item.1 }}"
+  notify: Restart PipeWire user services
+  tags:
+    - pipewire
+    - config
+
+- name: Remove stale PipeWire drop-ins
+  ansible.builtin.file:
+    path: "{{ item.0.home }}/.config/pipewire/pipewire.conf.d/{{ item.1 }}"
+    state: absent
+  loop: "{{ pipewire_user_records | product(['60-soft-limiter.conf', '99-ldac.conf']) | list }}"
+  loop_control:
+    label: "{{ item.0.name }} {{ item.1 }}"
+  notify: Restart PipeWire user services
   tags:
     - pipewire
     - config

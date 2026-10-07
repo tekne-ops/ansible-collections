@@ -1,20 +1,22 @@
 # Pipewire Role
 
-Installs and configures Pipewire audio system for Arch Linux, replacing conflicting audio packages.
+Deploys PipeWire and WirePlumber user configuration on Arch Linux.
+
+PipeWire itself is installed earlier, by pacstrap (`pipewire`, `pipewire-alsa`, `pipewire-jack`, `pipewire-pulse`, `wireplumber`). This role adds the Bluetooth codec libraries and per-user drop-ins.
 
 ## What It Does
 
-1. **Removes conflicting packages** (jack, ffmpeg, jack2, etc.)
-2. **Installs Pipewire stack** (pipewire, wireplumber, pavucontrol, etc.)
-3. **Creates user config directories** for each entry in `pipewire_users`
-4. **Deploys configuration files** to user directories
-5. **Enables user service** (without starting it)
-6. **Verifies installation** and service state
+1. **Installs codec libraries** (`libldac`, `libfreeaptx`)
+2. **Creates user config directories** for each entry in `pipewire_users`
+3. **Deploys drop-ins** under `~/.config/pipewire/pipewire.conf.d` and `~/.config/wireplumber/wireplumber.conf.d`
+4. **Removes retired drop-ins** (`60-volume-boost.conf`, `99-ldac.conf`, `60-soft-limiter.conf`)
+5. **Restarts user services** when a config file changes and that user has a running session
 
 ## Requirements
 
-- `community.general` collection (for `pacman` module)
-- Target users must already exist.
+- `community.general` collection (for `pacman`)
+- Target users must already exist
+- Run `tekne.devops.user` first when it creates those users
 
 ```bash
 ansible-galaxy collection install community.general
@@ -24,38 +26,35 @@ ansible-galaxy collection install community.general
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `pipewire_conflicting_packages` | See defaults | Packages to remove before install |
-| `pipewire_packages` | See defaults | Pipewire packages to install |
-| `pipewire_user_service` | `pipewire` | User service to enable |
-| `pipewire_users` | See defaults | Users that receive PipeWire configuration |
-| `pipewire_default_group` | `users` | Fallback primary group |
+| `pipewire_codec_packages` | `libldac`, `libfreeaptx` | Bluetooth codec libraries |
+| `pipewire_users` | See defaults | Users that receive configuration |
+| `pipewire_default_group` | `users` | Fallback group for new directories |
+| `pipewire_user_services` | `pipewire`, `pipewire-pulse`, `wireplumber` | User units restarted after a change |
+| `pipewire_install_chroot_phase` | `install_chroot_phase` | Skip the network wait and service restart in the install chroot |
 
-### Conflicting Packages (removed)
+Each `pipewire_users` entry:
 
-- jack, ffmpeg, jack2, libjack, portaudio, libopenmpt, freerdp
-
-### Pipewire Packages (installed)
-
-- pipewire, pipewire-audio, pipewire-libcamera, pipewire-jack
-- pipewire-alsa, pipewire-pulse, lib32-pipewire, lib32-pipewire-jack
-- wireplumber, pavucontrol, sound-theme-smooth
-
-## Dependencies
-
-- Run `tekne.devops.user` first when it is responsible for creating the target users.
+| Field | Description |
+|-------|-------------|
+| `name` | Account name |
+| `group` | Group owner for the drop-ins |
+| `hd660s_eq` | Deploy the Sennheiser HD 660S filter-chain sink. Default `false`. Enabled for `dvaliente`. |
 
 ## Files
 
 | Source | Destination |
 |--------|-------------|
-| `files/pipewire.conf` | `~/.config/pipewire/pipewire.conf` |
-| `files/sink-eq06-sony.conf` | `~/.config/pipewire/pipewire.conf.d/sink-eq06.conf` |
+| `files/pipewire.conf` | `~/.config/pipewire/pipewire.conf.d/99-audio-quality.conf` |
+| `files/sink-eq06-sony.conf` | `~/.config/pipewire/pipewire.conf.d/sink-eq06.conf` when `hd660s_eq` is true |
+| `files/50-bluetooth-quality.conf` | `~/.config/wireplumber/wireplumber.conf.d/50-bluetooth-quality.conf` |
 
-## Created Directories
+`99-audio-quality.conf` sets a 48 kHz clock, allows 44.1–96 kHz, and uses resample quality 10.
 
-For each user:
-- `~/.config/wireplumber/wireplumber.conf.d/`
-- `~/.config/pipewire/pipewire.conf.d/`
+`50-bluetooth-quality.conf` keeps A2DP roles, enables SBC-XQ and hardware volume, disables headset-profile autoswitch, and sets LDAC quality to `hq` with `bluez5.a2dp.ldac.quality` on `bluez_card.*` devices.
+
+The HD 660S sink is optional. Select "Sennheiser HD 660S EQ" in pavucontrol; it is not the default output.
+
+A changed drop-in restarts the user services only when `/run/user/<uid>` exists. Otherwise the new files apply at the next login.
 
 ## Example Playbook
 
@@ -71,11 +70,10 @@ For each user:
 | Tag | Description |
 |-----|-------------|
 | `pipewire` | All pipewire tasks |
-| `network` | Network connectivity wait (before packages) |
-| `packages` | Package install/remove only |
+| `network` | Network connectivity wait before packages |
+| `packages` | Codec library install |
 | `config` | Configuration directories and files |
-| `service` | User service management |
-| `verify` | Verification tasks |
+| `service` | User session check and service restart |
 
 ## License
 

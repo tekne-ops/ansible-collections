@@ -1,3 +1,17 @@
 # SPDX-License-Identifier: MIT-0
 ---
-# handlers file for ./ansible-role-pipewire
+- name: Restart PipeWire user services
+  become: true
+  become_user: "{{ item.item.name }}"
+  ansible.builtin.systemd:
+    name: "{{ pipewire_user_services }}"
+    state: restarted
+    scope: user
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ item.item.uid }}"
+  loop: "{{ pipewire_user_runtime.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when:
+    - not pipewire_install_chroot_phase | bool
+    - item.stat.isdir | default(false)
