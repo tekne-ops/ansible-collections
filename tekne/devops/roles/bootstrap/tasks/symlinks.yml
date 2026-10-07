@@ -51,6 +51,13 @@
   when: not item.stat.exists
   tags: [bootstrap, symlinks]
 
+- name: Restore Cursor configuration
+  become: true
+  become_user: "{{ bootstrap_user }}"
+  ansible.builtin.command:
+    cmd: "{{ bootstrap_cursor_restore }}"
+  tags: [bootstrap, symlinks, cursor]
+
 # ============================================
 # SSH KEY PERMISSIONS
 # ============================================
@@ -63,30 +70,6 @@
     owner: "{{ bootstrap_user }}"
     group: "{{ bootstrap_group }}"
     mode: '0700'
-  tags: [bootstrap, symlinks, ssh]
-
-- name: Check if SSH key source files exist
-  become: true
-  become_user: "{{ bootstrap_user }}"
-  ansible.builtin.stat:
-    path: "{{ item.path }}"
-  loop: "{{ bootstrap_ssh_keys }}"
-  loop_control:
-    label: "{{ item.path | basename }}"
-  register: bootstrap_ssh_key_sources
-  tags: [bootstrap, symlinks, ssh]
-
-- name: Set correct permissions on SSH key source files
-  become: true
-  ansible.builtin.file:
-    path: "{{ item.item.path }}"
-    owner: "{{ bootstrap_user }}"
-    group: "{{ bootstrap_group }}"
-    mode: "{{ item.item.mode }}"
-  loop: "{{ bootstrap_ssh_key_sources.results }}"
-  loop_control:
-    label: "{{ item.item.path | basename }}"
-  when: item.stat.exists
   tags: [bootstrap, symlinks, ssh]
 
 - name: Display symlinks summary

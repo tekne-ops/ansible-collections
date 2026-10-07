@@ -125,17 +125,11 @@ argument_specs:
             description: The groups field on each list entry.
             required: false
             type: str
-          ssh_key_file:
-            description: The ssh key file field on each list entry.
-            required: false
-            type: str
         default:
           - name: dvaliente
             groups: wheel
-            ssh_key_file: dvaliente
           - name: devops
             groups: wheel
-            ssh_key_file: devops
       hermes_supplementary_groups:
         description: The supplementary groups value for the hermes role.
         required: false

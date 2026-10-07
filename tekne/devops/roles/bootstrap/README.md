@@ -53,8 +53,7 @@ Post-install bootstrap: installs extra packages, runs OneDrive first sync (with 
 ### vars/main.yml
 
 - **OneDrive:** `bootstrap_onedrive_config_dir: "/home/dvaliente/.config/onedrive"` (fixed path for sync/service).
-- **Symlinks:** `bootstrap_symlinks` – list of `src`/`dest` (and optional `mode` for SSH keys). Examples: Documents, Notes, bashrc, Remmina, SSH config/keys, Pictures, avatar (.face, .face.icon), `bin/asd` from OneDrive script.
-- **SSH keys:** `bootstrap_ssh_keys` – paths and modes for key files (e.g. 0600 id_rsa, 0644 id_rsa.pub).
+- **Symlinks:** `bootstrap_symlinks` – list of `src`/`dest`. Examples: Documents, Notes, bashrc, Remmina, SSH config, Pictures, avatar (.face, .face.icon), `bin/asd` from OneDrive script. SSH identity keys are installed by the user role from the vault.
 - **Bluetooth:** `bootstrap_bluetooth_config` – list of `regexp`/`line` for `/etc/bluetooth/main.conf` (Name, AutoEnable, SessionMode, StreamMode, NameResolving, MultiProfile, ControllerMode, FastConnectable, JustWorksRepairing).
 
 ## Task Files
@@ -63,7 +62,7 @@ Post-install bootstrap: installs extra packages, runs OneDrive first sync (with 
 |------|---------|
 | `main.yml` | Network wait, package install, include onedrive_sync, symlinks, bluetooth, xfce |
 | `onedrive_sync.yml` | First sync (with pause for auth), enable user onedrive.service |
-| `symlinks.yml` | Create symlinks from `bootstrap_symlinks`, fix SSH dir/key permissions |
+| `symlinks.yml` | Create symlinks from `bootstrap_symlinks`, keep `~/.ssh` at mode 0700 |
 | `bluetooth.yml` | lineinfile on `/etc/bluetooth/main.conf`, notify restart bluetooth |
 | `xfce.yml` | xfconf-query for wallpaper, themes, shortcuts, workspaces, sounds, fonts |
 
@@ -73,7 +72,7 @@ The role notifies **`restart bluetooth`** after changing `/etc/bluetooth/main.co
 
 ## Symlinks (from vars)
 
-Typical links (customize via `bootstrap_symlinks`): OneDrive/Documents → ~/Documents; Documents/notes → ~/.local/share/notes; bashrc.txt → ~/.bashrc; Remmina config; SSH config and keys; Pictures; avatar → .face / .face.icon; bin/asd from script; Cursor User → ~/.config/Cursor/User; Cursor cursor/ → ~/.cursor.
+Typical links (customize via `bootstrap_symlinks`): OneDrive/Documents → ~/Documents; Documents/notes → ~/.local/share/notes; bashrc.txt → ~/.bashrc; Remmina config; SSH config and keys; Pictures; avatar → .face / .face.icon; bin/asd from script. Cursor is restored by `/srv/code/tekne/bash/bin/restore-cursor` instead of symlinks.
 
 ## Tags
 

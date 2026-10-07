@@ -77,16 +77,59 @@
   no_log: true
   tags: [hermes, configure]
 
-- name: Configure Hermes authorized SSH keys
+- name: Require vault SSH identity keys for Hermes
+  ansible.builtin.assert:
+    that:
+      - lookup('ansible.builtin.vars', item) | length > 0
+    fail_msg: "Vault variable {{ item }} is missing or empty."
+    quiet: true
+  loop:
+    - id_rsa-dvaliente
+    - id_rsa-devops
+    - id_rsa.pub-dvaliente
+    - id_rsa.pub-devops
+  no_log: true
+  tags: [hermes, configure]
+
+- name: Ensure Hermes SSH directories exist
+  ansible.builtin.file:
+    path: "/home/{{ item.name }}/.ssh"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: "0700"
+  loop: "{{ hermes_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  delegate_to: hermes_managed
+  tags: [hermes, configure]
+
+- name: Install Hermes SSH identity keys from vault
+  ansible.builtin.copy:
+    content: "{{ lookup('ansible.builtin.vars', item.1 ~ '-' ~ item.0.name) | trim }}\n"
+    dest: "/home/{{ item.0.name }}/.ssh/{{ item.1 }}"
+    owner: "{{ item.0.name }}"
+    group: "{{ item.0.name }}"
+    mode: "{{ '0600' if item.1 == 'id_rsa' else '0644' }}"
+  loop: "{{ hermes_users | product(['id_rsa', 'id_rsa.pub']) | list }}"
+  loop_control:
+    label: "{{ item.0.name }}/{{ item.1 }}"
+  delegate_to: hermes_managed
+  no_log: true
+  diff: false
+  tags: [hermes, configure]
+
+- name: Configure Hermes authorized SSH keys from vault
   ansible.posix.authorized_key:
     user: "{{ item.name }}"
-    key: "{{ lookup('ansible.builtin.file', role_path + '/files/' + item.ssh_key_file) }}"
+    key: "{{ lookup('ansible.builtin.vars', 'id_rsa.pub-' ~ item.name) | trim }}"
     exclusive: true
     state: present
   loop: "{{ hermes_users }}"
   loop_control:
     label: "{{ item.name }}"
   delegate_to: hermes_managed
+  no_log: true
   tags: [hermes, configure]
 
 - name: Install Hermes sudoers files

@@ -19,17 +19,11 @@ argument_specs:
             description: The groups field on each list entry.
             required: false
             type: str
-          ssh_key_file:
-            description: The ssh key file field on each list entry.
-            required: false
-            type: str
         default:
           - name: dvaliente
             groups: wheel,rfkill,network,devs,video,audio,input,games
-            ssh_key_file: dvaliente
           - name: devops
             groups: wheel,rfkill,network,devs,video,audio,input,games
-            ssh_key_file: devops
       user_default_shell:
         description: The default shell value for the user role.
         required: false

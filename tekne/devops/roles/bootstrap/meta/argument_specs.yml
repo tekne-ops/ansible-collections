@@ -135,6 +135,11 @@ argument_specs:
           - ocs-url
           - bitwarden-bin
           - yubico-authenticator-bin
+      bootstrap_cursor_restore:
+        description: Script that restores the Cursor configuration for the managed user.
+        required: false
+        type: str
+        default: /srv/code/tekne/bash/bin/restore-cursor
       bootstrap_symlinks:
         description: The symlinks value for the bootstrap role.
         required: false
@@ -147,20 +152,6 @@ argument_specs:
             type: str
           dest:
             description: The dest field on each list entry.
-            required: false
-            type: str
-          mode:
-            description: The mode field on each list entry.
-            required: false
-            type: str
-      bootstrap_ssh_keys:
-        description: The ssh keys value for the bootstrap role.
-        required: false
-        type: list
-        elements: dict
-        options:
-          path:
-            description: The path field on each list entry.
             required: false
             type: str
           mode:

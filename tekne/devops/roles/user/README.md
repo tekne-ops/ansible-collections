@@ -7,7 +7,7 @@ Manages system users, passwords, SSH authorized keys, sudoers, and home-director
 1. **Validates** that `user_password` is defined (e.g. from vault).
 2. **Creates users** from the `user_accounts` list (shell, group, groups, password).
 3. **Sets root password** when `user_manage_root_password` is true.
-4. **Configures SSH authorized keys** from role `files/` for each user with `ssh_key_file`.
+4. **Installs SSH identity keys** from vault variables `id_rsa-<user>` and `id_rsa.pub-<user>` into `~/.ssh/`, and configures `authorized_keys` from the public key.
 5. **Deploys sudoers files** to `/etc/sudoers.d/` (e.g. `sudo_dvaliente`, `sudo_devops`).
 6. **Creates home directories** (e.g. `.config/systemd/user`, `.gnupg`, `.ssh`, `bin`) and copies dotfiles (`.bashrc`, `.vimrc`, `pikaur.conf`).
 
@@ -39,7 +39,6 @@ Each user in the `user_accounts` list supports:
 |----------|----------|---------|-------------|
 | `name` | Yes | - | Username |
 | `groups` | Yes | - | Comma-separated secondary groups |
-| `ssh_key_file` | No | - | Filename in role `files/` for authorized_keys |
 | `shell` | No | `user_default_shell` | User's login shell |
 | `group` | No | `user_default_group` | Primary group |
 | `password` | No | `user_password` | User-specific password hash |
@@ -62,7 +61,8 @@ Created in each user's home (mode 0755 except `.gnupg`/`.ssh` 0700):
 | `pikaur.conf` | `~/.config/pikaur.conf` | 0644 |
 | `sudo_dvaliente` | `/etc/sudoers.d/sudo_dvaliente` | 0440 |
 | `sudo_devops` | `/etc/sudoers.d/sudo_devops` | 0440 |
-| `<ssh_key_file>` | `~/.ssh/authorized_keys` (via authorized_key) | - |
+
+Vault variables `id_rsa-<user>` and `id_rsa.pub-<user>` are written to `~/.ssh/id_rsa` (mode 0600) and `~/.ssh/id_rsa.pub` (mode 0644). The public key is also installed in `~/.ssh/authorized_keys`.
 
 Sudoers files are validated with `visudo -cf %s` before deployment.
 
@@ -76,7 +76,6 @@ Sudoers files are validated with `visudo -cf %s` before deployment.
         user_accounts:
           - name: admin
             groups: 'wheel,docker'
-            ssh_key_file: admin
           - name: deploy
             groups: 'deploy'
             shell: /bin/zsh

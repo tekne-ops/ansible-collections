@@ -69,6 +69,7 @@ bootstrap_xfce_skip_if_no_display: true
 
 # Packages to install via pacman (--noconfirm --needed)
 bootstrap_packages:
+  - microsoft-edge-stable-bin
   - google-chrome
   - zoom
   - ventoy-bin
@@ -84,7 +85,6 @@ bootstrap_packages:
   - liblqr
   - omnissa-horizon-client
   - transmission-qt
-  - microsoft-edge-stable-bin
   - ocs-url
   - bitwarden-bin
   - yubico-authenticator-bin
@@ -97,17 +97,12 @@ bootstrap_symlinks:
   - { src: "{{ bootstrap_onedrive }}/Documents/sc/bashrc.txt", dest: "{{ bootstrap_home }}/.bashrc" }
   - { src: "{{ bootstrap_onedrive }}/Documents/sc/remmina/share/remmina", dest: "{{ bootstrap_home }}/.local/share/remmina" }
   - { src: "{{ bootstrap_onedrive }}/Documents/sc/sshconfig", dest: "{{ bootstrap_home }}/.ssh/config" }
-  - { src: "{{ bootstrap_onedrive }}/Documents/keys/id_rsa", dest: "{{ bootstrap_home }}/.ssh/id_rsa", mode: "0600" }
-  - { src: "{{ bootstrap_onedrive }}/Documents/keys/id_rsa.pub", dest: "{{ bootstrap_home }}/.ssh/id_rsa.pub", mode: "0644" }
   - { src: "{{ bootstrap_onedrive }}/Pictures", dest: "{{ bootstrap_home }}/Pictures" }
   - { src: "{{ bootstrap_onedrive }}/Pictures/Avatars/fierce-yugen.jpg", dest: "{{ bootstrap_home }}/.face.icon" }
   - { src: "{{ bootstrap_onedrive }}/Pictures/Avatars/fierce-yugen.jpg", dest: "{{ bootstrap_home }}/.face" }
-  - { src: "{{ bootstrap_onedrive }}/Documents/Cursor/User", dest: "{{ bootstrap_home }}/.config/Cursor/User" }
-  - { src: "{{ bootstrap_onedrive }}/Documents/Cursor/cursor", dest: "{{ bootstrap_home }}/.cursor" }
 
-bootstrap_ssh_keys:
-  - { path: "{{ bootstrap_onedrive }}/Documents/keys/id_rsa", mode: "0600" }
-  - { path: "{{ bootstrap_onedrive }}/Documents/keys/id_rsa.pub", mode: "0644" }
+# Replaces the former ~/.config/Cursor/User and ~/.cursor symlinks.
+bootstrap_cursor_restore: /srv/code/tekne/bash/bin/restore-cursor
 
 bootstrap_bluetooth_config:
   - { regexp: '#Name = BlueZ', line: "Name = {{ bootstrap_bluetooth_name }}" }

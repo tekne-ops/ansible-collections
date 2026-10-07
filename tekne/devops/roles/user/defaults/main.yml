@@ -5,10 +5,8 @@
 user_accounts:
   - name: dvaliente
     groups: 'wheel,rfkill,network,devs,video,audio,input,games'
-    ssh_key_file: dvaliente
   - name: devops
     groups: 'wheel,rfkill,network,devs,video,audio,input,games'
-    ssh_key_file: devops
 
 # Default shell for all users
 user_default_shell: /bin/bash
