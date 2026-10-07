@@ -34,7 +34,7 @@ fact_caching_timeout = 86400
 ```yaml
 - hosts: servers
   roles:
-    - ansible-role-hostname
+    - tekne.devops.hostname
     - other-role-that-needs-hostname
 
 # In other-role-that-needs-hostname/tasks/main.yml:

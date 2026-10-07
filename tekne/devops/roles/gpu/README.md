@@ -1,12 +1,12 @@
 # GPU Role
 
-Installs GPU drivers based on hostname. NVIDIA drivers for the host matching `gpu_nvidia_hostname` (default **YUGEN**), Intel/Mesa drivers for all other hosts.
+Installs GPU drivers based on hostname. YUGEN gets discrete NVIDIA drivers. ASTER gets hybrid Intel plus NVIDIA, including PRIME. THEMIS, KVM, and HEPHAESTUS get Intel/Mesa.
 
 ## What It Does
 
-1. **Detects GPU type** based on hostname
-2. **Installs appropriate drivers** (NVIDIA or Intel/Mesa)
-3. **Verifies installation** of all packages
+1. **Detects GPU type** from the hostname lists (`nvidia`, `hybrid`, or `intel`)
+2. **Installs the matching drivers**
+3. **Verifies installation** of those packages
 
 ## Requirements
 
@@ -21,30 +21,33 @@ ansible-galaxy collection install community.general
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `gpu_nvidia_hostname` | `YUGEN` | Hostname that uses NVIDIA GPU (case-insensitive) |
-| `gpu_nvidia_packages` | See defaults | NVIDIA packages |
-| `gpu_intel_packages` | See defaults | Intel/Mesa packages |
+| `gpu_nvidia_hostnames` | `YUGEN` | Discrete NVIDIA hosts |
+| `gpu_hybrid_hostnames` | `ASTER` | Hybrid Intel iGPU plus NVIDIA dGPU hosts |
+| `gpu_intel_hostnames` | `THEMIS`, `HEPHAESTUS`, `KVM` | Intel/Mesa hosts |
+| `gpu_nvidia_packages` | See defaults | NVIDIA packages for YUGEN and ASTER |
+| `gpu_hybrid_extra_packages` | `nvidia-prime` | Extra packages for hybrid hosts |
+| `gpu_intel_packages` | See defaults | Intel/Mesa packages for Intel and hybrid hosts |
 
-### NVIDIA Packages (yugen)
+### NVIDIA Packages (YUGEN and ASTER)
 
 - lib32-opencl-nvidia-tkg, lib32-vulkan-icd-loader, lib32-nvidia-utils-tkg
 - nvidia-open-dkms-tkg, nvidia-settings-tkg, opencl-nvidia-tkg
 - vulkan-icd-loader, nvidia-utils-tkg
 
-### Intel/Mesa Packages (other hosts)
+### Intel/Mesa Packages (THEMIS, KVM, HEPHAESTUS, and ASTER)
 
 - mesa, lib32-mesa, vulkan-intel, lib32-vulkan-intel
 
 ## Dependencies
 
-None. The role uses `ansible_hostname` (from gathered facts). When the playbook sets `hostname`/`cached_hostname` (e.g. workstation playbook), ensure fact caching or pre_tasks run so hostname is consistent; the role compares `ansible_hostname` to `gpu_nvidia_hostname`.
+None. The role classifies the hostname as `nvidia`, `hybrid`, or `intel` using `gpu_nvidia_hostnames`, `gpu_hybrid_hostnames`, and `gpu_intel_hostnames`.
 
 ## Example Playbook
 
 ```yaml
 - hosts: workstations
   roles:
-    - ansible-role-gpu   # Installs NVIDIA on host matching gpu_nvidia_hostname (default: YUGEN), Intel/Mesa otherwise
+    - tekne.devops.gpu
 ```
 
 ## Tags
@@ -62,8 +65,9 @@ None. The role uses `ansible_hostname` (from gathered facts). When the playbook 
 
 | Hostname | GPU Type | Packages Installed |
 |----------|----------|-------------------|
-| YUGEN (default) | NVIDIA | 8 NVIDIA/TKG packages |
-| Others | Intel/Mesa | 4 Mesa/Vulkan packages |
+| YUGEN | NVIDIA | NVIDIA/TKG packages |
+| ASTER | Hybrid | NVIDIA/TKG, Intel/Mesa, and `nvidia-prime` |
+| THEMIS, KVM, HEPHAESTUS | Intel/Mesa | Mesa and Vulkan packages |
 
 ## License
 

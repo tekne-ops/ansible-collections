@@ -107,7 +107,11 @@ ansible-playbook playbook.yml --ask-vault-pass
 Generate password hashes with:
 
 ```bash
-python3 -c "import crypt; print(crypt.crypt('password', crypt.mksalt(crypt.METHOD_SHA512)))"
+# Interactive (password not stored in shell history)
+mkpasswd -m sha-512
+
+# One-liner (single-quote the password so $ is not expanded)
+openssl passwd -6 'your-password'
 ```
 
 ## License

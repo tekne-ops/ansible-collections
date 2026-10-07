@@ -62,8 +62,8 @@ For each user:
 ```yaml
 - hosts: workstations
   roles:
-    - ansible-role-user      # Must run first
-    - ansible-role-pipewire
+    - tekne.devops.user
+    - tekne.devops.pipewire
 ```
 
 ## Tags

@@ -7,8 +7,9 @@ Installs XFCE4 desktop environment and related packages for Arch Linux. Optional
 1. **Reads hostname** from `/etc/hostname` and sets facts for the role.
 2. **Installs XFCE4** package groups and packages on all hosts (desktop, themes, portals, Xorg, bluetooth, first-boot apps).
 3. **On hosts in `xfce4_lightdm_hosts` (ASTER, YUGEN):** installs LightDM and slick-greeter, enables LightDM, and sets `greeter-session=lightdm-slick-greeter` and `user-session=xfce` in `/etc/lightdm/lightdm.conf`.
-4. **User configuration** – creates per-user directories and copies portal config and the `minimal-grey2` window theme. ASTER also receives an ACPI media-key handler for `xfce4_acpi_user`.
-5. **Verifies** package and service state.
+4. **User configuration** – creates per-user directories, copies portal config and the `minimal-grey2` window theme, and writes xfwm4 vertical sync (`vblank_mode=glx`, compositing on). ASTER also receives an ACPI media-key handler for `xfce4_acpi_user`.
+5. **LightDM hosts** also receive the tekne backgrounds and slick-greeter configuration.
+6. **Verifies** package and service state.
 
 ## Requirements
 
@@ -34,7 +35,10 @@ ansible-galaxy collection install community.general
 - gnome-keyring, seahorse
 - xdg-desktop-portal, xdg-desktop-portal-gtk, xdg-desktop-portal-xapp, libportal
 - bibata-cursor-theme-bin, flat-remix, kora-icon-theme
-- xorg-server, xdotool, playerctl
+- xorg-server, xdotool, playerctl, xfce4-panel-profiles
+- file-roller, gvfs, gvfs-afc, sound-theme-smooth
+- bluez, bluez-utils, blueman, virt-manager, pavucontrol
+- vlc, vlc-plugins-base, vlc-plugins-all, vlc-plugin-upnp
 
 ### LightDM Packages (ASTER, YUGEN)
 
@@ -52,7 +56,7 @@ None. The role reads the hostname from `/etc/hostname` and installs LightDM when
 ```yaml
 - hosts: workstations
   roles:
-    - ansible-role-xfce4   # Installs XFCE4; LightDM on ASTER and YUGEN
+    - tekne.devops.xfce4
 ```
 
 ## Tags

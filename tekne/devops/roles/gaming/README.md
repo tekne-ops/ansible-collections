@@ -63,7 +63,7 @@ game lutris
 ```yaml
 - hosts: gaming-pc
   roles:
-    - ansible-role-gaming
+    - tekne.devops.gaming
 ```
 
 ## Tags

@@ -19,7 +19,7 @@ Ansible collection for Tekne Arch Linux workstation and server automation.
 | `network` | `network-host`, `wifi` | systemd-networkd, WiFi, br0 |
 | `os` | `os`, `locale`, `mirrors` | Locale, NTP, reflector, repo clones |
 | `pipewire` | `pipewire` | Audio stack and Bluetooth tuning |
-| `gpu` | `gpu` | NVIDIA (YUGEN) or Intel/Mesa drivers |
+| `gpu` | `gpu` | NVIDIA (YUGEN), hybrid Intel+NVIDIA (ASTER), or Intel/Mesa |
 | `xfce4` | `xfce4` | Desktop environment and display manager |
 | `kde` | `kde` | KDE Plasma desktop and login manager |
 | `gaming` | `gaming` | Steam, Lutris, Wine, gamemode |

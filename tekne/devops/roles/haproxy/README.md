@@ -6,7 +6,7 @@ HAProxy role: installs and runs HAProxy in Docker, fronting HTTPS for tekne.sv (
 Requirements
 ------------
 
-- Docker (e.g. ansible-role-docker). HAProxy runs in a container on network `dockers` at 192.168.75.10.
+- Docker (e.g. tekne.devops.docker). HAProxy runs in a container on network `dockers` at 192.168.75.10.
 - TLS certificate: use **certbot + Cloudflare DNS** on THEMIS, or provide the PEM via **Ansible Vault** or a **path on the controller** — see below.
 
 Role Variables
@@ -56,7 +56,7 @@ If you previously had `files/tekne.sv.pem` in this role, remove it from the repo
 Dependencies
 ------------
 
-- ansible-role-docker (for Docker and the `dockers` network).
+- tekne.devops.docker (for Docker and the `dockers` network).
 
 Example Playbook
 ----------------
@@ -65,7 +65,7 @@ Example Playbook
       vars_files:
         - vault   # vault contains haproxy_ssl_pem for server runs
       roles:
-        - role: ansible-role-haproxy
+        - role: tekne.devops.haproxy
           tags: haproxy
 
 License

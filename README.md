@@ -46,7 +46,7 @@ Install third-party collections via `ansible-galaxy collection install` (see `an
 | **network** | systemd-networkd, ASTER WiFi (iwd), THEMIS bridge (br0), connectivity wait |
 | **os** | Locale, NTP, reflector mirrors, THEMIS services, tekne repo clones |
 | **pipewire** | PipeWire audio with EQ, Bluetooth quality, LDAC, volume boost |
-| **gpu** | NVIDIA TKG drivers (YUGEN) or Intel/Mesa (all other hosts) |
+| **gpu** | NVIDIA TKG (YUGEN), hybrid Intel+NVIDIA (ASTER), or Intel/Mesa (THEMIS, KVM) |
 | **xfce4** | XFCE4 desktop, LightDM, themes, bluetooth, portals |
 | **kde** | KDE Plasma desktop and plasma login manager |
 | **gaming** | Steam, Lutris, Wine, Proton, gamemode, gaming fonts |
@@ -65,7 +65,7 @@ Install third-party collections via `ansible-galaxy collection install` (see `an
 | **gerbera** | UPnP/DLNA media server container (host network, `/srv/media` mount) |
 | **consul** | HashiCorp Consul server/agent in Docker with ACL and service registration |
 | **jenkins** | Jenkins CI container on the `dockers` network |
-| **n8n** | n8n workflow automation container on the `dockers` network |
+| **n8n** | n8n workflow automation container on the `dockers` network; not included in `server.yml` |
 | **hermes** | Amazon EC2 instance for Hermes and its SSH bootstrap |
 
 ### Kubernetes
@@ -132,7 +132,7 @@ Many roles branch on hostname (read from `/etc/hostname` or Ansible facts):
 
 | Host | Notable role behavior |
 |------|----------------------|
-| **ASTER** | WiFi via iwd, Intel GPU, LightDM, laptop nftables |
+| **ASTER** | WiFi via iwd, hybrid Intel+NVIDIA, LightDM, laptop nftables |
 | **YUGEN** | NVIDIA TKG GPU, triple-monitor XFCE wallpaper config |
 | **THEMIS** | br0 bridge, server nftables, cronie/irqbalance/sshd, Docker services |
 | **KVM** | VM network config, standard workstation stack |
