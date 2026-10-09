@@ -4,7 +4,7 @@ Configures systemd-networkd, systemd-resolved DNS policy, THEMIS bridge (br0) an
 
 ## What It Does
 
-1. **Workstation (ASTER, YUGEN)** – Deploys `80-wifi-station.network` and `89-ethernet.network`; enables systemd-networkd, resolved, acpid; ASTER also enables iwd/bluetooth/tlp/thermald and connects to WiFi.
+1. **Workstation (ASTER, YUGEN)** – Deploys `80-wifi-station.network` and `89-ethernet.network`; enables systemd-networkd, resolved, acpid; ASTER installs and enables iwd/bluetooth/tlp/thermald/bolt and connects to WiFi.
 2. **THEMIS** – Deploys `25-br0` netdev/network units and `sshd_config.d/ssh.conf`.
 3. **DNS** – One resolved drop-in, `95-dns.conf`. Strict DoT (`DNSOverTLS=yes`) on every host. **ASTER** uses DHCP nameservers (`UseDNS=yes`, `DNSDefaultRoute=yes`) and pins nothing. Other hosts pin Quad9 then Google and set `DNSDefaultRoute=no` so the router is not the resolver. `FallbackDNS=` clears systemd's compiled-in plaintext list.
 4. **Connectivity** – Flushes handlers and pings `archlinux.org` until reachable.
@@ -25,6 +25,7 @@ Run after `tekne.devops.os` locale setup and before roles that need network (mir
 | `network_wifi_detect_retries` | Auto-detect retry count (default `30`, ~60s with default delay) |
 | `network_wifi_detect_delay` | Seconds between auto-detect retries (default `2`) |
 | `network_connect_wifi` | Run live `iwctl` connect on ASTER (disable during arch-chroot install) |
+| `network_laptop_service_packages` | Packages providing the ASTER services managed by this role (`bluez`, `iwd`, `thermald`, `tlp`, `bolt`) |
 | `network_resolved_manage` | Deploy the resolved drop-in (default `true`) |
 | `network_dns_from_dhcp` | `true` on ASTER: use router-advertised DNS with strict DoT. `false` elsewhere. |
 | `network_dns_servers` | Pinned DoT resolvers (`ip#name`) when not using DHCP. Default Quad9 then Google (not Cloudflare; Tigo blocks 1.1.1.1:853). Ignored on ASTER. |
@@ -74,3 +75,14 @@ If **Resolve WiFi interface name** times out:
 2. Check rfkill: `rfkill list` — unblock with `rfkill unblock wifi` if soft-blocked.
 3. Pin the interface instead of auto-detect: `-e os_wifi_interface=wlp0s20f3` (or in vault).
 4. During arch-chroot install, WiFi connect is intentionally skipped (`network_connect_wifi=false`); run `workstation.sh` after first boot.
+
+## Install lifecycle
+
+The role installs the packages that provide its ASTER service units before
+enabling them. In particular, `bluetooth.service` comes from `bluez`; the
+network role runs before the XFCE role, so it cannot depend on XFCE installing
+`bluez` later.
+
+During `arch-chroot`, units are enabled for the installed system but are not
+started because there is no booted systemd instance in the chroot. On a
+normally booted host, the same tasks both enable and start the services.

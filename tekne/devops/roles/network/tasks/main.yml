@@ -240,6 +240,17 @@
     - network-host
     - wifi
 
+- name: Install laptop service packages (ASTER only)
+  community.general.pacman:
+    name: "{{ network_laptop_service_packages }}"
+    state: present
+    extra_args: "--noconfirm --needed"
+  when: network_hostname == 'ASTER'
+  tags:
+    - network-host
+    - wifi
+    - packages
+
 - name: Enable laptop services (ASTER only)
   ansible.builtin.systemd:
     name: "{{ item }}"
@@ -362,8 +373,8 @@
       fi
     done
     exit 1
-  register: _wifi_interface_cmd
-  until: _wifi_interface_cmd.stdout | trim | length > 0
+  register: network_wifi_interface_cmd
+  until: network_wifi_interface_cmd.stdout | trim | length > 0
   retries: "{{ network_wifi_detect_retries }}"
   delay: "{{ network_wifi_detect_delay }}"
   changed_when: false
@@ -382,7 +393,7 @@
       {{
         network_wifi_interface
         if (network_wifi_interface | default('') | length > 0)
-        else ((_wifi_interface_cmd.stdout | trim) | default('wlan0'))
+        else ((network_wifi_interface_cmd.stdout | trim) | default('wlan0'))
       }}
   when:
     - network_hostname == 'ASTER'
@@ -414,8 +425,8 @@
       - "{{ network_wifi_ssid }}"
       - --passphrase
       - "{{ network_wifi_passphrase }}"
-  register: _iwctl_connect
-  until: _iwctl_connect.rc == 0
+  register: network_iwctl_connect
+  until: network_iwctl_connect.rc == 0
   retries: 6
   delay: 5
   when:

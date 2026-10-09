@@ -50,7 +50,7 @@ Each `pipewire_users` entry:
 
 `99-audio-quality.conf` sets a 48 kHz clock, allows 44.1–96 kHz, and uses resample quality 10.
 
-`50-bluetooth-quality.conf` keeps A2DP roles, enables SBC-XQ and hardware volume, disables headset-profile autoswitch, and sets LDAC quality to `hq` with `bluez5.a2dp.ldac.quality` on `bluez_card.*` devices.
+`50-bluetooth-quality.conf` keeps A2DP roles, disables headset-profile autoswitch, holds the Bluetooth link at 48 kHz, and sets LDAC quality to `auto` so the bitrate drops instead of chopping. SBC-XQ and hardware volume stay on the device quirk list. Bluetooth nodes resample at quality 4; other streams stay at 10.
 
 The HD 660S sink is optional. Select "Sennheiser HD 660S EQ" in pavucontrol; it is not the default output.
 

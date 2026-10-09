@@ -67,6 +67,17 @@ argument_specs:
         required: false
         type: bool
         default: true
+      network_laptop_service_packages:
+        description: Packages that provide the ASTER systemd services managed by this role.
+        required: false
+        type: list
+        elements: str
+        default:
+          - bluez
+          - iwd
+          - thermald
+          - tlp
+          - bolt
       network_install_chroot_phase:
         description: Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network).
         required: false
