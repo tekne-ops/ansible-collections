@@ -34,3 +34,10 @@ argument_specs:
         description: The home value for the onedrive role.
         required: false
         type: str
+      onedrive_notification_packages:
+        description: Packages required for OneDrive GUI notification support.
+        required: false
+        type: list
+        elements: str
+        default:
+          - libnotify

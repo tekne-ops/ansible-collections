@@ -166,7 +166,7 @@
   tags: [bootstrap, onedrive, sync]
 
 # ============================================
-# SERVICE ENABLEMENT
+# DESKTOP-AWARE SERVICE STARTUP
 # ============================================
 
 - name: Get user UID for systemd user scope
@@ -181,19 +181,43 @@
   register: bootstrap_linger_file
   tags: [bootstrap, onedrive, service]
 
-- name: Enable linger so the OneDrive user manager starts at boot
+- name: Disable linger so OneDrive does not start before the graphical session
   ansible.builtin.command:
     argv:
       - loginctl
-      - enable-linger
+      - disable-linger
       - "{{ bootstrap_user }}"
-  when: not bootstrap_linger_file.stat.exists
+  when: bootstrap_linger_file.stat.exists
   tags: [bootstrap, onedrive, service]
 
-- name: Start the OneDrive user manager
-  ansible.builtin.systemd:
-    name: "user@{{ ansible_facts.getent_passwd[bootstrap_user][1] }}.service"
-    state: started
+- name: Ensure OneDrive desktop startup directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ bootstrap_user }}"
+    group: "{{ bootstrap_group }}"
+    mode: '0700'
+  loop:
+    - "{{ bootstrap_home }}/bin"
+    - "{{ bootstrap_home }}/.config/autostart"
+  tags: [bootstrap, onedrive, service]
+
+- name: Install desktop-aware OneDrive startup helper
+  ansible.builtin.copy:
+    src: onedrive-desktop-start
+    dest: "{{ bootstrap_home }}/bin/onedrive-desktop-start"
+    owner: "{{ bootstrap_user }}"
+    group: "{{ bootstrap_group }}"
+    mode: '0755'
+  tags: [bootstrap, onedrive, service]
+
+- name: Start OneDrive from the XFCE session
+  ansible.builtin.template:
+    src: onedrive-desktop-start.desktop.j2
+    dest: "{{ bootstrap_home }}/.config/autostart/onedrive-desktop-start.desktop"
+    owner: "{{ bootstrap_user }}"
+    group: "{{ bootstrap_group }}"
+    mode: '0644'
   tags: [bootstrap, onedrive, service]
 
 - name: Reload systemd user daemon
@@ -206,40 +230,73 @@
     XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[bootstrap_user][1] }}"
   tags: [bootstrap, onedrive, service]
 
-- name: Enable OneDrive user service
+- name: Disable boot-time OneDrive user service enablement
   become: true
   become_user: "{{ bootstrap_user }}"
   ansible.builtin.systemd:
     name: onedrive.service
-    enabled: true
+    enabled: false
     scope: user
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[bootstrap_user][1] }}"
   tags: [bootstrap, onedrive, service]
 
-- name: Start OneDrive user service after sync_list resync
+- name: Check for the active desktop notification service
+  become: true
+  become_user: "{{ bootstrap_user }}"
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/busctl
+      - --user
+      - call
+      - org.freedesktop.Notifications
+      - /org/freedesktop/Notifications
+      - org.freedesktop.Notifications
+      - GetServerInformation
+  register: bootstrap_notification_service
+  changed_when: false
+  failed_when: false
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[bootstrap_user][1] }}"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ ansible_facts.getent_passwd[bootstrap_user][1] }}/bus"
+  tags: [bootstrap, onedrive, service]
+
+- name: Restart OneDrive after the desktop notification service is ready
   become: true
   become_user: "{{ bootstrap_user }}"
   ansible.builtin.systemd:
     name: onedrive.service
-    state: started
+    state: restarted
+    scope: user
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[bootstrap_user][1] }}"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ ansible_facts.getent_passwd[bootstrap_user][1] }}/bus"
+  when:
+    - not ansible_check_mode
+    - bootstrap_notification_service.rc == 0
+  tags: [bootstrap, onedrive, service]
+
+- name: Stop OneDrive when no graphical notification service is active
+  become: true
+  become_user: "{{ bootstrap_user }}"
+  ansible.builtin.systemd:
+    name: onedrive.service
+    state: stopped
     scope: user
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[bootstrap_user][1] }}"
   when:
     - not ansible_check_mode
-    - bootstrap_onedrive_repair_status is defined
-    - not (bootstrap_onedrive_repair_status.skipped | default(false))
-    - (bootstrap_onedrive_repair_status.rc | default(1) | int) == 0
+    - bootstrap_notification_service.rc != 0
   tags: [bootstrap, onedrive, service]
 
-- name: Display service enabled message
+- name: Display OneDrive desktop startup message
   ansible.builtin.debug:
     msg:
       - "=========================================="
-      - "OneDrive service enabled: onedrive.service"
-      - "Linger is enabled, so the user manager starts at boot."
-      - "To start now: systemctl --user start onedrive.service"
+      - "OneDrive starts from XFCE after org.freedesktop.Notifications is ready."
+      - "Boot-time service enablement and user lingering are disabled."
+      - "Current desktop notification service available: {{ bootstrap_notification_service.rc == 0 }}"
       - "To check status: systemctl --user status onedrive.service"
       - "=========================================="
   tags: [bootstrap, onedrive, service]

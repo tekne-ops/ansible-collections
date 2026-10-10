@@ -7,3 +7,7 @@ onedrive_group: users
 onedrive_sync_dir: /srv/OneDrive
 onedrive_config_dir: .config/onedrive
 onedrive_home: "/home/{{ onedrive_owner }}"
+
+# libnotify is both a build/runtime dependency for GUI notification support.
+onedrive_notification_packages:
+  - libnotify

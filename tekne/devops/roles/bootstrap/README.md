@@ -8,7 +8,7 @@ Post-install bootstrap: installs extra packages, runs OneDrive first sync (with 
 
 1. **Network check** – Waits for connectivity (ping archlinux.org) before packages.
 2. **Package installation** – Installs `bootstrap_packages` via pacman (e.g. Chrome, Zoom, VS Code, Cursor, gaming/office apps). Verifies installation.
-3. **OneDrive sync** (`tasks/onedrive_sync.yml`) – If `~/.config/onedrive/items.sqlite3` does not exist: runs the first sync with `--resync --resync-auth` (required because `sync_list` is already installed), **pauses for user to authenticate** with Microsoft (URL + code), waits for sync to finish, then enables the user `onedrive.service` so sync runs on login. If the database already exists but `.sync_list.hash` is still the client's `initial-hash` sentinel, runs that same resync before enabling the service.
+3. **OneDrive sync and desktop startup** (`tasks/onedrive_sync.yml`) – If `~/.config/onedrive/items.sqlite3` does not exist: runs the first sync with `--resync --resync-auth` (required because `sync_list` is already installed), **pauses for user to authenticate** with Microsoft, and waits for sync to finish. Installs an XFCE autostart helper that waits for `org.freedesktop.Notifications` before starting the user `onedrive.service`. Boot-time service enablement and lingering are disabled so the client cannot cache “notification service unavailable” before login. If the database already exists but `.sync_list.hash` is still the client's `initial-hash` sentinel, runs the same repair resync.
 4. **Symlinks** (`tasks/symlinks.yml`) – Ensures parent dirs exist; for each entry in `bootstrap_symlinks`, creates a symlink from OneDrive path to home path (only if source exists). Sets `~/.ssh` to mode 0700. Runs `bootstrap_cursor_restore` as `bootstrap_user`. Skips and warns when a symlink source is missing.
 5. **Bluetooth** (`tasks/bluetooth.yml`) – When `/etc/bluetooth/main.conf` exists, applies `bootstrap_bluetooth_config` (lineinfile) and notifies `restart bluetooth`.
 6. **XFCE** (`tasks/xfce.yml`) – Configures desktop for `bootstrap_user`: wallpaper per monitor, cursor/GTK/WM/icon themes, keyboard shortcuts (Super+t terminal, Super+b browser), workspace count, Smooth event sounds, fonts, predictable sessions (`SaveOnExit=false`), fullscreen compositor unredirect, and automatic display extension/profile activation. Uses `xfconf-query` against the active user session.
@@ -62,7 +62,7 @@ Post-install bootstrap: installs extra packages, runs OneDrive first sync (with 
 | File | Purpose |
 |------|---------|
 | `main.yml` | Network wait, package install, include onedrive_sync, symlinks, bluetooth, xfce |
-| `onedrive_sync.yml` | First sync (with pause for auth), enable user onedrive.service |
+| `onedrive_sync.yml` | First sync (with pause for auth), desktop-aware user service startup |
 | `symlinks.yml` | Create symlinks from `bootstrap_symlinks`, keep `~/.ssh` at mode 0700, run `restore-cursor` |
 | `bluetooth.yml` | lineinfile on `/etc/bluetooth/main.conf`, notify restart bluetooth |
 | `xfce.yml` | xfconf-query for wallpaper, themes, shortcuts, workspaces, sounds, fonts, sessions, compositor and displays |
@@ -84,7 +84,7 @@ Typical links (customize via `bootstrap_symlinks`): OneDrive/Documents → ~/Doc
 | `packages` | Package install and verify |
 | `onedrive` | OneDrive sync and service |
 | `sync` | First sync and auth pause |
-| `service` | OneDrive user service enable |
+| `service` | OneDrive XFCE autostart and user-service lifecycle |
 | `symlinks` | Symlink creation and SSH permissions |
 | `ssh` | SSH dir and key permissions (inside symlinks) |
 | `bluetooth` | Bluetooth config |
@@ -116,6 +116,9 @@ Playbook typically sets host-specific `bootstrap_xfce_monitors` (e.g. ASTER: eDP
 ## Notes
 
 - **OneDrive first sync** pauses for user authentication; follow on-screen URL/code steps.
+- OneDrive monitor mode starts only in XFCE after the notification service is
+  available. The user service is intentionally not enabled at
+  `default.target`, and lingering is intentionally disabled.
 - Symlinks are created only when the **source** exists; missing sources are reported and skipped.
 - XFCE tasks resolve `bootstrap_user` through `getent` and use that account's
   runtime directory; no fixed UID is assumed.

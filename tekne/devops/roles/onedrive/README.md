@@ -4,11 +4,12 @@ Installs and configures the abraunegg OneDrive client for `onedrive_owner`.
 
 ## What It Does
 
-1. **Installs OneDrive package** (onedrive-abraunegg)
+1. **Installs OneDrive and notification support** (`onedrive-abraunegg`, `libnotify`)
 2. **Creates the owner's config directory** (`~/.config/onedrive`)
 3. **Creates sync directory** (`/srv/OneDrive`) owned by `dvaliente`
-4. **Copies config file and `sync_list`** to dvaliente's config directory
-5. **Verifies installation** and configuration
+4. **Copies config file and `sync_list`** to dvaliente's config directory. GUI notifications and per-file action notifications are enabled; one remote change is enough to notify.
+5. **Verifies installation** and configuration, including that the executable
+   is linked to `libnotify` (the package was built with GUI support)
 
 ## Requirements
 
@@ -28,6 +29,7 @@ ansible-galaxy collection install community.general
 | `onedrive_group` | `users` | Group of the sync directory |
 | `onedrive_sync_dir` | `/srv/OneDrive` | Sync directory |
 | `onedrive_config_dir` | `.config/onedrive` | Config directory in home |
+| `onedrive_notification_packages` | `libnotify` | Packages required by the client's compiled GUI notification support |
 
 ## Files Deployed
 
@@ -71,6 +73,11 @@ After running the role, each user needs to authenticate:
 ```bash
 onedrive --synchronize --single-directory
 ```
+
+The bootstrap role starts monitor mode from XFCE only after
+`org.freedesktop.Notifications` responds on the user D-Bus. Starting the
+monitor from a lingering user manager at boot causes the client to detect no
+GUI notification service and continue without desktop notifications.
 
 ## License
 

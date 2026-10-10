@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT-0
 ---
-- name: Install OneDrive package
+- name: Install OneDrive and desktop notification support
   community.general.pacman:
-    name: "{{ onedrive_package }}"
+    name: "{{ [onedrive_package] + onedrive_notification_packages }}"
     state: present
     extra_args: '--noconfirm --needed'
   tags:
@@ -93,6 +93,18 @@
   register: onedrive_package_verify
   changed_when: false
   failed_when: onedrive_package_verify.rc != 0
+  tags:
+    - onedrive
+    - verify
+
+- name: Verify OneDrive was built with libnotify support
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/ldd
+      - /usr/bin/onedrive
+  register: onedrive_linked_libraries
+  changed_when: false
+  failed_when: "'libnotify.so' not in onedrive_linked_libraries.stdout"
   tags:
     - onedrive
     - verify

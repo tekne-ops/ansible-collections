@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -u
+
+# OneDrive decides whether GUI notifications are available when monitor mode
+# starts. Wait until the desktop notification service owns its D-Bus name, then
+# start (or restart) the monitor so that check succeeds.
+for _ in {1..60}; do
+    if /usr/bin/busctl --user call \
+        org.freedesktop.Notifications \
+        /org/freedesktop/Notifications \
+        org.freedesktop.Notifications \
+        GetServerInformation >/dev/null 2>&1; then
+        /usr/bin/systemctl --user reset-failed onedrive.service
+        exec /usr/bin/systemctl --user restart onedrive.service
+    fi
+
+    /usr/bin/sleep 1
+done
+
+/usr/bin/logger -t onedrive \
+    "Desktop notification service was unavailable; OneDrive monitor was not started"
+exit 1
