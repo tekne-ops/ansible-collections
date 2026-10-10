@@ -12,3 +12,9 @@
     state: restarted
   when: not network_install_chroot_phase | bool
   listen: Restart systemd-resolved
+
+- name: Restart TLP
+  ansible.builtin.systemd:
+    name: tlp.service
+    state: restarted
+  when: not network_install_chroot_phase | bool

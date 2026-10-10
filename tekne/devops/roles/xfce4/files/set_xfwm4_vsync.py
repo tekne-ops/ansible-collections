@@ -8,7 +8,7 @@ from pathlib import Path
 WANTED = (
     ("use_compositing", "bool", "true"),
     ("vblank_mode", "string", "glx"),
-    ("unredirect_overlays", "bool", "false"),
+    ("unredirect_overlays", "bool", "true"),
 )
 
 

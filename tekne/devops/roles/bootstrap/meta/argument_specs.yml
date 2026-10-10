@@ -36,10 +36,10 @@ argument_specs:
         type: str
         default: /usr/bin/onedrive
       bootstrap_onedrive_sync_options:
-        description: First sync options (download-only for initial sync).
+        description: First sync options. Includes --resync --resync-auth so the installed sync_list is accepted before the user service starts.
         required: false
         type: str
-        default: --sync --download-only --verbose
+        default: --sync --download-only --verbose --resync --resync-auth
       bootstrap_onedrive_sync_timeout:
         description: Timeout for first sync in seconds (1 hour default).
         required: false

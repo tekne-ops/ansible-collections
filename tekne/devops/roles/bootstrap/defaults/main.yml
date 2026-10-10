@@ -18,8 +18,12 @@ bootstrap_onedrive_config_dir: "{{ bootstrap_home }}/.config/onedrive"
 # OneDrive binary path
 bootstrap_onedrive_binary: /usr/bin/onedrive
 
-# First sync options (download-only for initial sync)
-bootstrap_onedrive_sync_options: "--sync --download-only --verbose"
+# First sync options. --resync --resync-auth is required because this repo
+# installs sync_list before the first authenticated run. The client seeds
+# .sync_list.hash with "initial-hash", then the next start (the user service)
+# exits 126 until --resync stores the real hash. --resync-auth accepts that
+# without the interactive Y/N prompt.
+bootstrap_onedrive_sync_options: "--sync --download-only --verbose --resync --resync-auth"
 
 # Timeout for first sync in seconds (1 hour default)
 bootstrap_onedrive_sync_timeout: 3600

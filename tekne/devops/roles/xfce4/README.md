@@ -6,8 +6,8 @@ Installs XFCE4 desktop environment and related packages for Arch Linux. Optional
 
 1. **Reads hostname** from `/etc/hostname` and sets facts for the role.
 2. **Installs XFCE4** package groups and packages on all hosts (desktop, themes, portals, Xorg, bluetooth, first-boot apps).
-3. **On hosts in `xfce4_lightdm_hosts` (ASTER, YUGEN):** installs LightDM and slick-greeter, enables LightDM, and sets `greeter-session=lightdm-slick-greeter` and `user-session=xfce` in `/etc/lightdm/lightdm.conf`.
-4. **User configuration** – creates per-user directories, copies portal config and the `minimal-grey2` window theme, and writes xfwm4 vertical sync (`vblank_mode=glx`, compositing on). ASTER also receives an ACPI media-key handler for `xfce4_acpi_user`.
+3. **On hosts in `xfce4_lightdm_hosts` (ASTER, YUGEN):** installs LightDM and slick-greeter, enables LightDM, and deploys `/etc/lightdm/lightdm.conf.d/50-xfce.conf` with the greeter and Xfce session.
+4. **User configuration** – creates per-user directories, copies portal config and the `minimal-grey2` window theme, and writes xfwm4 vertical sync (`vblank_mode=glx`, compositing and fullscreen unredirect on). ASTER also receives an ACPI media-key handler for `xfce4_acpi_user`.
 5. **LightDM hosts** also receive the tekne backgrounds and slick-greeter configuration.
 6. **Verifies** package and service state.
 
@@ -45,7 +45,7 @@ ansible-galaxy collection install community.general
 - lightdm, lightdm-slick-greeter
 - light-locker and the GTK and WebKit greeters are removed
 
-The role also replaces `#greeter-session=example-gtk-gnome` with `greeter-session=lightdm-slick-greeter` in `/etc/lightdm/lightdm.conf`.
+The role keeps package configuration intact and selects the greeter and Xfce session in `/etc/lightdm/lightdm.conf.d/50-xfce.conf`.
 
 ## Dependencies
 
@@ -65,7 +65,7 @@ None. The role reads the hostname from `/etc/hostname` and installs LightDM when
 |-----|-------------|
 | `xfce4` | All XFCE4 tasks |
 | `packages` | Package installation only |
-| `lightdm` | LightDM packages, service, and lightdm.conf |
+| `lightdm` | LightDM packages, service, and drop-in configuration |
 | `config` | LightDM config file and user/portal config |
 | `service` | Service management |
 | `verify` | Verification tasks |

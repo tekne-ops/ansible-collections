@@ -57,7 +57,19 @@
       - channel: xfwm4
         property: /general/unredirect_overlays
         type: bool
+        value: 'true'
+      - channel: xfce4-session
+        property: /general/SaveOnExit
+        type: bool
         value: 'false'
+      - channel: displays
+        property: /Notify
+        type: int
+        value: '3'
+      - channel: displays
+        property: /AutoEnableProfiles
+        type: int
+        value: '3'
       - channel: xsettings
         property: /Net/IconThemeName
         type: string
@@ -86,6 +98,10 @@
         property: /Net/EnableEventSounds
         type: bool
         value: 'true'
+      - channel: xsettings
+        property: /Net/SoundThemeName
+        type: string
+        value: Smooth
       - channel: xsettings
         property: /Xft/RGBA
         type: string
@@ -153,23 +169,6 @@
     - bootstrap_xfce_apply | bool
     - ansible_check_mode or item.rc != 0 or item.stdout != item.item.value
   changed_when: true
-  register: bootstrap_xfce_setting_apply
-  tags: [bootstrap, xfce]
-
-- name: Reload xfwm4 so vertical sync takes effect
-  become: true
-  become_user: "{{ bootstrap_user }}"
-  ansible.builtin.command: xfwm4 --replace
-  environment:
-    XDG_RUNTIME_DIR: "/run/user/{{ bootstrap_user_getent.ansible_facts.getent_passwd[bootstrap_user][1] }}"
-    DISPLAY: ':0'
-    DBUS_SESSION_BUS_ADDRESS: >-
-      unix:path=/run/user/{{ bootstrap_user_getent.ansible_facts.getent_passwd[bootstrap_user][1] }}/bus
-  async: 15
-  poll: 0
-  when:
-    - bootstrap_xfce_apply | bool
-    - bootstrap_xfce_setting_apply.results | default([]) | selectattr('changed') | map(attribute='item.item.property') | select('in', ['/general/vblank_mode', '/general/use_compositing', '/general/unredirect_overlays']) | list | length > 0
   tags: [bootstrap, xfce]
 
 - name: Read current XFCE wallpaper settings

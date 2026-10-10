@@ -92,23 +92,40 @@
     - packages
     - portals
 
-- name: Set LightDM greeter to slick greeter
-  ansible.builtin.replace:
-    path: /etc/lightdm/lightdm.conf
-    regexp: '^#greeter-session=example-gtk-gnome'
-    replace: 'greeter-session=lightdm-slick-greeter'
+- name: Ensure the LightDM drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/lightdm/lightdm.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
   when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
     - lightdm
     - config
 
-- name: Set LightDM user session to Xfce
+- name: Deploy the LightDM XFCE drop-in
+  ansible.builtin.copy:
+    src: 50-xfce.conf
+    dest: /etc/lightdm/lightdm.conf.d/50-xfce.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: xfce4_hostname in xfce4_lightdm_hosts
+  tags:
+    - xfce4
+    - lightdm
+    - config
+
+- name: Remove settings managed by the LightDM drop-in from the main file
   ansible.builtin.lineinfile:
     path: /etc/lightdm/lightdm.conf
-    regexp: '^#?user-session='
-    line: user-session=xfce
-    insertafter: '^greeter-session='
+    regexp: "^{{ item }}="
+    state: absent
+  loop:
+    - greeter-session
+    - user-session
   when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
     - xfce4
@@ -310,6 +327,45 @@
     - xfce4
     - config
 
+- name: Set XFCE session, sound, and display defaults before first login
+  ansible.builtin.command:
+    argv:
+      - python3
+      - "{{ role_path }}/files/set_xfce_defaults.py"
+      - "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.config/xfce4/xfconf/xfce-perchannel-xml"
+  loop: "{{ xfce4_user_info.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  register: xfce4_default_xml
+  changed_when: "'changed' in xfce4_default_xml.stdout"
+  tags:
+    - xfce4
+    - config
+
+- name: Give the managed XFCE channel files to their users
+  ansible.builtin.file:
+    path: "{{ item.0.ansible_facts.getent_passwd[item.0.item.name][4] }}/.config/xfce4/xfconf/xfce-perchannel-xml/{{ item.1 }}.xml"
+    owner: "{{ item.0.item.name }}"
+    group: "{{ item.0.item.group | default(xfce4_default_group) }}"
+    mode: '0644'
+  loop: "{{ xfce4_user_info.results | product(['xfce4-session', 'xsettings', 'displays']) | list }}"
+  loop_control:
+    label: "{{ item.0.item.name }}/{{ item.1 }}"
+  tags:
+    - xfce4
+    - config
+
+- name: Remove saved XFCE sessions
+  ansible.builtin.file:
+    path: "{{ item.ansible_facts.getent_passwd[item.item.name][4] }}/.cache/sessions"
+    state: absent
+  loop: "{{ xfce4_user_info.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  tags:
+    - xfce4
+    - config
+
 - name: Copy xfce-portals.conf for each user
   ansible.builtin.copy:
     src: xfce-portals.conf
@@ -354,13 +410,30 @@
 # System Configuration
 # =============================================================================
 
-- name: Copy gnome-keyring.portal to system portals directory
-  ansible.builtin.copy:
-    src: gnome-keyring.portal
-    dest: /usr/share/xdg-desktop-portal/portals/gnome-keyring.portal
-    owner: root
-    group: root
-    mode: '0644'
+- name: Check whether the old role overwrote the GNOME Keyring portal definition
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/grep
+      - -F
+      - UseIn=XFCE;Cinnamon;generic
+      - /usr/share/xdg-desktop-portal/portals/gnome-keyring.portal
+  register: xfce4_custom_keyring_portal
+  changed_when: false
+  failed_when: xfce4_custom_keyring_portal.rc not in [0, 1]
+  tags:
+    - xfce4
+    - config
+    - portals
+
+- name: Restore the package-owned GNOME Keyring portal definition
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/pacman
+      - -S
+      - --noconfirm
+      - gnome-keyring
+  when: xfce4_custom_keyring_portal.rc == 0
+  changed_when: true
   tags:
     - xfce4
     - config
@@ -456,7 +529,7 @@
     - lightdm
     - verify
 
-- name: Check LightDM enablement without systemd (chroot)
+- name: Check LightDM enablement without systemd (chroot)  # noqa command-instead-of-module
   ansible.builtin.command:
     cmd: systemctl is-enabled {{ xfce4_lightdm_service }}
   register: xfce4_lightdm_enabled

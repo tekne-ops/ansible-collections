@@ -236,6 +236,7 @@
     group: root
     mode: '0644'
   when: network_hostname == 'ASTER'
+  notify: Restart TLP
   tags:
     - network-host
     - wifi

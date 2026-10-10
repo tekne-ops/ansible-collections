@@ -8,10 +8,10 @@ Post-install bootstrap: installs extra packages, runs OneDrive first sync (with 
 
 1. **Network check** – Waits for connectivity (ping archlinux.org) before packages.
 2. **Package installation** – Installs `bootstrap_packages` via pacman (e.g. Chrome, Zoom, VS Code, Cursor, gaming/office apps). Verifies installation.
-3. **OneDrive sync** (`tasks/onedrive_sync.yml`) – If `~/.config/onedrive/items.sqlite3` does not exist: runs first sync in background, **pauses for user to authenticate** with Microsoft (URL + code), waits for sync to finish, then enables the user `onedrive.service` so sync runs on login.
+3. **OneDrive sync** (`tasks/onedrive_sync.yml`) – If `~/.config/onedrive/items.sqlite3` does not exist: runs the first sync with `--resync --resync-auth` (required because `sync_list` is already installed), **pauses for user to authenticate** with Microsoft (URL + code), waits for sync to finish, then enables the user `onedrive.service` so sync runs on login. If the database already exists but `.sync_list.hash` is still the client's `initial-hash` sentinel, runs that same resync before enabling the service.
 4. **Symlinks** (`tasks/symlinks.yml`) – Ensures parent dirs exist; for each entry in `bootstrap_symlinks`, creates a symlink from OneDrive path to home path (only if source exists). Sets `~/.ssh` to mode 0700. Runs `bootstrap_cursor_restore` as `bootstrap_user`. Skips and warns when a symlink source is missing.
 5. **Bluetooth** (`tasks/bluetooth.yml`) – When `/etc/bluetooth/main.conf` exists, applies `bootstrap_bluetooth_config` (lineinfile) and notifies `restart bluetooth`.
-6. **XFCE** (`tasks/xfce.yml`) – Configures desktop for `bootstrap_user`: wallpaper per monitor, cursor/GTK/WM/icon themes, keyboard shortcuts (Super+t terminal, Super+b browser), workspace count, input/event sounds, font and RGBA. Uses `xfconf-query` with a fixed display/runtime (e.g. DISPLAY=:0, XDG_RUNTIME_DIR for UID 1000). Can depend on `xfce_display_available` (set by playbook/other role) for summary message.
+6. **XFCE** (`tasks/xfce.yml`) – Configures desktop for `bootstrap_user`: wallpaper per monitor, cursor/GTK/WM/icon themes, keyboard shortcuts (Super+t terminal, Super+b browser), workspace count, Smooth event sounds, fonts, predictable sessions (`SaveOnExit=false`), fullscreen compositor unredirect, and automatic display extension/profile activation. Uses `xfconf-query` against the active user session.
 
 ## Requirements
 
@@ -32,7 +32,7 @@ Post-install bootstrap: installs extra packages, runs OneDrive first sync (with 
 | `bootstrap_onedrive` | `/srv/OneDrive` | OneDrive sync directory |
 | `bootstrap_onedrive_config_dir` | `{{ bootstrap_home }}/.config/onedrive` | OneDrive config dir (config file inside) |
 | `bootstrap_onedrive_binary` | `/usr/bin/onedrive` | OneDrive binary |
-| `bootstrap_onedrive_sync_options` | `--sync --download-only --verbose` | First sync options |
+| `bootstrap_onedrive_sync_options` | `--sync --download-only --verbose --resync --resync-auth` | First sync options |
 | `bootstrap_onedrive_sync_timeout` | `3600` | First sync timeout (seconds) |
 | `bootstrap_bluetooth_name` | `{{ ansible_hostname \| default('BlueZ') }}` | Bluetooth device name |
 | `bootstrap_xfce_wallpaper` | Path in Pictures/Wallpapers | Wallpaper image path |
@@ -65,7 +65,7 @@ Post-install bootstrap: installs extra packages, runs OneDrive first sync (with 
 | `onedrive_sync.yml` | First sync (with pause for auth), enable user onedrive.service |
 | `symlinks.yml` | Create symlinks from `bootstrap_symlinks`, keep `~/.ssh` at mode 0700, run `restore-cursor` |
 | `bluetooth.yml` | lineinfile on `/etc/bluetooth/main.conf`, notify restart bluetooth |
-| `xfce.yml` | xfconf-query for wallpaper, themes, shortcuts, workspaces, sounds, fonts |
+| `xfce.yml` | xfconf-query for wallpaper, themes, shortcuts, workspaces, sounds, fonts, sessions, compositor and displays |
 
 ## Handlers
 

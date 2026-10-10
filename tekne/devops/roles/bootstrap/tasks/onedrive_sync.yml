@@ -11,12 +11,53 @@
   register: bootstrap_onedrive_db_check
   tags: [bootstrap, onedrive, sync]
 
+- name: Read the stored OneDrive sync_list hash
+  ansible.builtin.slurp:
+    src: "{{ bootstrap_onedrive_config_dir }}/.sync_list.hash"
+  register: bootstrap_onedrive_sync_list_hash
+  failed_when: false
+  changed_when: false
+  when: bootstrap_onedrive_db_check.stat.exists
+  tags: [bootstrap, onedrive, sync]
+
 - name: Display skip message if already synced
   ansible.builtin.debug:
     msg:
       - "OneDrive database already exists at {{ bootstrap_onedrive_config_dir }}/items.sqlite3"
       - "Skipping first sync - OneDrive has been synced before"
-  when: bootstrap_onedrive_db_check.stat.exists
+  when:
+    - bootstrap_onedrive_db_check.stat.exists
+    - bootstrap_onedrive_sync_list_hash.content is defined
+    - (bootstrap_onedrive_sync_list_hash.content | b64decode | trim) != 'initial-hash'
+  tags: [bootstrap, onedrive, sync]
+
+- name: Resync OneDrive so the installed sync_list is accepted
+  become: true
+  become_user: "{{ bootstrap_user }}"
+  ansible.builtin.command:
+    argv: "{{ [bootstrap_onedrive_binary] + (bootstrap_onedrive_sync_options.split()) + ['--confdir=' ~ bootstrap_onedrive_config_dir] }}"
+  async: "{{ bootstrap_onedrive_sync_timeout }}"
+  poll: 0
+  register: bootstrap_onedrive_repair_sync
+  when:
+    - bootstrap_onedrive_db_check.stat.exists
+    - not ansible_check_mode
+    - bootstrap_onedrive_sync_list_hash.content is not defined or (bootstrap_onedrive_sync_list_hash.content | b64decode | trim) == 'initial-hash'
+  tags: [bootstrap, onedrive, sync]
+
+- name: Wait for the OneDrive sync_list resync to finish
+  become: true
+  become_user: "{{ bootstrap_user }}"
+  ansible.builtin.async_status:
+    jid: "{{ bootstrap_onedrive_repair_sync.ansible_job_id }}"
+  register: bootstrap_onedrive_repair_status
+  until: bootstrap_onedrive_repair_status.finished
+  retries: "{{ ((bootstrap_onedrive_sync_timeout | int) / 10) | round(0, 'ceil') | int }}"
+  delay: 10
+  when:
+    - not ansible_check_mode
+    - bootstrap_onedrive_repair_sync.ansible_job_id is defined
+  failed_when: bootstrap_onedrive_repair_status.finished and (bootstrap_onedrive_repair_status.rc | default(1) | int) != 0
   tags: [bootstrap, onedrive, sync]
 
 - name: Remove stale OneDrive authentication log
@@ -174,6 +215,22 @@
     scope: user
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[bootstrap_user][1] }}"
+  tags: [bootstrap, onedrive, service]
+
+- name: Start OneDrive user service after sync_list resync
+  become: true
+  become_user: "{{ bootstrap_user }}"
+  ansible.builtin.systemd:
+    name: onedrive.service
+    state: started
+    scope: user
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[bootstrap_user][1] }}"
+  when:
+    - not ansible_check_mode
+    - bootstrap_onedrive_repair_status is defined
+    - not (bootstrap_onedrive_repair_status.skipped | default(false))
+    - (bootstrap_onedrive_repair_status.rc | default(1) | int) == 0
   tags: [bootstrap, onedrive, service]
 
 - name: Display service enabled message
