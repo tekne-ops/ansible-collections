@@ -1,15 +1,19 @@
 [Match]
 Name=br0
-Host={{ network_hostname_raw }}
 
 [Link]
 RequiredForOnline=routable
 
 [Network]
 DHCP=ipv4
-IPv6AcceptRA=no
+IPv6AcceptRA={{ 'yes' if network_ipv6_accept_ra | bool else 'no' }}
+{% if network_ipv6_accept_ra | bool -%}
+# Stable address on the host bridge. Client links use privacy extensions.
+IPv6PrivacyExtensions=no
+{% endif -%}
 DNSDefaultRoute={{ network_dns_default_route }}
 DNSOverTLS={{ network_dns_over_tls }}
+LLMNR={{ network_dns_llmnr }}
 # DNS=127.0.0.53
 # Address=192.168.135.5/24
 # Gateway=192.168.135.1
@@ -18,3 +22,12 @@ DNSOverTLS={{ network_dns_over_tls }}
 UseDNS={{ network_dhcp_use_dns }}
 UseHostname=no
 UseDomains={{ network_dhcp_use_domains }}
+{% if network_ipv6_accept_ra | bool %}
+[IPv6AcceptRA]
+UseDNS={{ network_dhcp_use_dns }}
+UseDomains={{ network_dhcp_use_domains }}
+
+[DHCPv6]
+UseDNS={{ network_dhcp_use_dns }}
+UseDomains={{ network_dhcp_use_domains }}
+{% endif %}

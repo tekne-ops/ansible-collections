@@ -25,7 +25,7 @@
     group: root
     mode: '0644'
   when: network_hostname in network_wifi_hosts
-  notify: Restart systemd-networkd
+  notify: Reload systemd-networkd
   tags:
     - network-host
 
@@ -34,7 +34,7 @@
     path: /etc/systemd/network/80-wifi-station.network
     state: absent
   when: network_hostname not in network_wifi_hosts
-  notify: Restart systemd-networkd
+  notify: Reload systemd-networkd
   tags:
     - network-host
 
@@ -46,7 +46,7 @@
     group: root
     mode: '0644'
   when: network_hostname in network_ethernet_hosts
-  notify: Restart systemd-networkd
+  notify: Reload systemd-networkd
   tags:
     - network-host
 
@@ -55,7 +55,7 @@
     path: /etc/systemd/network/89-ethernet.network
     state: absent
   when: network_hostname not in network_ethernet_hosts
-  notify: Restart systemd-networkd
+  notify: Reload systemd-networkd
   tags:
     - network-host
 
@@ -76,7 +76,7 @@
     owner: root
     group: root
     mode: '0644'
-  notify: Restart systemd-networkd
+  notify: Reload systemd
   tags:
     - network-host
 
@@ -88,15 +88,16 @@
   tags:
     - network-host
 
-# DNS policy: strict DoT in resolved; ASTER uses DHCP nameservers, others pin Quad9/Google
-- name: Install systemd-resolvconf (VPN/DHCP clients that call resolvconf)
+# DNS policy: strict DoT to pinned Quad9/Google resolvers on every host.
+- name: Remove superseded network packages
   community.general.pacman:
-    name: systemd-resolvconf
-    state: present
-  when: network_resolved_manage | bool
+    name:
+      - wpa_supplicant
+      - systemd-resolvconf
+    state: absent
   tags:
     - network-host
-    - dns
+    - packages
 
 - name: Point /etc/resolv.conf at the systemd-resolved stub
   ansible.builtin.file:
@@ -159,7 +160,7 @@
     - /etc/systemd/network/80-wifi-station.network.d
     - /etc/systemd/network/89-ethernet.network.d
     - /etc/systemd/network/25-br0.network.d
-  notify: Restart systemd-networkd
+  notify: Reload systemd-networkd
   tags:
     - network-host
     - dns
@@ -195,7 +196,7 @@
     group: root
     mode: '0644'
   when: network_hostname == 'THEMIS'
-  notify: Restart systemd-networkd
+  notify: Reload systemd-networkd
   tags:
     - network-host
 
@@ -207,7 +208,7 @@
     group: root
     mode: '0644'
   when: network_hostname == 'THEMIS'
-  notify: Restart systemd-networkd
+  notify: Reload systemd-networkd
   tags:
     - network-host
 
@@ -219,11 +220,11 @@
     group: root
     mode: '0644'
   when: network_hostname == 'THEMIS'
-  notify: Restart systemd-networkd
+  notify: Reload systemd-networkd
   tags:
     - network-host
 
-- name: Flush handlers so networkd restarts with new config before enabling WiFi
+- name: Flush handlers so networkd reloads with new config before enabling WiFi
   ansible.builtin.meta: flush_handlers
   tags:
     - network-host
@@ -251,6 +252,30 @@
     - network-host
     - wifi
     - packages
+
+- name: Ensure iwd configuration directory exists (ASTER only)
+  ansible.builtin.file:
+    path: /etc/iwd
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: network_hostname == 'ASTER'
+  tags:
+    - network-host
+    - wifi
+
+- name: Deploy iwd main configuration (ASTER only)
+  ansible.builtin.copy:
+    src: iwd-main.conf
+    dest: /etc/iwd/main.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: network_hostname == 'ASTER'
+  tags:
+    - network-host
+    - wifi
 
 - name: Enable laptop services (ASTER only)
   ansible.builtin.systemd:
@@ -308,8 +333,9 @@
     - network-host
 
 - name: Check whether outbound network is already up (ASTER)
-  ansible.builtin.command:
-    cmd: ping -c 1 -W 2 archlinux.org
+  ansible.builtin.shell: |
+    /usr/lib/systemd/systemd-networkd-wait-online --any --ipv4 --dns --timeout=3 \
+      && resolvectl query --cache=no archlinux.org
   register: network_outbound_up
   changed_when: false
   failed_when: false
@@ -444,17 +470,18 @@
 # Wait for Network Connectivity
 # =============================================================================
 
-- name: Flush handlers to restart networkd if config changed
+- name: Flush handlers to reload networkd if config changed
   ansible.builtin.meta: flush_handlers
   tags:
     - network-host
 
-- name: Wait for network connectivity
-  ansible.builtin.command:
-    cmd: ping -c 1 -W 2 archlinux.org
+- name: Wait for IPv4 connectivity and DNS
+  ansible.builtin.shell: |
+    /usr/lib/systemd/systemd-networkd-wait-online --any --ipv4 --dns --timeout=5 \
+      && resolvectl query --cache=no archlinux.org
   register: network_connectivity_check
   until: network_connectivity_check.rc == 0
-  retries: 30
+  retries: 10
   delay: 2
   changed_when: false
   when: not network_install_chroot_phase | bool

@@ -10,7 +10,7 @@ argument_specs:
         required: false
         type: str
       network_hostname_raw:
-        description: The hostname raw value for the network role.
+        description: Case-sensitive hostname shown in debug output. Network units are not matched on Host=.
         required: false
         type: str
       network_wifi_hosts:
@@ -79,7 +79,7 @@ argument_specs:
           - tlp
           - bolt
       network_install_chroot_phase:
-        description: Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network).
+        description: Skip the live IPv4 and DNS check during arch-chroot install (live ISO already verified network).
         required: false
         type: bool
         default: false
@@ -90,10 +90,11 @@ argument_specs:
         default: true
       network_dns_from_dhcp:
         description:
-          - 'ASTER: DHCP nameservers from the router, contacted only with strict DoT. Other hosts: pin Quad9 then Google (Cablecolor/Tigo drop port 53;'
-          - Tigo blocks 1.1.1.1:853).
+          - When false (default on every host), pin Quad9 then Google and ignore DHCP DNS.
+          - Cablecolor/Tigo drop much of port 53; Tigo blocks 1.1.1.1:853.
         required: false
         type: bool
+        default: false
       network_dns_servers:
         description: The dns servers value for the network role.
         required: false
@@ -111,12 +112,39 @@ argument_specs:
         elements: str
         default: []
       network_dns_search_domains:
-        description: The dns search domains value for the network role.
+        description: Search suffixes written to resolved Domains=.
         required: false
         type: list
         elements: str
         default:
           - tekne.sv
+      network_dns_route_domains:
+        description: Route-only domains appended to resolved Domains=. "~." makes the pinned resolvers the default DNS route.
+        required: false
+        type: list
+        elements: str
+        default:
+          - "~."
+      network_dns_llmnr:
+        description: Global and per-link LLMNR setting.
+        required: false
+        type: str
+        default: 'no'
+      network_dns_stale_retention_sec:
+        description: How long resolved may serve expired cache records.
+        required: false
+        type: str
+        default: 30min
+      network_ipv6_accept_ra:
+        description: Accept IPv6 router advertisements on Wi-Fi, Ethernet, and br0.
+        required: false
+        type: bool
+        default: true
+      network_ipv6_privacy_extensions:
+        description: IPv6 privacy extensions on Wi-Fi and Ethernet. br0 stays stable.
+        required: false
+        type: str
+        default: 'yes'
       network_dns_over_tls:
         description: The dns over tls value for the network role.
         required: false

@@ -32,14 +32,15 @@ network_laptop_service_packages:
   - tlp
   - bolt
 
-# Skip archlinux.org ping loop during arch-chroot install (live ISO already verified network)
+# Skip the live IPv4/DNS check during arch-chroot install (live ISO already verified network)
 network_install_chroot_phase: "{{ install_chroot_phase | default(false) }}"
 
 # DNS (single drop-in: /etc/systemd/resolved.conf.d/95-dns.conf)
 network_resolved_manage: true
-# ASTER: DHCP nameservers from the router, contacted only with strict DoT.
-# Other hosts: pin Quad9 then Google (Cablecolor/Tigo drop port 53; Tigo blocks 1.1.1.1:853).
-network_dns_from_dhcp: "{{ network_hostname == 'ASTER' }}"
+# Every host pins Quad9 then Google. DHCP and IPv6 RA nameservers are ignored:
+# strict DoT cannot authenticate a resolver that arrives as a bare IP.
+# Cablecolor/Tigo drop much of port 53; Tigo blocks 1.1.1.1:853.
+network_dns_from_dhcp: false
 network_dns_servers:
   - 9.9.9.9#dns.quad9.net
   - 149.112.112.112#dns.quad9.net
@@ -49,9 +50,20 @@ network_dns_servers:
 network_dns_fallback: []
 network_dns_search_domains:
   - tekne.sv
+# "~." keeps global resolvers as the default DNS route. A more-specific
+# per-link domain (for example a VPN split-DNS suffix) still wins.
+network_dns_route_domains:
+  - "~."
 network_dns_over_tls: 'yes'
 network_dnssec: 'no'
 network_dns_cache: 'yes'
+network_dns_llmnr: 'no'
+# Serve unexpired cache entries through a short upstream DoT outage.
+network_dns_stale_retention_sec: '30min'
 network_dhcp_use_dns: "{{ 'yes' if network_dns_from_dhcp | bool else 'no' }}"
 network_dhcp_use_domains: 'no'
 network_dns_default_route: "{{ 'yes' if network_dns_from_dhcp | bool else 'no' }}"
+
+# SLAAC on the managed link, DHCPv4 for IPv4. Bridge member ports stay IPv6-off.
+network_ipv6_accept_ra: true
+network_ipv6_privacy_extensions: 'yes'

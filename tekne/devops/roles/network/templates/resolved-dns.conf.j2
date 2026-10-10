@@ -2,26 +2,33 @@
 #
 # DNSOverTLS=yes: every resolver is reached on 853. Lookups fail if a server
 # has no DoT. FallbackDNS= clears compiled-in plaintext resolvers.
+# LLMNR is off. StaleRetentionSec keeps expired records usable during a
+# short upstream outage. "~." in Domains makes these global servers the
+# default DNS route without overriding a longer per-link split-DNS suffix.
 #
-{% if network_dns_from_dhcp | bool %}
+{% if network_dns_from_dhcp | bool -%}
 # This host uses DHCP nameservers (no DNS= pin). systemd-networkd UseDNS=yes
 # plus DNSDefaultRoute=yes feed those IPs into resolved; they still go via DoT.
-{% else %}
-# Pinned DoT resolvers (not DHCP). Cablecolor drops much of port 53;
-# Tigo blocks Cloudflare DoT — Quad9 then Google.
+{% else -%}
+# Pinned DoT resolvers (not DHCP or IPv6 RA). Cablecolor drops much of port 53;
+# Tigo blocks Cloudflare DoT — Quad9 then Google. Each address is IP#hostname
+# so the certificate can be checked against a DNS name.
 {% endif %}
 [Resolve]
-{% if network_dns_search_domains | length > 0 %}
-Domains={{ network_dns_search_domains | join(' ') }}
-{% endif %}
-{% if not (network_dns_from_dhcp | bool) and network_dns_servers | length > 0 %}
+{% set _dns_domains = (network_dns_search_domains | default([])) + (network_dns_route_domains | default([])) -%}
+{% if _dns_domains | length > 0 -%}
+Domains={{ _dns_domains | unique | join(' ') }}
+{% endif -%}
+{% if not (network_dns_from_dhcp | bool) and network_dns_servers | length > 0 -%}
 DNS={{ network_dns_servers | join(' ') }}
-{% endif %}
-{% if network_dns_fallback | length > 0 %}
+{% endif -%}
+{% if network_dns_fallback | length > 0 -%}
 FallbackDNS={{ network_dns_fallback | join(' ') }}
-{% else %}
+{% else -%}
 FallbackDNS=
 {% endif %}
 DNSOverTLS={{ network_dns_over_tls }}
 DNSSEC={{ network_dnssec }}
 Cache={{ network_dns_cache }}
+LLMNR={{ network_dns_llmnr }}
+StaleRetentionSec={{ network_dns_stale_retention_sec }}
