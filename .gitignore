@@ -16,9 +16,11 @@ eggs/
 .eggs/
 lib/
 lib64/
-# Installed Galaxy collections (ansible-galaxy collection install)
+# Installed Galaxy collections. The tekne entry is a symlink to the source
+# tree so Ansible's ansible_collections/<namespace>/<name> search succeeds.
 tekne/ansible_collections/
-ansible_collections/
+ansible_collections/*
+!ansible_collections/tekne
 .ansible/
 parts/
 sdist/

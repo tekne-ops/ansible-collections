@@ -13,22 +13,28 @@ argument_specs:
         description: Case-sensitive hostname shown in debug output. Network units are not matched on Host=.
         required: false
         type: str
+      network_manage_bridge:
+        description: Deploy the br0 bridge units and the SSH drop-in.
+        required: false
+        type: bool
+        default: false
+      network_manage_laptop:
+        description: Install laptop services and connect Wi-Fi when network_connect_wifi is true.
+        required: false
+        type: bool
+        default: false
       network_wifi_hosts:
-        description: 'WiFi .network unit: ASTER only (iwd). Ethernet: workstations/VMs, not THEMIS (br0).'
+        description: Hostnames that receive the iwd Wi-Fi .network unit.
         required: false
         type: list
         elements: str
-        default:
-          - ASTER
+        default: []
       network_ethernet_hosts:
-        description: The ethernet hosts value for the network role.
+        description: Hostnames that receive the Ethernet .network unit.
         required: false
         type: list
         elements: str
-        default:
-          - ASTER
-          - YUGEN
-          - KVM
+        default: []
       network_config_hosts:
         description: The config hosts value for the network role.
         required: false

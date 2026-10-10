@@ -11,28 +11,23 @@ argument_specs:
         type: bool
         default: false
       gpu_nvidia_hostnames:
-        description: Discrete NVIDIA only (desktop).
+        description: Hostnames that receive discrete NVIDIA packages.
         required: false
         type: list
         elements: str
-        default:
-          - YUGEN
+        default: []
       gpu_hybrid_hostnames:
-        description: The hybrid hostnames value for the gpu role.
+        description: Hostnames that receive hybrid Intel plus NVIDIA packages.
         required: false
         type: list
         elements: str
-        default:
-          - ASTER
+        default: []
       gpu_intel_hostnames:
-        description: The intel hostnames value for the gpu role.
+        description: Hostnames documented as Intel or Mesa only. Unlisted hosts use that path too.
         required: false
         type: list
         elements: str
-        default:
-          - THEMIS
-          - HEPHAESTUS
-          - KVM
+        default: []
       gpu_nvidia_packages:
         description: The nvidia packages value for the gpu role.
         required: false

@@ -1,38 +1,23 @@
-Role Name
-=========
+# nftables
 
-A brief description of the role goes here.
+Installs nftables and writes `/etc/nftables.conf` from one of three policies:
 
-Requirements
-------------
+- `server.conf` when the hostname is in `nftables_server_hosts`
+- `workstation-docker.conf` when the hostname is in `nftables_docker_hosts` and is not a server host
+- `workstation.conf` otherwise
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Server and Docker policies allow the ICMPv6 types SLAAC needs and DHCPv6 replies. The workstation policy allows DHCPv6 replies. During the Arch install chroot the service is enabled and left stopped.
 
-Role Variables
---------------
+Membership lists are empty unless a play sets them. Tekne playbooks load `inventories/host_profiles/<HOSTNAME>.yml`.
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+## Variables
 
-Dependencies
-------------
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `nftables_server_hosts` | `[]` | Hostnames that receive the server policy |
+| `nftables_docker_hosts` | `[]` | Hostnames that receive the Docker workstation policy |
+| `nftables_install_chroot_phase` | `install_chroot_phase` | Enable the unit without starting it |
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+## Tags
 
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+`nftables`, `packages`, `config`

@@ -1,6 +1,6 @@
 # Network Role
 
-Configures systemd-networkd, systemd-resolved DNS policy, THEMIS bridge (br0) and SSH drop-in, ASTER WiFi via iwd, and waits for outbound connectivity before later roles run.
+Configures systemd-networkd, systemd-resolved DNS policy, an optional bridge, optional laptop Wi-Fi, and waits for outbound connectivity before later roles run. `network_manage_bridge`, `network_manage_laptop`, `network_wifi_hosts`, and `network_ethernet_hosts` come from `inventories/host_profiles`. They are off unless that profile sets them.
 
 ## What It Does
 

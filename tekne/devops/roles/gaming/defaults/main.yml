@@ -17,14 +17,12 @@ gaming_packages:
   - noto-fonts-cjk
   # - lib32-pcsclite
 
-# Hostnames that receive gaming packages, limits, schedtoold, gamemode
-gaming_hosts:
-  - YUGEN
-  - ASTER
+# Hostnames that receive gaming packages, limits, schedtoold, gamemode.
+# Membership comes from inventories/host_profiles.
+gaming_hosts: []
 
-# YUGEN-only NVIDIA Xorg drop-in (monitor-specific; do not deploy on ASTER)
-gaming_xorg_hosts:
-  - YUGEN
+# NVIDIA Xorg drop-in. Membership comes from inventories/host_profiles.
+gaming_xorg_hosts: []
 
 # File destinations
 gaming_xorg_conf_dest: /etc/X11/xorg.conf.d/20-yugen-nvidia.conf

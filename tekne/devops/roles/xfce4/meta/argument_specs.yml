@@ -106,16 +106,13 @@ argument_specs:
         required: false
         type: list
         elements: str
-        default:
-          - ASTER
+        default: []
       xfce4_lightdm_hosts:
         description: Hosts that receive LightDM packages, greeter config, and backgrounds.
         required: false
         type: list
         elements: str
-        default:
-          - ASTER
-          - YUGEN
+        default: []
       xfce4_lightdm_service:
         description: The lightdm service value for the xfce4 role.
         required: false

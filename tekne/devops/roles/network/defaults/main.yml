@@ -3,13 +3,12 @@
 network_hostname: "{{ hostname | default(ansible_facts['hostname']) | upper }}"
 network_hostname_raw: "{{ cached_hostname_raw | default(ansible_facts['hostname']) }}"
 
-# WiFi .network unit: ASTER only (iwd). Ethernet: workstations/VMs, not THEMIS (br0).
-network_wifi_hosts:
-  - ASTER
-network_ethernet_hosts:
-  - ASTER
-  - YUGEN
-  - KVM
+# Host membership is set by inventories/host_profiles. Empty means the feature
+# stays off, so this role can run on a machine that is not one of the Tekne hosts.
+network_manage_bridge: false
+network_manage_laptop: false
+network_wifi_hosts: []
+network_ethernet_hosts: []
 network_config_hosts: "{{ (network_wifi_hosts + network_ethernet_hosts) | unique }}"
 
 # WiFi (ASTER only); set passphrase in vault

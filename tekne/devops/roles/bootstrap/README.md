@@ -36,7 +36,7 @@ Post-install bootstrap: installs extra packages, runs OneDrive first sync (with 
 | `bootstrap_onedrive_sync_timeout` | `3600` | First sync timeout (seconds) |
 | `bootstrap_bluetooth_name` | `{{ ansible_hostname \| default('BlueZ') }}` | Bluetooth device name |
 | `bootstrap_xfce_wallpaper` | Path in Pictures/Wallpapers | Wallpaper image path |
-| `bootstrap_xfce_monitors` | `eDP-1`, `DP-1-1` | Monitor names for wallpaper (override per host in playbook) |
+| `bootstrap_xfce_monitors` | empty | Monitor names for wallpaper. Tekne host profiles set the outputs. |
 | `bootstrap_xfce_cursor_theme` | `Bibata-Original-Amber` | Cursor theme |
 | `bootstrap_xfce_wm_theme` | `minimal-grey2` | Window manager theme |
 | `bootstrap_xfce_gtk_theme` | `Adwaita-dark` | GTK theme |
@@ -55,7 +55,7 @@ Post-install bootstrap: installs extra packages, runs OneDrive first sync (with 
 
 - **OneDrive:** `bootstrap_onedrive_config_dir: "/home/dvaliente/.config/onedrive"` (fixed path for sync/service).
 - **Symlinks:** `bootstrap_symlinks` – list of `src`/`dest`. Examples: Documents, notes, bashrc, Remmina, SSH config, Pictures, avatar (`.face`, `.face.icon`), `bin/asd`. SSH identity keys come from the user role. Cursor is restored by `bootstrap_cursor_restore`.
-- **Bluetooth:** `bootstrap_bluetooth_config` – list of `regexp`/`line` for `/etc/bluetooth/main.conf` (Name, AutoEnable, SessionMode, StreamMode, NameResolving, MultiProfile, ControllerMode, FastConnectable, JustWorksRepairing).
+- **Bluetooth:** `bootstrap_bluetooth_config` – list of `regexp`/`line` for `/etc/bluetooth/main.conf` (Name, AutoEnable, SessionMode, StreamMode, NameResolving, MultiProfile, ControllerMode, FastConnectable, JustWorksRepairing). `JustWorksRepairing` is `always` so a mouse can initiate Just Works pairing without a confirmation dialog. `FastConnectable` stays `false` because the Aerox 9 Bluetooth link is BLE and classic fast page scan prevents that connection.
 
 ## Task Files
 
@@ -100,7 +100,7 @@ Typical links (customize via `bootstrap_symlinks`): OneDrive/Documents → ~/Doc
 
 ## Example Playbook
 
-Playbook typically sets host-specific `bootstrap_xfce_monitors` (e.g. ASTER: eDP-1, DP-1-1; YUGEN: DP-1, DP-2, DP-3):
+Tekne playbooks set `bootstrap_xfce_monitors` from `inventories/host_profiles`. ASTER uses `eDP-1` and `DP-1-1`. YUGEN uses `DP-1`, `DP-2`, and `DP-3`.
 
 ```yaml
 - hosts: localhost
@@ -110,7 +110,7 @@ Playbook typically sets host-specific `bootstrap_xfce_monitors` (e.g. ASTER: eDP
     - role: tekne.devops.bootstrap
       vars:
         bootstrap_user: dvaliente
-        bootstrap_xfce_monitors: ["DP-1", "DP-2", "DP-3"]  # YUGEN
+        bootstrap_xfce_monitors: ["DP-1", "DP-2", "DP-3"]
 ```
 
 ## Notes

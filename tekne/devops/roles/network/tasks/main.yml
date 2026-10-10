@@ -173,7 +173,7 @@
     owner: root
     group: root
     mode: '0755'
-  when: network_hostname == 'THEMIS'
+  when: network_manage_bridge | bool
   tags:
     - network-host
 
@@ -184,7 +184,7 @@
     owner: root
     group: root
     mode: '0644'
-  when: network_hostname == 'THEMIS'
+  when: network_manage_bridge | bool
   tags:
     - network-host
 
@@ -195,7 +195,7 @@
     owner: root
     group: root
     mode: '0644'
-  when: network_hostname == 'THEMIS'
+  when: network_manage_bridge | bool
   notify: Reload systemd-networkd
   tags:
     - network-host
@@ -207,7 +207,7 @@
     owner: root
     group: root
     mode: '0644'
-  when: network_hostname == 'THEMIS'
+  when: network_manage_bridge | bool
   notify: Reload systemd-networkd
   tags:
     - network-host
@@ -219,7 +219,7 @@
     owner: root
     group: root
     mode: '0644'
-  when: network_hostname == 'THEMIS'
+  when: network_manage_bridge | bool
   notify: Reload systemd-networkd
   tags:
     - network-host
@@ -236,7 +236,7 @@
     owner: root
     group: root
     mode: '0644'
-  when: network_hostname == 'ASTER'
+  when: network_manage_laptop | bool
   notify: Restart TLP
   tags:
     - network-host
@@ -247,7 +247,7 @@
     name: "{{ network_laptop_service_packages }}"
     state: present
     extra_args: "--noconfirm --needed"
-  when: network_hostname == 'ASTER'
+  when: network_manage_laptop | bool
   tags:
     - network-host
     - wifi
@@ -260,7 +260,7 @@
     owner: root
     group: root
     mode: '0755'
-  when: network_hostname == 'ASTER'
+  when: network_manage_laptop | bool
   tags:
     - network-host
     - wifi
@@ -272,7 +272,7 @@
     owner: root
     group: root
     mode: '0644'
-  when: network_hostname == 'ASTER'
+  when: network_manage_laptop | bool
   tags:
     - network-host
     - wifi
@@ -287,7 +287,7 @@
     - thermald.service
     - tlp.service
     - bolt.service
-  when: network_hostname == 'ASTER'
+  when: network_manage_laptop | bool
   tags:
     - network-host
     - wifi
@@ -303,7 +303,7 @@
     - tlp.service
     - bolt.service
   when:
-    - network_hostname == 'ASTER'
+    - network_manage_laptop | bool
     - not network_install_chroot_phase | bool
   tags:
     - network-host
@@ -340,7 +340,7 @@
   changed_when: false
   failed_when: false
   when:
-    - network_hostname == 'ASTER'
+    - network_manage_laptop | bool
     - network_connect_wifi | bool
   tags:
     - network-host
@@ -353,7 +353,7 @@
       - network_wifi_passphrase | length > 0
     fail_msg: "network_wifi_passphrase (or os_wifi_passphrase in vault) must be set for ASTER WiFi connection."
   when:
-    - network_hostname == 'ASTER'
+    - network_manage_laptop | bool
     - network_connect_wifi | bool
     - network_outbound_up.rc | default(1) != 0
   tags:
@@ -362,7 +362,7 @@
 
 - name: Prepare WiFi for live connect (ASTER)
   when:
-    - network_hostname == 'ASTER'
+    - network_manage_laptop | bool
     - network_connect_wifi | bool
     - network_outbound_up.rc | default(1) != 0
   tags:
@@ -406,7 +406,7 @@
   delay: "{{ network_wifi_detect_delay }}"
   changed_when: false
   when:
-    - network_hostname == 'ASTER'
+    - network_manage_laptop | bool
     - network_connect_wifi | bool
     - network_outbound_up.rc | default(1) != 0
     - network_wifi_interface | default('') | length == 0
@@ -423,7 +423,7 @@
         else ((network_wifi_interface_cmd.stdout | trim) | default('wlan0'))
       }}
   when:
-    - network_hostname == 'ASTER'
+    - network_manage_laptop | bool
     - network_connect_wifi | bool
     - network_outbound_up.rc | default(1) != 0
   tags:
@@ -435,7 +435,7 @@
     path: "/sys/class/net/{{ network_wifi_interface_resolved }}"
     timeout: 15
   when:
-    - network_hostname == 'ASTER'
+    - network_manage_laptop | bool
     - network_connect_wifi | bool
     - network_outbound_up.rc | default(1) != 0
   tags:
@@ -457,7 +457,7 @@
   retries: 6
   delay: 5
   when:
-    - network_hostname == 'ASTER'
+    - network_manage_laptop | bool
     - network_connect_wifi | bool
     - network_outbound_up.rc | default(1) != 0
   changed_when: false

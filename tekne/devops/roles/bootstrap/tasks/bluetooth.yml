@@ -32,7 +32,8 @@
       - "  SessionMode: ertm"
       - "  StreamMode: streaming"
       - "  MultiProfile: multiple"
-      - "  FastConnectable: true"
+      - "  FastConnectable: false"
+      - "  JustWorksRepairing: always"
   when: bootstrap_bluetooth_config_check.stat.exists
   tags: [bootstrap, bluetooth]
 

@@ -60,6 +60,16 @@
   failed_when: bootstrap_onedrive_repair_status.finished and (bootstrap_onedrive_repair_status.rc | default(1) | int) != 0
   tags: [bootstrap, onedrive, sync]
 
+- name: Explain how to authenticate OneDrive
+  ansible.builtin.debug:
+    msg: >-
+      OneDrive has no local database. This run does not prompt for Microsoft
+      sign-in. Run playbooks/onedrive-auth.sh once, then converge again.
+  when:
+    - not bootstrap_onedrive_db_check.stat.exists
+    - not (bootstrap_onedrive_interactive | bool)
+  tags: [bootstrap, onedrive, sync]
+
 - name: Remove stale OneDrive authentication log
   ansible.builtin.file:
     path: "{{ bootstrap_onedrive_auth_log }}"
@@ -67,6 +77,7 @@
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+    - bootstrap_onedrive_interactive | bool
   tags: [bootstrap, onedrive, sync]
 
 - name: Start OneDrive first sync in background
@@ -81,6 +92,7 @@
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+    - bootstrap_onedrive_interactive | bool
   tags: [bootstrap, onedrive, sync]
 
 - name: Wait for OneDrive authentication progress
@@ -109,6 +121,7 @@
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+    - bootstrap_onedrive_interactive | bool
   changed_when: false
   tags: [bootstrap, onedrive, sync]
 
@@ -119,6 +132,7 @@
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+    - bootstrap_onedrive_interactive | bool
   tags: [bootstrap, onedrive, sync]
 
 - name: Record OneDrive authentication log text
@@ -127,6 +141,7 @@
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+    - bootstrap_onedrive_interactive | bool
     - bootstrap_onedrive_auth_instructions.content is defined
   tags: [bootstrap, onedrive, sync]
 
@@ -139,6 +154,7 @@
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+    - bootstrap_onedrive_interactive | bool
     - bootstrap_onedrive_auth_text is defined
     - "'Enter the response uri' in bootstrap_onedrive_auth_text or 'empty or invalid response' in bootstrap_onedrive_auth_text"
   tags: [bootstrap, onedrive, sync]
@@ -149,6 +165,7 @@
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+    - bootstrap_onedrive_interactive | bool
     - bootstrap_onedrive_auth_text is defined
     - "'Enter the following code' in bootstrap_onedrive_auth_text or 'devicelogin' in bootstrap_onedrive_auth_text"
   tags: [bootstrap, onedrive, sync]
@@ -174,6 +191,7 @@
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+    - bootstrap_onedrive_interactive | bool
     - bootstrap_onedrive_auth_text is defined
     - "'Enter the following code' in bootstrap_onedrive_auth_text or 'devicelogin' in bootstrap_onedrive_auth_text"
   tags: [bootstrap, onedrive, sync]
@@ -190,6 +208,7 @@
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+    - bootstrap_onedrive_interactive | bool
   tags: [bootstrap, onedrive, sync]
 
 - name: Display sync completion message
@@ -202,6 +221,7 @@
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+    - bootstrap_onedrive_interactive | bool
   tags: [bootstrap, onedrive, sync]
 
 # ============================================

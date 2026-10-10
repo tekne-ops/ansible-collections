@@ -19,33 +19,33 @@ argument_specs:
         type: bool
         default: false
       os_cpupower_governor:
-        description: 'CPU governor: performance on YUGEN, schedutil on THEMIS; ASTER uses TLP only.'
+        description: CPU governor written to the cpupower configuration.
         required: false
         type: str
+        default: schedutil
       os_cpupower_start_hosts:
-        description: The cpupower start hosts value for the os role.
+        description: Hostnames that start the cpupower service.
         required: false
         type: list
         elements: str
-        default:
-          - YUGEN
-          - THEMIS
+        default: []
       os_cpupower_skip_hosts:
-        description: The cpupower skip hosts value for the os role.
+        description: Hostnames that do not receive a cpupower governor line.
         required: false
         type: list
         elements: str
-        default:
-          - ASTER
+        default: []
       os_irqbalance_start_hosts:
-        description: The irqbalance start hosts value for the os role.
+        description: Hostnames that start irqbalance.
         required: false
         type: list
         elements: str
-        default:
-          - YUGEN
-          - THEMIS
-          - ASTER
+        default: []
+      os_manage_server_services:
+        description: Enable cronie, irqbalance, and sshd as the server service set.
+        required: false
+        type: bool
+        default: false
       os_clone_tekne_repos:
         description: The clone tekne repos value for the os role.
         required: false

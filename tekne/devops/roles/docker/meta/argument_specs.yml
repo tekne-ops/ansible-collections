@@ -14,9 +14,7 @@ argument_specs:
         required: false
         type: list
         elements: str
-        default:
-          - YUGEN
-          - THEMIS
+        default: []
       docker_daemon_json_dest:
         description: The daemon json dest value for the docker role.
         required: false

@@ -31,6 +31,10 @@ bootstrap_onedrive_sync_timeout: 3600
 # Temporary log used to expose the interactive device-authentication URL.
 bootstrap_onedrive_auth_log: /tmp/tekne-onedrive-first-sync.log
 
+# Normal convergence does not wait at a Microsoft device-login prompt.
+# playbooks/onedrive-auth.yml sets this for the one-time sign-in.
+bootstrap_onedrive_interactive: false
+
 # =============================================================================
 # Bluetooth Configuration
 # =============================================================================
@@ -45,10 +49,8 @@ bootstrap_bluetooth_name: "{{ ansible_facts.get('hostname', 'BlueZ') }}"
 # Wallpaper path
 bootstrap_xfce_wallpaper: "{{ bootstrap_home }}/Pictures/Wallpapers/alexander-anderson-bayonet-hellsing-ultimate-4k-wallpaper-uhdpaper.com-231@5@d.jpg"
 
-# Monitor names for wallpaper configuration (host-specific)
-bootstrap_xfce_monitors:
-  - "eDP-1"
-  - "DP-1-1"
+# Monitor names for wallpaper configuration. Host profiles set the real outputs.
+bootstrap_xfce_monitors: []
 
 # Theme settings
 bootstrap_xfce_cursor_theme: "Bibata-Original-Amber"
@@ -116,5 +118,9 @@ bootstrap_bluetooth_config:
   - { regexp: '#NameResolving = true', line: 'NameResolving = true' }
   - { regexp: '#MultiProfile = off', line: 'MultiProfile = multiple' }
   - { regexp: '#ControllerMode = dual', line: 'ControllerMode = dual' }
-  - { regexp: '#FastConnectable = false', line: 'FastConnectable = true' }
-  - { regexp: '#JustWorksRepairing = never', line: 'JustWorksRepairing = confirm' }
+  # Fast Connectable spends the radio on classic page scan. The Aerox 9
+  # Bluetooth mode is BLE and then fails to connect.
+  - { regexp: '^(#)?FastConnectable\s*=', line: 'FastConnectable = false' }
+  # A mouse starts Just Works pairing itself and cannot confirm a prompt.
+  # "confirm" rejects that repair unless a desktop agent answers; "always" accepts it.
+  - { regexp: '^(#)?JustWorksRepairing\s*=', line: 'JustWorksRepairing = always' }

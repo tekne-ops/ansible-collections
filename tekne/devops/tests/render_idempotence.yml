@@ -1,0 +1,31 @@
+---
+- name: Render the resolved DNS drop-in twice
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    tekne_resolved_output: "{{ lookup('env', 'RUNNER_TEMP') | default('/tmp', true) }}/tekne-resolved-idempotence.conf"
+    network_dns_from_dhcp: false
+    network_dns_servers:
+      - 9.9.9.9#dns.quad9.net
+      - 149.112.112.112#dns.quad9.net
+      - 8.8.8.8#dns.google
+      - 8.8.4.4#dns.google
+    network_dns_fallback: []
+    network_dns_search_domains:
+      - tekne.sv
+    network_dns_route_domains:
+      - "~."
+    network_dns_over_tls: "yes"
+    network_dnssec: "no"
+    network_dns_cache: "yes"
+    network_dns_llmnr: "no"
+    network_dns_stale_retention_sec: 30min
+
+  tasks:
+    - name: Render resolved DNS configuration
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../roles/network/templates/resolved-dns.conf.j2"
+        dest: "{{ tekne_resolved_output }}"
+        mode: "0644"

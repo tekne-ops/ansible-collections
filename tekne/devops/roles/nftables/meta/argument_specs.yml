@@ -10,20 +10,17 @@ argument_specs:
         required: false
         type: str
       nftables_server_hosts:
-        description: The server hosts value for the nftables role.
+        description: Hostnames that receive the server firewall.
         required: false
         type: list
         elements: str
-        default:
-          - THEMIS
+        default: []
       nftables_docker_hosts:
-        description: The docker hosts value for the nftables role.
+        description: Hostnames that receive the Docker workstation firewall when they are not server hosts.
         required: false
         type: list
         elements: str
-        default:
-          - THEMIS
-          - YUGEN
+        default: []
       nftables_install_chroot_phase:
         description: The install chroot phase value for the nftables role.
         required: false

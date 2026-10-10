@@ -1,38 +1,25 @@
-Role Name
-=========
+# Docker
 
-A brief description of the role goes here.
+Installs Docker Engine, Docker Compose, and Docker Buildx on Arch. Hosts listed in `docker_daemon_json_hosts` receive `/etc/docker/daemon.json`. Every host that has the packages gets the `dockers` bridge on `192.168.75.0/24`.
 
-Requirements
-------------
+Container DNS uses the LAN gateway and Quad9. Containers cannot use the host stub resolver at `127.0.0.53`.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Membership lists are empty unless a play sets them. Tekne playbooks load `inventories/host_profiles/<HOSTNAME>.yml`.
 
-Role Variables
---------------
+## Variables
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `docker_daemon_json_hosts` | `[]` | Hostnames that receive `daemon.json` |
+| `docker_daemon_json_dest` | `/etc/docker/daemon.json` | Daemon configuration path |
+| `docker_network_name` | `dockers` | Bridge network name |
+| `docker_network_subnet` | `192.168.75.0/24` | Bridge subnet |
+| `docker_dns_servers` | `192.168.135.1`, `9.9.9.9` | Resolver addresses inside containers |
 
-Dependencies
-------------
+## Tags
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+`docker-host`, `config`
 
-Example Playbook
-----------------
+## Requirements
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Arch Linux, `community.general`, and `community.docker`.

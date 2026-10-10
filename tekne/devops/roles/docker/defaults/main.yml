@@ -4,10 +4,9 @@
 
 docker_hostname: "{{ hostname | default(ansible_facts['hostname']) | upper }}"
 
-# Hosts that receive daemon.json performance tuning
-docker_daemon_json_hosts:
-  - YUGEN
-  - THEMIS
+# Hosts that receive daemon.json performance tuning.
+# Membership comes from inventories/host_profiles.
+docker_daemon_json_hosts: []
 
 docker_daemon_json_dest: /etc/docker/daemon.json
 

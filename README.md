@@ -86,13 +86,16 @@ Each role has its own README under `tekne/devops/roles/<role>/README.md` with va
 
 ### From local source (development)
 
-When checked out alongside `ansible-playbooks`:
+When checked out alongside `ansible-playbooks`, the collections repository exposes the standard search path:
+
+```text
+ansible_collections/tekne -> ../tekne
+```
+
+`ansible-playbooks/ansible.cfg` sets `collections_path = ../ansible-collections`. Ansible then finds `tekne.devops` without a Galaxy install. A path that stops at `tekne/devops` does not.
 
 ```bash
-# ansible-playbooks/ansible.cfg sets:
-# collections_path = ../ansible-collections
-
-ansible-galaxy collection install -r ../ansible-playbooks/requirements.yml
+ansible-galaxy collection list tekne.devops
 ```
 
 Or install the collection directly:
@@ -126,16 +129,16 @@ Reference roles by FQCN:
 
 See [`ansible-playbooks`](../ansible-playbooks) for complete playbooks, inventories, and vault configuration.
 
-## Host-Specific Behavior
+## Host profiles
 
-Many roles branch on hostname (read from `/etc/hostname` or Ansible facts):
+Roles do not embed Tekne hostnames. `ansible-playbooks` loads `inventories/host_profiles/<HOSTNAME>.yml` after it reads `/etc/hostname`. That file sets Wi-Fi, bridge, laptop, GPU, LightDM, firewall, gaming, and Docker membership. Running a role without that profile leaves those features off.
 
-| Host | Notable role behavior |
-|------|----------------------|
-| **ASTER** | WiFi via iwd, hybrid Intel+NVIDIA, LightDM, laptop nftables |
-| **YUGEN** | NVIDIA TKG GPU, triple-monitor XFCE wallpaper config |
-| **THEMIS** | br0 bridge, server nftables, cronie/irqbalance/sshd, Docker services |
-| **KVM** | VM network config, standard workstation stack |
+| Host | Profile behavior |
+|------|------------------|
+| **ASTER** | iwd Wi-Fi, laptop services, hybrid Intel+NVIDIA, LightDM, ACPI keys |
+| **YUGEN** | Ethernet, discrete NVIDIA, LightDM, gaming Xorg drop-in, Docker daemon tuning |
+| **THEMIS** | br0 bridge, server services, server firewall, Docker daemon tuning |
+| **KVM** | Ethernet and the Intel/Mesa GPU path |
 
 ## Requirements
 
@@ -167,9 +170,9 @@ roles/<role>/
 └── README.md            # Role documentation
 ```
 
-After editing roles, reinstall or ensure `collections_path` points at `tekne/` so playbooks pick up changes without rebuilding.
+After editing roles, playbooks pick up the working tree through `ansible_collections/tekne`. Reinstall only when a checkout does not have that symlink.
 
-Collection quality checks live in `.github/workflows/collection.yml` and use the repo-local `.yamllint` and `.ansible-lint` configs. They install the Galaxy dependencies, then run yamllint, ansible-lint, `ansible-galaxy collection build`, role syntax checks, and `ansible-test sanity` for galaxy, runtime, changelog, and ansible-doc metadata.
+Collection quality checks live in `.github/workflows/collection.yml`. They install the ranges in `tekne/devops/requirements.yml`, then run yamllint, ansible-lint, `ansible-galaxy collection build`, role syntax checks, two-pass idempotence for the hostname role and the resolved DNS template, and `ansible-test sanity`.
 
 ## Related Repos
 

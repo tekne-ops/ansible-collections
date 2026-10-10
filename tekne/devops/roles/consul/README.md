@@ -1,38 +1,20 @@
-Role Name
-=========
+# Consul
 
-A brief description of the role goes here.
+Creates `/srv/docker/consul` and starts the pinned `hashicorp/consul` image on the `dockers` network at `192.168.75.11`. The container uses the official image user, a TLS domain of `consul.tekne.sv`, and stores the bootstrap and admin tokens under the config directory.
 
-Requirements
-------------
+Run this after the Docker role has created the `dockers` network.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+## Variables
 
-Role Variables
---------------
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `consul_docker_image` | `hashicorp/consul:1.21.5` | Image tag |
+| `consul_docker_network` | `dockers` | Docker network |
+| `consul_docker_ip` | `192.168.75.11` | Address on that network |
+| `consul_directory` | `/srv/docker/consul/config` | Config and token directory |
+| `consul_data_directory` | `/srv/docker/consul/data` | Data directory |
+| `consul_tls_domain` | `consul.tekne.sv` | TLS domain |
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+## Tags
 
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+`consul`, `config`, `docker`

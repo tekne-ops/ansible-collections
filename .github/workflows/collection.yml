@@ -27,17 +27,10 @@ jobs:
         run: |
           ansible-galaxy collection install \
             --collections-path "${GITHUB_WORKSPACE}/.ci-collections" \
-            "amazon.aws:>=7.0.0" \
-            "ansible.posix:>=1.5.0" \
-            "community.docker:>=4.0.0" \
-            "community.general:>=10.0.0"
+            -r requirements.yml
 
-      - name: Expose the collection on the Ansible path
-        run: |
-          rm -rf "${GITHUB_WORKSPACE}/.ci-layout/ansible_collections/tekne/devops"
-          mkdir -p "${GITHUB_WORKSPACE}/.ci-layout/ansible_collections/tekne"
-          cp -a "${GITHUB_WORKSPACE}/tekne/devops" \
-            "${GITHUB_WORKSPACE}/.ci-layout/ansible_collections/tekne/devops"
+      - name: Confirm the collection layout Ansible searches
+        run: test -f "${GITHUB_WORKSPACE}/ansible_collections/tekne/devops/galaxy.yml"
 
       - name: Yamllint
         run: yamllint -c .yamllint tekne/devops .github
@@ -48,7 +41,7 @@ jobs:
       - name: Ansible lint
         working-directory: tekne/devops
         env:
-          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.ci-layout:${{ github.workspace }}/.ci-collections
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}:${{ github.workspace }}/.ci-collections
         run: ansible-lint -c "${GITHUB_WORKSPACE}/.ansible-lint"
 
       - name: Build the collection
@@ -58,7 +51,7 @@ jobs:
       - name: Syntax-check role tests
         working-directory: tekne/devops
         env:
-          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.ci-layout:${{ github.workspace }}/.ci-collections
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}:${{ github.workspace }}/.ci-collections
         run: |
           set -euo pipefail
           status=0
@@ -68,22 +61,25 @@ jobs:
           done
           exit "${status}"
 
-      - name: Targeted idempotence check
+      - name: Execute idempotence checks
         working-directory: tekne/devops
         env:
-          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.ci-layout:${{ github.workspace }}/.ci-collections
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}:${{ github.workspace }}/.ci-collections
         run: |
           set -euo pipefail
           ansible-playbook tests/hostname_idempotence.yml -i localhost,
-          ansible-playbook tests/hostname_idempotence.yml -i localhost, | tee /tmp/idempotence-second.log
-          grep -Eq 'changed=0 .*failed=0' /tmp/idempotence-second.log
+          ansible-playbook tests/hostname_idempotence.yml -i localhost, | tee /tmp/idempotence-hostname.log
+          grep -Eq 'changed=0 .*failed=0' /tmp/idempotence-hostname.log
+          ansible-playbook tests/render_idempotence.yml -i localhost,
+          ansible-playbook tests/render_idempotence.yml -i localhost, | tee /tmp/idempotence-render.log
+          grep -Eq 'changed=0 .*failed=0' /tmp/idempotence-render.log
 
       - name: Sanity checks
         env:
-          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.ci-layout:${{ github.workspace }}/.ci-collections
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}:${{ github.workspace }}/.ci-collections
         run: |
           set -euo pipefail
-          cd "${GITHUB_WORKSPACE}/.ci-layout/ansible_collections/tekne/devops"
+          cd "${GITHUB_WORKSPACE}/ansible_collections/tekne/devops"
           ansible-test sanity --local --python 3.12 \
             --test runtime-metadata \
             --test changelog \

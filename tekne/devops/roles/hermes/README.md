@@ -1,38 +1,23 @@
-Role Name
-=========
+# Hermes
 
-A brief description of the role goes here.
+Ensures boto3 is available, then creates or updates the EC2 instance named `tekne-devops-hermes` from the role defaults (AMI, instance type, subnet, and security groups). AWS credentials are read from the controller environment. The SSH port moves from 22 to `45100` after boot.
 
-Requirements
-------------
+This role talks to AWS. It is not part of the normal THEMIS service tag list. Apply it with `--tags hermes`.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+## Variables
 
-Role Variables
---------------
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `hermes_instance_name` | `tekne-devops-hermes` | EC2 Name tag |
+| `hermes_instance_type` | `t3a.micro` | Instance type |
+| `hermes_aws_region` | `AWS_DEFAULT_REGION` or `us-east-1` | Region |
+| `hermes_ssh_port` | `45100` | SSH port after first boot |
+| `hermes_management_user` | `devops` | Account created on the instance |
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+## Tags
 
-Dependencies
-------------
+`hermes`, `ec2`
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+## Requirements
 
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+`amazon.aws` and AWS credentials in the controller environment.

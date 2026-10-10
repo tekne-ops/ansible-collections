@@ -23,20 +23,17 @@ argument_specs:
           - proton-ge-custom-bin
           - noto-fonts-cjk
       gaming_hosts:
-        description: The hosts value for the gaming role.
+        description: Hostnames that receive gaming packages and limits.
         required: false
         type: list
         elements: str
-        default:
-          - YUGEN
-          - ASTER
+        default: []
       gaming_xorg_hosts:
-        description: The xorg hosts value for the gaming role.
+        description: Hostnames that receive the NVIDIA Xorg drop-in.
         required: false
         type: list
         elements: str
-        default:
-          - YUGEN
+        default: []
       gaming_xorg_conf_dest:
         description: The xorg conf dest value for the gaming role.
         required: false

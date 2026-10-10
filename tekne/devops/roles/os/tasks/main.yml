@@ -112,7 +112,7 @@
     - cronie.service
     - irqbalance.service
     - sshd.service
-  when: os_hostname == 'THEMIS'
+  when: os_manage_server_services | bool
   tags:
     - os
     - themis_services

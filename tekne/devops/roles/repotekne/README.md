@@ -1,38 +1,18 @@
-Role Name
-=========
+# repotekne
 
-A brief description of the role goes here.
+Creates the Tekne package-repo data and AUR cache directories, then starts `fiercebrake/arch:1.1.0` on the `dockers` network at `192.168.75.13`.
 
-Requirements
-------------
+`/srv/docker/repotekne` is the published repo. `/mnt/cache/aur-build-tekne` is the build cache. Image, network, and volume comparisons are strict. The role waits until the container accepts an exec.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+## Variables
 
-Role Variables
---------------
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `repotekne_container_image` | `fiercebrake/arch:1.1.0` | Image tag |
+| `repotekne_docker_ip` | `192.168.75.13` | Address on `dockers` |
+| `repotekne_data_dir` | `/srv/docker/repotekne` | Repository data |
+| `repotekne_cache_dir` | `/mnt/cache/aur-build-tekne` | AUR build cache |
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+## Tags
 
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+`repotekne`, `config`, `docker`

@@ -67,13 +67,11 @@ xfce4_lightdm_unused_packages:
 
 # Laptop user that receives ACPI media-key events.
 xfce4_acpi_user: dvaliente
-xfce4_acpi_hosts:
-  - ASTER
+xfce4_acpi_hosts: []
 
-# Hosts that receive LightDM packages, greeter config, and backgrounds
-xfce4_lightdm_hosts:
-  - ASTER
-  - YUGEN
+# Hosts that receive LightDM packages, greeter config, and backgrounds.
+# Membership comes from inventories/host_profiles.
+xfce4_lightdm_hosts: []
 
 # LightDM service name
 xfce4_lightdm_service: lightdm

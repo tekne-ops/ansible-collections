@@ -1,38 +1,17 @@
-Role Name
-=========
+# Jenkins
 
-A brief description of the role goes here.
+Starts the pinned Jenkins LTS image on the `dockers` network at `192.168.75.12`. The image comparison is strict, so a tag change is a container change.
 
-Requirements
-------------
+Run this after the Docker role has created the `dockers` network. The server playbook exposes it with the `jenkins` tag.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+## Variables
 
-Role Variables
---------------
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `jenkins_docker_image` | `jenkins/jenkins:2.516.3-lts-jdk21` | Image tag |
+| `jenkins_docker_network` | `dockers` | Docker network |
+| `jenkins_docker_ip` | `192.168.75.12` | Address on that network |
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+## Tags
 
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+`jenkins`, `docker`
