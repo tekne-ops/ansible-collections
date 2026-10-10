@@ -72,14 +72,8 @@
 - name: Start OneDrive first sync in background
   become: true
   become_user: "{{ bootstrap_user }}"
-  ansible.builtin.shell:
-    cmd: >-
-      set -o pipefail;
-      {{ bootstrap_onedrive_binary | quote }}
-      {{ bootstrap_onedrive_sync_options }}
-      --confdir={{ bootstrap_onedrive_config_dir | quote }}
-      > {{ bootstrap_onedrive_auth_log | quote }} 2>&1
-    executable: /bin/bash
+  ansible.builtin.command:
+    argv: "{{ ['script', '--quiet', '--return', '--flush', bootstrap_onedrive_auth_log, '--', bootstrap_onedrive_binary] + bootstrap_onedrive_sync_options.split() + ['--confdir=' ~ bootstrap_onedrive_config_dir] }}"
   async: "{{ bootstrap_onedrive_sync_timeout }}"
   poll: 0
   register: bootstrap_onedrive_first_sync
@@ -89,14 +83,33 @@
     - not ansible_check_mode
   tags: [bootstrap, onedrive, sync]
 
-- name: Wait for OneDrive authentication instructions
-  ansible.builtin.wait_for:
-    path: "{{ bootstrap_onedrive_auth_log }}"
-    search_regex: 'https?://'
-    timeout: 60
+- name: Wait for OneDrive authentication progress
+  ansible.builtin.command:
+    argv:
+      - /bin/bash
+      - -c
+      - |
+        log="$1"
+        for _ in $(seq 1 60); do
+          if [[ -f "$log" ]] && grep -E -q 'https?://|Enter the following code|Enter the response uri|could not be initialised|empty or invalid response' "$log"; then
+            exit 0
+          fi
+          sleep 1
+        done
+        printf '%s\n' 'OneDrive did not print authentication instructions within 60 seconds.' >&2
+        if [[ -f "$log" ]]; then
+          printf '%s\n' '----- OneDrive log -----' >&2
+          cat "$log" >&2
+        else
+          printf '%s\n' 'The OneDrive log was not created.' >&2
+        fi
+        exit 1
+      - bash
+      - "{{ bootstrap_onedrive_auth_log }}"
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+  changed_when: false
   tags: [bootstrap, onedrive, sync]
 
 - name: Read OneDrive authentication instructions
@@ -108,12 +121,36 @@
     - not ansible_check_mode
   tags: [bootstrap, onedrive, sync]
 
-- name: Display OneDrive authentication instructions
-  ansible.builtin.debug:
-    msg: "{{ bootstrap_onedrive_auth_instructions.content | b64decode }}"
+- name: Record OneDrive authentication log text
+  ansible.builtin.set_fact:
+    bootstrap_onedrive_auth_text: "{{ bootstrap_onedrive_auth_instructions.content | b64decode }}"
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+    - bootstrap_onedrive_auth_instructions.content is defined
+  tags: [bootstrap, onedrive, sync]
+
+- name: Fail when OneDrive expected a pasted redirect URI
+  ansible.builtin.fail:
+    msg: |
+      OneDrive asked for a browser redirect URI on standard input.
+      Device authentication did not start, so this run cannot answer that prompt.
+      {{ bootstrap_onedrive_auth_text }}
+  when:
+    - not bootstrap_onedrive_db_check.stat.exists
+    - not ansible_check_mode
+    - bootstrap_onedrive_auth_text is defined
+    - "'Enter the response uri' in bootstrap_onedrive_auth_text or 'empty or invalid response' in bootstrap_onedrive_auth_text"
+  tags: [bootstrap, onedrive, sync]
+
+- name: Display OneDrive authentication instructions
+  ansible.builtin.debug:
+    msg: "{{ bootstrap_onedrive_auth_text }}"
+  when:
+    - not bootstrap_onedrive_db_check.stat.exists
+    - not ansible_check_mode
+    - bootstrap_onedrive_auth_text is defined
+    - "'Enter the following code' in bootstrap_onedrive_auth_text or 'devicelogin' in bootstrap_onedrive_auth_text"
   tags: [bootstrap, onedrive, sync]
 
 - name: Wait for user to authenticate with OneDrive
@@ -137,6 +174,8 @@
   when:
     - not bootstrap_onedrive_db_check.stat.exists
     - not ansible_check_mode
+    - bootstrap_onedrive_auth_text is defined
+    - "'Enter the following code' in bootstrap_onedrive_auth_text or 'devicelogin' in bootstrap_onedrive_auth_text"
   tags: [bootstrap, onedrive, sync]
 
 - name: Wait for OneDrive first sync to finish

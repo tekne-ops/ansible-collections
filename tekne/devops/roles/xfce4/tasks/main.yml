@@ -574,7 +574,7 @@
       LightDM Status on {{ xfce4_hostname }}:
       ==================================
       Packages installed: {{ xfce4_lightdm_install_result is success }}
-      Service enabled: {{ xfce4_lightdm_enabled.stdout if xfce4_lightdm_enabled is defined else xfce4_lightdm_service_status.status.UnitFileState }}
+      Service enabled: {{ xfce4_lightdm_enabled.stdout if not (xfce4_lightdm_enabled.skipped | default(false)) else xfce4_lightdm_service_status.status.UnitFileState }}
       Service state: {{ 'not queried during chroot' if xfce4_install_chroot_phase | bool else xfce4_lightdm_service_status.status.ActiveState }}
   when: xfce4_hostname in xfce4_lightdm_hosts
   tags:
