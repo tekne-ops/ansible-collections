@@ -55,26 +55,41 @@ argument_specs:
         required: false
         type: str
         default: en_US.UTF-8
-      os_mirror_country:
-        description: Mirror settings.
-        required: false
-        type: str
-        default: United States
-      os_mirror_count:
-        description: The mirror count value for the os role.
-        required: false
-        type: int
-        default: 100
       os_mirror_protocols:
-        description: The mirror protocols value for the os role.
+        description: Protocols Reflector may select. HTTPS only.
         required: false
         type: str
-        default: https,ftp
+        default: https
       os_mirror_age:
-        description: The mirror age value for the os role.
+        description: Maximum mirror synchronization age in hours.
         required: false
         type: int
-        default: 168
+        default: 24
+      os_mirror_latest:
+        description: How many recently synchronized mirrors Reflector may benchmark.
+        required: false
+        type: int
+        default: 20
+      os_mirror_number:
+        description: How many mirrors to write after sorting.
+        required: false
+        type: int
+        default: 10
+      os_mirror_sort:
+        description: Reflector sort key.
+        required: false
+        type: str
+        default: rate
+      os_parallel_downloads:
+        description: Pacman ParallelDownloads value.
+        required: false
+        type: int
+        default: 5
+      os_pacman_noextract:
+        description: Pacman NoExtract entry that preserves the managed mirrorlist.
+        required: false
+        type: str
+        default: etc/pacman.d/mirrorlist
       os_themis_local_packages:
         description: 'THEMIS-only: local .pkg.tar.zst packages (place in role files/).'
         required: false

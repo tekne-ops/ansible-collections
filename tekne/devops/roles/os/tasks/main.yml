@@ -13,10 +13,11 @@
   tags:
     - os
     - system_config
+    - mirrors
 
-- name: Copy reflector.conf to system
-  ansible.builtin.copy:
-    src: reflector.conf
+- name: Install the reflector steady-state policy
+  ansible.builtin.template:
+    src: reflector.conf.j2
     dest: /etc/xdg/reflector/reflector.conf
     owner: root
     group: root
@@ -24,6 +25,7 @@
   tags:
     - os
     - system_config
+    - mirrors
 
 # =============================================================================
 # CPU power / governor
@@ -260,17 +262,54 @@
 # Mirror Configuration (requires network to be up)
 # =============================================================================
 
+- name: Limit pacman parallel downloads
+  ansible.builtin.lineinfile:
+    path: /etc/pacman.conf
+    regexp: '^#?\s*ParallelDownloads\s*='
+    line: "ParallelDownloads = {{ os_parallel_downloads }}"
+    insertafter: '^\[options\]'
+  tags:
+    - os
+    - mirrors
+
+- name: Keep pacman-mirrorlist from replacing the managed mirrorlist
+  ansible.builtin.lineinfile:
+    path: /etc/pacman.conf
+    regexp: '^#?\s*NoExtract\s*='
+    line: "NoExtract = {{ os_pacman_noextract }}"
+    insertafter: '^\[options\]'
+  tags:
+    - os
+    - mirrors
+
 - name: Generate pacman mirrorlist candidate
   ansible.builtin.command:
     cmd: >-
       /usr/bin/reflector
-      --country '{{ os_mirror_country }}'
-      --latest {{ os_mirror_count }}
-      --sort rate
       --protocol {{ os_mirror_protocols }}
       --age {{ os_mirror_age }}
+      --latest {{ os_mirror_latest }}
+      --number {{ os_mirror_number }}
+      --sort {{ os_mirror_sort }}
       --save /tmp/ansible-pacman-mirrorlist
   changed_when: false
+  tags:
+    - os
+    - mirrors
+
+- name: Read the reflector candidate
+  ansible.builtin.slurp:
+    src: /tmp/ansible-pacman-mirrorlist
+  register: os_mirrorlist_candidate
+  tags:
+    - os
+    - mirrors
+
+- name: Require the reflector candidate to list servers
+  ansible.builtin.assert:
+    that:
+      - (os_mirrorlist_candidate.content | b64decode) is search('(?m)^Server = ')
+    fail_msg: Reflector wrote a mirrorlist with no Server entries.
   tags:
     - os
     - mirrors
@@ -283,6 +322,23 @@
     owner: root
     group: root
     mode: "0644"
+  tags:
+    - os
+    - mirrors
+
+- name: Enable the weekly reflector timer
+  ansible.builtin.systemd:
+    name: reflector.timer
+    enabled: true
+    state: "{{ 'stopped' if os_install_chroot_phase | bool else 'started' }}"
+  tags:
+    - os
+    - mirrors
+
+- name: Keep reflector from running on every boot
+  ansible.builtin.systemd:
+    name: reflector.service
+    enabled: false
   tags:
     - os
     - mirrors

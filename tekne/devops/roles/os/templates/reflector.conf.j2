@@ -1,0 +1,10 @@
+# Managed by tekne.devops.os
+# reflector.timer starts reflector.service, which reads this file.
+# arch-install.sh uses a smaller ranking only while pacstrap is running.
+
+--save /etc/pacman.d/mirrorlist
+--protocol {{ os_mirror_protocols }}
+--age {{ os_mirror_age }}
+--latest {{ os_mirror_latest }}
+--number {{ os_mirror_number }}
+--sort {{ os_mirror_sort }}

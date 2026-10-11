@@ -22,11 +22,17 @@ os_clone_tekne_repos: "{{ git_token is defined and git_token | string | trim | l
 # Locale settings
 os_locale: en_US.UTF-8
 
-# Mirror settings
-os_mirror_country: 'United States'
-os_mirror_count: 100
-os_mirror_protocols: 'https,ftp'
-os_mirror_age: 168
+# Steady-state mirror policy. reflector.timer reads the rendered
+# /etc/xdg/reflector/reflector.conf. No country filter: throughput is not
+# the same as distance, and this network is not in the United States.
+# The installer ranks a smaller set before pacstrap; see arch-install.sh.
+os_mirror_protocols: https
+os_mirror_age: 24
+os_mirror_latest: 20
+os_mirror_number: 10
+os_mirror_sort: rate
+os_parallel_downloads: 5
+os_pacman_noextract: etc/pacman.d/mirrorlist
 
 # THEMIS-only: local .pkg.tar.zst packages (place in role files/)
 os_themis_local_packages:
