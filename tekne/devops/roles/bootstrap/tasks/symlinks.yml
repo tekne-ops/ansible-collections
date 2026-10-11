@@ -72,6 +72,28 @@
     mode: '0700'
   tags: [bootstrap, symlinks, ssh]
 
+- name: Check the linked SSH config
+  become: true
+  ansible.builtin.stat:
+    path: "{{ bootstrap_home }}/.ssh/config"
+    follow: false
+  register: bootstrap_ssh_config
+  tags: [bootstrap, symlinks, ssh]
+
+# follow is required: mode applies to the OneDrive file, not the symlink.
+# The link task follows the target and would otherwise leave its mode unchanged.
+- name: Leave the linked SSH config at mode 0400
+  become: true
+  ansible.builtin.file:
+    path: "{{ bootstrap_home }}/.ssh/config"
+    state: file
+    owner: "{{ bootstrap_user }}"
+    group: "{{ bootstrap_group }}"
+    mode: '0400'
+    follow: true
+  when: bootstrap_ssh_config.stat.islnk | default(false)
+  tags: [bootstrap, symlinks, ssh]
+
 - name: Display symlinks summary
   ansible.builtin.debug:
     msg:
