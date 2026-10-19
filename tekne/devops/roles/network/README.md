@@ -4,7 +4,7 @@ Configures systemd-networkd, systemd-resolved DNS policy, an optional bridge, op
 
 ## What It Does
 
-1. **Workstation (ASTER, YUGEN)** – Deploys `80-wifi-station.network` and `89-ethernet.network`; enables systemd-networkd, resolved, acpid; ASTER installs and enables iwd/bluetooth/tlp/thermald/bolt and connects to WiFi.
+1. **Workstation (ASTER, YUGEN)** – Deploys `80-wifi-station.network` and `89-ethernet.network`; enables systemd-networkd and resolved; disables acpid. ASTER installs and enables iwd/bluetooth/tlp/thermald/bolt and connects to WiFi.
 2. **THEMIS** – Deploys `25-br0` netdev/network units and `sshd_config.d/ssh.conf`.
 3. **DNS** – One resolved drop-in, `95-dns.conf`. Strict DoT (`DNSOverTLS=yes`) on every host, including ASTER. Resolvers are pinned as `IP#hostname` (Quad9, then Google) so the certificate matches a DNS name. DHCP and IPv6 router-advertisement DNS are ignored (`UseDNS=no`, `DNSDefaultRoute=no`). `FallbackDNS=` clears systemd's compiled-in plaintext list. `LLMNR=no`. `StaleRetentionSec=30min` keeps expired cache entries usable during a short outage. `Domains` includes the search suffix `tekne.sv` and the default route `~.`.
 4. **IPv6** – Managed links accept router advertisements (SLAAC) and still use DHCPv4. Wi-Fi and Ethernet use IPv6 privacy extensions. THEMIS `br0` keeps a stable address. Bridge member ports stay IPv6-off. THEMIS and YUGEN firewalls allow the ICMPv6 types SLAAC needs, and every firewall allows DHCPv6 replies.

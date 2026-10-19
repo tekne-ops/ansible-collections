@@ -316,7 +316,6 @@
   loop:
     - systemd-networkd.service
     - systemd-resolved.service
-    - acpid.service
   tags:
     - network-host
 
@@ -327,8 +326,15 @@
   loop:
     - systemd-networkd.service
     - systemd-resolved.service
-    - acpid.service
   when: not network_install_chroot_phase | bool
+  tags:
+    - network-host
+
+- name: Disable acpid
+  ansible.builtin.systemd:
+    name: acpid.service
+    enabled: false
+    state: "{{ 'stopped' if not (network_install_chroot_phase | bool) else omit }}"
   tags:
     - network-host
 
