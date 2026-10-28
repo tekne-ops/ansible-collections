@@ -84,7 +84,18 @@
   become: true
   become_user: "{{ bootstrap_user }}"
   ansible.builtin.command:
-    argv: "{{ ['script', '--quiet', '--return', '--flush', bootstrap_onedrive_auth_log, '--', bootstrap_onedrive_binary] + bootstrap_onedrive_sync_options.split() + ['--confdir=' ~ bootstrap_onedrive_config_dir] }}"
+    argv: "{{ bootstrap_onedrive_sync_argv }}"
+  vars:
+    bootstrap_onedrive_sync_argv: >-
+      {{
+        [
+          'script', '--quiet', '--return', '--flush',
+          bootstrap_onedrive_auth_log, '--',
+          bootstrap_onedrive_binary
+        ]
+        + bootstrap_onedrive_sync_options.split()
+        + ['--confdir=' ~ bootstrap_onedrive_config_dir]
+      }}
   async: "{{ bootstrap_onedrive_sync_timeout }}"
   poll: 0
   register: bootstrap_onedrive_first_sync
@@ -102,8 +113,10 @@
       - -c
       - |
         log="$1"
+        pattern='https?://|Enter the following code|Enter the response uri'
+        pattern+='|could not be initialised|empty or invalid response'
         for _ in $(seq 1 60); do
-          if [[ -f "$log" ]] && grep -E -q 'https?://|Enter the following code|Enter the response uri|could not be initialised|empty or invalid response' "$log"; then
+          if [[ -f "$log" ]] && grep -E -q "$pattern" "$log"; then
             exit 0
           fi
           sleep 1
@@ -247,6 +260,7 @@
       - disable-linger
       - "{{ bootstrap_user }}"
   when: bootstrap_linger_file.stat.exists
+  changed_when: true
   tags: [bootstrap, onedrive, service]
 
 - name: Ensure OneDrive desktop startup directories exist
