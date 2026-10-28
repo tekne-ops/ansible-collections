@@ -23,6 +23,17 @@
     - pipewire
     - packages
 
+- name: Disable Intel Wi-Fi Bluetooth coexistence
+  ansible.builtin.copy:
+    dest: /etc/modprobe.d/iwlwifi.conf
+    content: "options iwlwifi bt_coex_active=0\n"
+    owner: root
+    group: root
+    mode: "0644"
+  tags:
+    - pipewire
+    - config
+
 - name: Get user info for home directories
   ansible.builtin.getent:
     database: passwd
